@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact - GCBTP Bureau d'Études Techniques</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .contact-hero {
+            padding: 120px 0 60px;
+            background: linear-gradient(135deg, #1a5f7a 0%, #2c88a8 100%);
+            color: white;
+            text-align: center;
+        }
+        
+        .contact-hero h1 {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            font-weight: 700;
+        }
+        
+        .contact-hero p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+        
+        .contact-section {
+            padding: 80px 0;
+            background: #f8fafc;
+        }
+        
+        .contact-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4rem;
+            margin-top: 3rem;
+        }
+        
+        .contact-info {
+            background: white;
+            padding: 2.5rem;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+        
+        .contact-info h3 {
+            color: #1a5f7a;
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            font-weight: 600;
+        }
+        
+        .contact-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding: 1rem;
+            background: #f8fafc;
+            border-radius: 10px;
+        }
+        
+        .contact-item i {
+            font-size: 1.5rem;
+            color: #1a5f7a;
+            margin-right: 1rem;
+            width: 30px;
+        }
+        
+        .contact-item div h4 {
+            color: #333;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+        
+        .contact-item div p {
+            color: #666;
+            margin: 0;
+        }
+        
+        .contact-form {
+            background: white;
+            padding: 2.5rem;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+        
+        .contact-form h3 {
+            color: #1a5f7a;
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            font-weight: 600;
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #333;
+            font-weight: 500;
+        }
+        
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #1a5f7a;
+            box-shadow: 0 0 0 3px rgba(26, 95, 122, 0.1);
+        }
+        
+        .form-group textarea {
+            resize: vertical;
+            min-height: 120px;
+        }
+        
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+        
+        .submit-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #1a5f7a, #2c88a8);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(26, 95, 122, 0.4);
+        }
+        
+        .map-section {
+            padding: 80px 0;
+            background: white;
+        }
+        
+        .map-container {
+            height: 400px;
+            background: #e2e8f0;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #666;
+            font-size: 1.2rem;
+        }
+        
+        @media (max-width: 768px) {
+            .contact-grid {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+            }
+            
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .contact-hero h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <nav class="navbar">
+            <div class="nav-container">
+                <div class="nav-logo">
+                    <a href="index.html" class="nav-logo-link">
+                        <div class="nav-logo">
+                            <img src="Images/LOGO.jpg" alt="Logo GUINDO CONSTRUCTION BTP">
+                            <div class="nav-logo-text">
+                                <span class="nav-logo-title">GUINDO CONSTRUCTION BTP</span>
+                                <span class="nav-logo-sub">Bureau d'Études Techniques</span>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+                <ul class="nav-menu">
+                    <li><a href="index.html" class="nav-link">Accueil</a></li>
+                    <li><a href="index.html#qui-sommes-nous" class="nav-link">Qui Sommes-Nous</a></li>
+                    <li><a href="index.html#equipe" class="nav-link">L'équipe</a></li>
+                    <li><a href="index.html#projets" class="nav-link">Projets</a></li>
+                    <li><a href="index.html#carrieres" class="nav-link">Carrières</a></li>
+                    <li><a href="contact.html" class="nav-link">Contact</a></li>
+                </ul>
+                <div class="nav-buttons">
+                    <a href="#devis" class="btn btn-primary">Demander un Devis</a>
+                    <div class="hamburger">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Contact Hero -->
+    <section class="contact-hero">
+        <div class="container">
+            <h1>Contactez-Nous</h1>
+            <p>Discutons de votre projet et obtenez un devis personnalisé</p>
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section class="contact-section">
+        <div class="container">
+            <div class="contact-grid">
+                <!-- Contact Info -->
+                <div class="contact-info">
+                    <h3>Nos Coordonnées</h3>
+                    
+                    <div class="contact-item">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <div>
+                            <h4>Adresse</h4>
+                            <p>123 Avenue Mohammed V<br>Casablanca 20000, Maroc</p>
+                        </div>
+                    </div>
+                    
+                    <div class="contact-item">
+                        <i class="fas fa-phone"></i>
+                        <div>
+                            <h4>Téléphone</h4>
+                            <p>+212 (0) 5 22 44 04 55</p>
+                        </div>
+                    </div>
+                    
+                    <div class="contact-item">
+                        <i class="fas fa-mobile-alt"></i>
+                        <div>
+                            <h4>Mobile</h4>
+                            <p>+212 (0) 6 61 53 93 91</p>
+                        </div>
+                    </div>
+                    
+                    <div class="contact-item">
+                        <i class="fas fa-envelope"></i>
+                        <div>
+                            <h4>Email</h4>
+                            <p>contact@gcbtp.ma</p>
+                        </div>
+                    </div>
+                    
+                    <div class="contact-item">
+                        <i class="fas fa-clock"></i>
+                        <div>
+                            <h4>Horaires de travail</h4>
+                            <p>Lundi - Vendredi: 09H00 - 19H00<br>Samedi: 09H00 - 12H30</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Contact Form -->
+                <div class="contact-form">
+                    <h3>Demande de Devis</h3>
+                    <form id="contactForm">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="firstName">Prénom *</label>
+                                <input type="text" id="firstName" name="firstName" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="lastName">Nom *</label>
+                                <input type="text" id="lastName" name="lastName" required>
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="email">Email *</label>
+                                <input type="email" id="email" name="email" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="phone">Téléphone *</label>
+                                <input type="tel" id="phone" name="phone" required>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="company">Entreprise</label>
+                            <input type="text" id="company" name="company">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="service">Type de Service *</label>
+                            <select id="service" name="service" required>
+                                <option value="">Sélectionnez un service</option>
+                                <option value="structure">Structure du Bâtiment</option>
+                                <option value="technique">Lots Techniques du Bâtiment</option>
+                                <option value="vrd">VRD (Voirie et Réseaux Divers)</option>
+                                <option value="conseil">Conseil et Études</option>
+                                <option value="autre">Autre</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="projectType">Type de Projet</label>
+                            <select id="projectType" name="projectType">
+                                <option value="">Sélectionnez le type de projet</option>
+                                <option value="residential">Résidentiel</option>
+                                <option value="commercial">Commercial</option>
+                                <option value="industrial">Industriel</option>
+                                <option value="healthcare">Santé</option>
+                                <option value="education">Éducation</option>
+                                <option value="hotel">Hôtellerie</option>
+                                <option value="other">Autre</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="budget">Budget estimé</label>
+                            <select id="budget" name="budget">
+                                <option value="">Sélectionnez une fourchette</option>
+                                <option value="small">Moins de 500K MAD</option>
+                                <option value="medium">500K - 2M MAD</option>
+                                <option value="large">2M - 10M MAD</option>
+                                <option value="xlarge">Plus de 10M MAD</option>
+                                <option value="unknown">À définir</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="message">Description du projet *</label>
+                            <textarea id="message" name="message" placeholder="Décrivez votre projet, vos besoins et vos attentes..." required></textarea>
+                        </div>
+                        
+                        <button type="submit" class="submit-btn">
+                            <i class="fas fa-paper-plane"></i> Envoyer la demande
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Map Section -->
+    <section class="map-section">
+        <div class="container">
+            <h2 class="section-title">Notre Localisation</h2>
+            <div class="map-container">
+                <div style="text-align: center;">
+                    <i class="fas fa-map" style="font-size: 3rem; color: #1a5f7a; margin-bottom: 1rem;"></i>
+                    <p>123 Avenue Mohammed V, Casablanca 20000</p>
+                    <p>Maroc</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>GCBTP</h3>
+                    <p>GCBTP est un bureau d'études technique spécialisé dans les études techniques du bâtiment et VRD</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Accès Rapide</h4>
+                    <ul>
+                        <li><a href="index.html">Accueil</a></li>
+                        <li><a href="index.html#qui-sommes-nous">Qui Sommes-Nous</a></li>
+                        <li><a href="index.html#equipe">L'équipe</a></li>
+                        <li><a href="index.html#projets">Projets</a></li>
+                        <li><a href="index.html#carrieres">Carrières</a></li>
+                        <li><a href="contact.html">Contact</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Nos Bureaux</h4>
+                    <div class="office-info">
+                        <h5>Siège Principal:</h5>
+                        <p>123 Avenue Mohammed V<br>Casablanca 20000</p>
+                        <p><strong>Fixe:</strong> +212 (0) 5 22 44 04 55</p>
+                        <p><strong>Mobile:</strong> +212 (0) 6 61 53 93 91</p>
+                    </div>
+                </div>
+                <div class="footer-section">
+                    <h4>Contact</h4>
+                    <p><strong>Email:</strong> contact@gcbtp.ma</p>
+                    <p><strong>Téléphone:</strong> +212 (0) 5 22 44 04 55</p>
+                    <h5>Horaire de Travail</h5>
+                    <p>Lun-Ven: 09H00 – 19H00</p>
+                    <p>Sam: 09H00 – 12H30</p>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; <strong>GCBTP</strong> 2025 - Tous droits réservés</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+    <script>
+        // Form handling for contact page
+        document.getElementById('contactForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Get form data
+            const formData = new FormData(this);
+            const data = Object.fromEntries(formData);
+            
+            // Validate required fields
+            const requiredFields = ['firstName', 'lastName', 'email', 'phone', 'service', 'message'];
+            let isValid = true;
+            
+            requiredFields.forEach(field => {
+                if (!data[field] || data[field].trim() === '') {
+                    isValid = false;
+                    document.getElementById(field).style.borderColor = '#dc3545';
+                } else {
+                    document.getElementById(field).style.borderColor = '#e2e8f0';
+                }
+            });
+            
+            if (isValid) {
+                // Show success message
+                showNotification('Votre demande a été envoyée avec succès! Nous vous contacterons dans les plus brefs délais.', 'success');
+                this.reset();
+            } else {
+                showNotification('Veuillez remplir tous les champs obligatoires', 'error');
+            }
+        });
+        
+        // Notification function (same as in script.js)
+        function showNotification(message, type) {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.textContent = message;
+            
+            notification.style.position = 'fixed';
+            notification.style.top = '20px';
+            notification.style.right = '20px';
+            notification.style.padding = '15px 20px';
+            notification.style.borderRadius = '5px';
+            notification.style.color = 'white';
+            notification.style.fontWeight = '600';
+            notification.style.zIndex = '10000';
+            notification.style.transform = 'translateX(100%)';
+            notification.style.transition = 'transform 0.3s ease';
+            notification.style.maxWidth = '400px';
+            
+            if (type === 'success') {
+                notification.style.background = '#28a745';
+            } else {
+                notification.style.background = '#dc3545';
+            }
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.transform = 'translateX(0)';
+            }, 100);
+            
+            setTimeout(() => {
+                notification.style.transform = 'translateX(100%)';
+                setTimeout(() => {
+                    document.body.removeChild(notification);
+                }, 300);
+            }, 5000);
+        }
+    </script>
+</body>
+</html> 

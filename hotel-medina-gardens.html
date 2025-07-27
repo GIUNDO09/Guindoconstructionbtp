@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>HÔTEL MÉDINA GARDENS – GUINDO CONSTRUCTION BTP</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- Header (copié de index.html) -->
+  <header class="header">
+    <nav class="navbar">
+      <div class="nav-container">
+        <a href="index.html" class="nav-logo-link">
+          <div class="nav-logo">
+            <img src="Images/LOGO.jpg" alt="Logo GUINDO CONSTRUCTION BTP">
+            <div class="nav-logo-text">
+              <span class="nav-logo-title">GUINDO CONSTRUCTION BTP</span>
+              <span class="nav-logo-sub">Bureau d'Études Techniques</span>
+            </div>
+          </div>
+        </a>
+        <ul class="nav-menu">
+          <li><a href="index.html#accueil" class="nav-link">Accueil</a></li>
+          <li><a href="index.html#qui-sommes-nous" class="nav-link">Qui&nbsp;Sommes-Nous</a></li>
+          <li><a href="index.html#equipe" class="nav-link">L'équipe</a></li>
+          <li><a href="index.html#projets" class="nav-link">Projets</a></li>
+          <li><a href="index.html#carrieres" class="nav-link">Carrières</a></li>
+          <li><a href="contact.html" class="nav-link">Contact</a></li>
+        </ul>
+        <div class="nav-buttons">
+          <a href="#devis" class="btn btn-primary">Demander un Devis</a>
+        </div>
+      </div>
+    </nav>
+  </header>
+  <main>
+    <section class="project-detail">
+      <div class="project-detail-row">
+        <div class="project-gallery-col">
+          <div class="project-gallery-row" style="margin-top:48px;">
+            <img src="Images/hotel2-1.png" alt="Hôtel MÉDINA GARDENS 1">
+            <img src="Images/hotel2-2.png" alt="Hôtel MÉDINA GARDENS 2">
+            <img src="Images/hotel2-3.png" alt="Hôtel MÉDINA GARDENS 3">
+          </div>
+        </div>
+        <div class="project-info-col">
+          <h1>HÔTEL MÉDINA GARDENS</h1>
+          <ul>
+            <li><strong>Description :</strong> Projet de construction de l’hôtel Deep C à Imesouane</li>
+            <li><strong>Mission :</strong> Études techniques et suivi des travaux de construction</li>
+            <li><strong>Ville :</strong> Imesouane</li>
+            <li><strong>Superficie :</strong> 4 niveaux (lobby, cuisine, suites, chambres, skybar, etc…)</li>
+            <li><strong>Maîtrise d’œuvre :</strong> Cabinet MOBB Architecture</li>
+            <li><strong>Date :</strong> Avril 2022</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+  </main>
+  <!-- Footer (copié de index.html) -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-content">
+        <div class="footer-section">
+          <h3>GUINDO CONSTRUCTION BTP</h3>
+          <p>GUINDO CONSTRUCTION BTP est un bureau d'études technique spécialisé dans les études techniques du bâtiment et VRD</p>
+        </div>
+        <div class="footer-section">
+          <h4>Accès Rapide</h4>
+          <ul>
+            <li><a href="index.html#accueil">Accueil</a></li>
+            <li><a href="index.html#qui-sommes-nous">Qui Sommes-Nous</a></li>
+            <li><a href="index.html#equipe">L'équipe</a></li>
+            <li><a href="index.html#projets">Projets</a></li>
+            <li><a href="index.html#carrieres">Carrières</a></li>
+            <li><a href="contact.html">Contact</a></li>
+          </ul>
+        </div>
+        <div class="footer-section">
+          <h4>Nos Bureaux</h4>
+          <div class="office-info">
+            <h5>Siège Principal:</h5>
+            <p>123 Avenue Mohammed V<br>Casablanca 20000</p>
+            <p><strong>Fixe:</strong> +212 (0) 5 22 44 04 55</p>
+            <p><strong>Mobile:</strong> +212 (0) 6 61 53 93 91</p>
+          </div>
+        </div>
+        <div class="footer-section">
+          <h4>Contact</h4>
+          <p><strong>Email:</strong> contact@gcbtp.ma</p>
+          <p><strong>Téléphone:</strong> +212 (0) 5 22 44 04 55</p>
+          <h5>Horaire de Travail</h5>
+          <p>Lun-Ven: 09H00 – 19H00</p>
+          <p>Sam: 09H00 – 12H30</p>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; <strong>GUINDO CONSTRUCTION BTP</strong> 2025 - Tous droits réservés</p>
+      </div>
+    </div>
+  </footer>
+  <script>
+function changeProjectImg(img) {
+  document.getElementById('mainProjectImg').src = img.src;
+  document.querySelectorAll('.thumbnails img').forEach(el => el.classList.remove('active'));
+  img.classList.add('active');
+}
+document.addEventListener('DOMContentLoaded', function() {
+  const thumbs = document.querySelectorAll('.thumbnails img');
+  if (thumbs.length) thumbs[0].classList.add('active');
+});
+</script>
+</body>
+</html> 
