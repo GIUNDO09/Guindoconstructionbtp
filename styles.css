@@ -22,7 +22,7 @@ body {
     padding: 0 20px;
 }
 
-/* Media Queries pour Mobile */
+/* Media Queries pour Mobile - NE MODIFIE PAS LE DESIGN PC */
 @media (max-width: 768px) {
     .container {
         padding: 0 16px;
