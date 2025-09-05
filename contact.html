@@ -419,7 +419,13 @@
     </footer>
 
     <script src="script.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     <script>
+        // Initialize EmailJS
+        (function() {
+            emailjs.init("YOUR_PUBLIC_KEY"); // Nous remplacerons cela
+        })();
+
         // Form handling for contact page
         document.getElementById('contactForm').addEventListener('submit', function(e) {
             e.preventDefault();
@@ -442,42 +448,33 @@
             });
             
             if (isValid) {
-                // Create email content
-                const subject = encodeURIComponent('Nouvelle demande de contact - GCBTP');
-                const body = encodeURIComponent(`
-Nouvelle demande de contact reçue via le site GCBTP
-
-INFORMATIONS CLIENT:
-- Nom: ${data.firstName} ${data.lastName}
-- Email: ${data.email}
-- Téléphone: ${data.phone}
-- Entreprise: ${data.company || 'Non spécifié'}
-
-DÉTAILS DE LA DEMANDE:
-- Service demandé: ${data.service}
-- Type de projet: ${data.projectType || 'Non spécifié'}
-- Budget estimé: ${data.budget || 'Non spécifié'}
-
-MESSAGE:
-${data.message}
-
----
-Message envoyé depuis le site GCBTP
-                `);
+                // Show loading state
+                const submitBtn = this.querySelector('.submit-btn');
+                const originalText = submitBtn.innerHTML;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Envoi en cours...';
+                submitBtn.disabled = true;
                 
-                // Create mailto link
-                const mailtoLink = `mailto:guindoconstruction@gmail.com?subject=${subject}&body=${body}`;
-                
-                // Open email client
-                window.location.href = mailtoLink;
-                
-                // Show success message
-                showNotification('Votre client email s\'ouvre. Veuillez envoyer le message pour finaliser votre demande.', 'success');
-                
-                // Reset form after a delay
-                setTimeout(() => {
-                    this.reset();
-                }, 2000);
+                // Send email using EmailJS
+                emailjs.send('service_gcbtp', 'template_contact', {
+                    from_name: data.firstName + ' ' + data.lastName,
+                    from_email: data.email,
+                    phone: data.phone,
+                    company: data.company || 'Non spécifié',
+                    service: data.service,
+                    project_type: data.projectType || 'Non spécifié',
+                    budget: data.budget || 'Non spécifié',
+                    message: data.message,
+                    to_email: 'guindoconstruction@gmail.com'
+                }).then(function(response) {
+                    showNotification('Votre demande a été envoyée avec succès! Nous vous contacterons dans les plus brefs délais.', 'success');
+                    document.getElementById('contactForm').reset();
+                }, function(error) {
+                    showNotification('Erreur lors de l\'envoi. Veuillez réessayer ou nous contacter directement.', 'error');
+                }).finally(function() {
+                    // Restore button state
+                    submitBtn.innerHTML = originalText;
+                    submitBtn.disabled = false;
+                });
                 
             } else {
                 showNotification('Veuillez remplir tous les champs obligatoires', 'error');

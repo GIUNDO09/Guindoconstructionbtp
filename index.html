@@ -571,6 +571,13 @@
     </div>
 
     <script src="script.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <script>
+        // Initialize EmailJS
+        (function() {
+            emailjs.init("YOUR_PUBLIC_KEY"); // Nous remplacerons cela
+        })();
+    </script>
     <script>
         function updateCVLabel(input) {
             const label = document.getElementById('cv-label-text');
@@ -602,32 +609,30 @@
             });
             
             if (isValid) {
-                // Create email content
-                const subject = encodeURIComponent('Nouvelle candidature - GCBTP');
-                const body = encodeURIComponent(`
-Nouvelle candidature reçue via le site GCBTP
-
-INFORMATIONS CANDIDAT:
-- Nom: ${data.nom}
-- Email: ${data.email}
-- Téléphone: ${data.telephone}
-- Motivation: ${data.motivation || 'Non spécifiée'}
-
-NOTE: Le CV est joint en pièce jointe (si disponible)
-
----
-Message envoyé depuis le site GCBTP
-                `);
+                // Show loading state
+                const submitBtn = this.querySelector('.btn');
+                const originalText = submitBtn.innerHTML;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Envoi en cours...';
+                submitBtn.disabled = true;
                 
-                // Create mailto link
-                const mailtoLink = `mailto:guindoconstruction@gmail.com?subject=${subject}&body=${body}`;
-                
-                // Open email client
-                window.location.href = mailtoLink;
-                
-                // Show success message
-                document.getElementById('carrieresForm').style.display = 'none';
-                document.getElementById('carrieres-confirm').style.display = 'block';
+                // Send email using EmailJS
+                emailjs.send('service_gcbtp', 'template_candidature', {
+                    from_name: data.nom,
+                    from_email: data.email,
+                    phone: data.telephone,
+                    motivation: data.motivation || 'Non spécifiée',
+                    cv_file: data.cv ? data.cv.name : 'Aucun fichier',
+                    to_email: 'guindoconstruction@gmail.com'
+                }).then(function(response) {
+                    document.getElementById('carrieresForm').style.display = 'none';
+                    document.getElementById('carrieres-confirm').style.display = 'block';
+                }, function(error) {
+                    alert('Erreur lors de l\'envoi. Veuillez réessayer ou nous contacter directement.');
+                }).finally(function() {
+                    // Restore button state
+                    submitBtn.innerHTML = originalText;
+                    submitBtn.disabled = false;
+                });
                 
             } else {
                 alert('Veuillez remplir tous les champs obligatoires');
@@ -655,35 +660,32 @@ Message envoyé depuis le site GCBTP
             });
             
             if (isValid) {
-                // Create email content
-                const subject = encodeURIComponent('Nouvelle demande de devis - GCBTP');
-                const body = encodeURIComponent(`
-Nouvelle demande de devis reçue via le site GCBTP
-
-INFORMATIONS CLIENT:
-- Nom: ${data.nom}
-- Email: ${data.email}
-- Téléphone: ${data.telephone}
-- Entreprise: ${data.entreprise || 'Non spécifié'}
-
-DÉTAILS DU PROJET:
-- Type de projet: ${data['type-projet']}
-- Description: ${data.description}
-- Budget estimé: ${data.budget || 'Non spécifié'}
-
----
-Message envoyé depuis le site GCBTP
-                `);
+                // Show loading state
+                const submitBtn = this.querySelector('.btn');
+                const originalText = submitBtn.innerHTML;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Envoi en cours...';
+                submitBtn.disabled = true;
                 
-                // Create mailto link
-                const mailtoLink = `mailto:guindoconstruction@gmail.com?subject=${subject}&body=${body}`;
-                
-                // Open email client
-                window.location.href = mailtoLink;
-                
-                // Show success message
-                document.getElementById('devisForm').style.display = 'none';
-                document.getElementById('devis-confirm').style.display = 'block';
+                // Send email using EmailJS
+                emailjs.send('service_gcbtp', 'template_devis', {
+                    from_name: data.nom,
+                    from_email: data.email,
+                    phone: data.telephone,
+                    company: data.entreprise || 'Non spécifié',
+                    project_type: data['type-projet'],
+                    description: data.description,
+                    budget: data.budget || 'Non spécifié',
+                    to_email: 'guindoconstruction@gmail.com'
+                }).then(function(response) {
+                    document.getElementById('devisForm').style.display = 'none';
+                    document.getElementById('devis-confirm').style.display = 'block';
+                }, function(error) {
+                    alert('Erreur lors de l\'envoi. Veuillez réessayer ou nous contacter directement.');
+                }).finally(function() {
+                    // Restore button state
+                    submitBtn.innerHTML = originalText;
+                    submitBtn.disabled = false;
+                });
                 
             } else {
                 alert('Veuillez remplir tous les champs obligatoires');
