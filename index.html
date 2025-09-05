@@ -456,6 +456,7 @@
                         <input type="hidden" name="access_key" value="cf53af9f-c13b-4a19-bfd0-69c85ee9f19d">
                         <input type="hidden" name="subject" value="Nouvelle candidature - GCBTP">
                         <input type="hidden" name="from_name" value="Site GCBTP">
+                        <input type="hidden" name="to" value="guindoconstruction@gmail.com">
                         <input type="hidden" name="redirect" value="false">
                         <input type="hidden" name="redirect_url" value="https://giundo09.github.io/Guindo-construction/?candidature=success">
                         <div class="form-group">
@@ -541,7 +542,9 @@
                         <input type="hidden" name="access_key" value="cf53af9f-c13b-4a19-bfd0-69c85ee9f19d">
                         <input type="hidden" name="subject" value="Nouvelle demande de devis - GCBTP">
                         <input type="hidden" name="from_name" value="Site GCBTP">
+                        <input type="hidden" name="to" value="guindoconstruction@gmail.com">
                         <input type="hidden" name="redirect" value="false">
+                        <input type="hidden" name="redirect_url" value="https://giundo09.github.io/Guindo-construction/?devis=success">
                         <div class="form-group">
                             <label for="nom-devis">Nom et Prénom *</label>
                             <input type="text" id="nom-devis" name="nom" placeholder="Votre Nom et Prénom" required>
@@ -932,6 +935,12 @@
             // Clean URL
             window.history.replaceState({}, document.title, window.location.pathname);
         }
+        
+        if (window.location.search.includes('devis=success')) {
+            alert('Votre demande de devis a été envoyée avec succès! Nous vous contacterons dans les plus brefs délais.');
+            // Clean URL
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }
     </script>
     <script>
         // CV upload function removed - now using URL field
@@ -982,6 +991,7 @@
                 formData.append('access_key', 'cf53af9f-c13b-4a19-bfd0-69c85ee9f19d');
                 formData.append('subject', 'Nouvelle candidature - GCBTP');
                 formData.append('from_name', 'Site GCBTP');
+                formData.append('to', 'guindoconstruction@gmail.com');
                 formData.append('redirect', 'false');
                 formData.append('redirect_url', 'https://giundo09.github.io/Guindo-construction/?candidature=success');
                 
@@ -1059,13 +1069,30 @@
                     if (data.success) {
                         document.getElementById('devisForm').style.display = 'none';
                         document.getElementById('devis-confirm').style.display = 'block';
+                        // Track successful submission
+                        trackEvent('form_submission', {
+                            form_type: 'devis',
+                            success: true
+                        });
                     } else {
                         console.error('Web3Forms error:', data);
-                        alert('Erreur lors de l\'envoi. Veuillez réessayer ou nous contacter directement.');
+                        alert('Erreur lors de l\'envoi: ' + (data.message || 'Erreur inconnue') + '. Veuillez réessayer ou nous contacter directement.');
+                        // Track failed submission
+                        trackEvent('form_submission', {
+                            form_type: 'devis',
+                            success: false,
+                            error: data.message
+                        });
                     }
                 }).catch(error => {
                     console.error('Fetch error:', error);
                     alert('Erreur de connexion. Veuillez vérifier votre connexion internet et réessayer.');
+                    // Track connection error
+                    trackEvent('form_submission', {
+                        form_type: 'devis',
+                        success: false,
+                        error: 'connection_error'
+                    });
                 }).finally(() => {
                     // Restore button state
                     submitBtn.innerHTML = originalText;
