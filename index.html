@@ -310,7 +310,11 @@
                     <h3>Rejoignez-nous</h3>
                     <p>La valeur de <strong>GCBTP</strong> passe d’abord par la qualité de nos équipes. Nous sélectionnons les meilleurs talents et portons une attention particulière à l’adhésion à nos valeurs. Après sélection de votre CV, vous serez convié à un entretien pour mieux vous connaître et apprécier vos motivations.</p>
                     <p>En rejoignant <strong>GCBTP</strong>, vous vous lancez dans une aventure passionnante et trouverez la liberté d’écrire votre histoire. Pour présenter votre candidature, remplissez le formulaire ci-dessous :</p>
-                    <form class="carrieres-form" enctype="multipart/form-data" id="carrieresForm">
+                    <form class="carrieres-form" enctype="multipart/form-data" id="carrieresForm" action="https://api.web3forms.com/submit" method="POST">
+                        <input type="hidden" name="access_key" value="YOUR_ACCESS_KEY">
+                        <input type="hidden" name="subject" value="Nouvelle candidature - GCBTP">
+                        <input type="hidden" name="from_name" value="Site GCBTP">
+                        <input type="hidden" name="redirect" value="false">
                         <div class="form-group">
                             <label for="nom">Nom et Prénom *</label>
                             <input type="text" id="nom" name="nom" placeholder="Votre Nom et Prénom" required>
@@ -380,7 +384,11 @@
                     </div>
                 </div>
                 <div class="devis-right">
-                    <form class="devis-form" id="devisForm">
+                    <form class="devis-form" id="devisForm" action="https://api.web3forms.com/submit" method="POST">
+                        <input type="hidden" name="access_key" value="YOUR_ACCESS_KEY">
+                        <input type="hidden" name="subject" value="Nouvelle demande de devis - GCBTP">
+                        <input type="hidden" name="from_name" value="Site GCBTP">
+                        <input type="hidden" name="redirect" value="false">
                         <div class="form-group">
                             <label for="nom-devis">Nom et Prénom *</label>
                             <input type="text" id="nom-devis" name="nom" placeholder="Votre Nom et Prénom" required>
@@ -571,13 +579,6 @@
     </div>
 
     <script src="script.js"></script>
-    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
-    <script>
-        // Initialize EmailJS
-        (function() {
-            emailjs.init("YOUR_PUBLIC_KEY"); // Nous remplacerons cela
-        })();
-    </script>
     <script>
         function updateCVLabel(input) {
             const label = document.getElementById('cv-label-text');
@@ -591,16 +592,12 @@
         document.getElementById('carrieresForm').addEventListener('submit', function(e) {
             e.preventDefault();
             
-            // Get form data
-            const formData = new FormData(this);
-            const data = Object.fromEntries(formData);
-            
             // Validate required fields
             const requiredFields = ['nom', 'email', 'telephone', 'cv'];
             let isValid = true;
             
             requiredFields.forEach(field => {
-                if (!data[field] || data[field].trim() === '') {
+                if (!document.getElementById(field).value.trim()) {
                     isValid = false;
                     document.getElementById(field).style.borderColor = '#dc3545';
                 } else {
@@ -615,20 +612,21 @@
                 submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Envoi en cours...';
                 submitBtn.disabled = true;
                 
-                // Send email using EmailJS
-                emailjs.send('service_gcbtp', 'template_candidature', {
-                    from_name: data.nom,
-                    from_email: data.email,
-                    phone: data.telephone,
-                    motivation: data.motivation || 'Non spécifiée',
-                    cv_file: data.cv ? data.cv.name : 'Aucun fichier',
-                    to_email: 'guindoconstruction@gmail.com'
-                }).then(function(response) {
-                    document.getElementById('carrieresForm').style.display = 'none';
-                    document.getElementById('carrieres-confirm').style.display = 'block';
-                }, function(error) {
+                // Submit form to Web3Forms
+                fetch(this.action, {
+                    method: 'POST',
+                    body: new FormData(this)
+                }).then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        document.getElementById('carrieresForm').style.display = 'none';
+                        document.getElementById('carrieres-confirm').style.display = 'block';
+                    } else {
+                        alert('Erreur lors de l\'envoi. Veuillez réessayer ou nous contacter directement.');
+                    }
+                }).catch(error => {
                     alert('Erreur lors de l\'envoi. Veuillez réessayer ou nous contacter directement.');
-                }).finally(function() {
+                }).finally(() => {
                     // Restore button state
                     submitBtn.innerHTML = originalText;
                     submitBtn.disabled = false;
@@ -642,20 +640,17 @@
         document.getElementById('devisForm').addEventListener('submit', function(e) {
             e.preventDefault();
             
-            // Get form data
-            const formData = new FormData(this);
-            const data = Object.fromEntries(formData);
-            
             // Validate required fields
             const requiredFields = ['nom', 'email', 'telephone', 'type-projet', 'description'];
             let isValid = true;
             
             requiredFields.forEach(field => {
-                if (!data[field] || data[field].trim() === '') {
+                const fieldId = field.replace('-', '-');
+                if (!document.getElementById(fieldId).value.trim()) {
                     isValid = false;
-                    document.getElementById(field.replace('-', '-')).style.borderColor = '#dc3545';
+                    document.getElementById(fieldId).style.borderColor = '#dc3545';
                 } else {
-                    document.getElementById(field.replace('-', '-')).style.borderColor = '#e2e8f0';
+                    document.getElementById(fieldId).style.borderColor = '#e2e8f0';
                 }
             });
             
@@ -666,22 +661,21 @@
                 submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Envoi en cours...';
                 submitBtn.disabled = true;
                 
-                // Send email using EmailJS
-                emailjs.send('service_gcbtp', 'template_devis', {
-                    from_name: data.nom,
-                    from_email: data.email,
-                    phone: data.telephone,
-                    company: data.entreprise || 'Non spécifié',
-                    project_type: data['type-projet'],
-                    description: data.description,
-                    budget: data.budget || 'Non spécifié',
-                    to_email: 'guindoconstruction@gmail.com'
-                }).then(function(response) {
-                    document.getElementById('devisForm').style.display = 'none';
-                    document.getElementById('devis-confirm').style.display = 'block';
-                }, function(error) {
+                // Submit form to Web3Forms
+                fetch(this.action, {
+                    method: 'POST',
+                    body: new FormData(this)
+                }).then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        document.getElementById('devisForm').style.display = 'none';
+                        document.getElementById('devis-confirm').style.display = 'block';
+                    } else {
+                        alert('Erreur lors de l\'envoi. Veuillez réessayer ou nous contacter directement.');
+                    }
+                }).catch(error => {
                     alert('Erreur lors de l\'envoi. Veuillez réessayer ou nous contacter directement.');
-                }).finally(function() {
+                }).finally(() => {
                     // Restore button state
                     submitBtn.innerHTML = originalText;
                     submitBtn.disabled = false;

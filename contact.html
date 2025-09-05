@@ -281,7 +281,11 @@
                 <!-- Contact Form -->
                 <div class="contact-form">
                     <h3>Demande de Devis</h3>
-                    <form id="contactForm">
+                    <form id="contactForm" action="https://api.web3forms.com/submit" method="POST">
+                        <input type="hidden" name="access_key" value="YOUR_ACCESS_KEY">
+                        <input type="hidden" name="subject" value="Nouvelle demande de contact - GCBTP">
+                        <input type="hidden" name="from_name" value="Site GCBTP">
+                        <input type="hidden" name="redirect" value="false">
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="firstName">Prénom *</label>
@@ -419,27 +423,17 @@
     </footer>
 
     <script src="script.js"></script>
-    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     <script>
-        // Initialize EmailJS
-        (function() {
-            emailjs.init("YOUR_PUBLIC_KEY"); // Nous remplacerons cela
-        })();
-
-        // Form handling for contact page
+        // Form handling for contact page with Web3Forms
         document.getElementById('contactForm').addEventListener('submit', function(e) {
             e.preventDefault();
-            
-            // Get form data
-            const formData = new FormData(this);
-            const data = Object.fromEntries(formData);
             
             // Validate required fields
             const requiredFields = ['firstName', 'lastName', 'email', 'phone', 'service', 'message'];
             let isValid = true;
             
             requiredFields.forEach(field => {
-                if (!data[field] || data[field].trim() === '') {
+                if (!document.getElementById(field).value.trim()) {
                     isValid = false;
                     document.getElementById(field).style.borderColor = '#dc3545';
                 } else {
@@ -454,23 +448,21 @@
                 submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Envoi en cours...';
                 submitBtn.disabled = true;
                 
-                // Send email using EmailJS
-                emailjs.send('service_gcbtp', 'template_contact', {
-                    from_name: data.firstName + ' ' + data.lastName,
-                    from_email: data.email,
-                    phone: data.phone,
-                    company: data.company || 'Non spécifié',
-                    service: data.service,
-                    project_type: data.projectType || 'Non spécifié',
-                    budget: data.budget || 'Non spécifié',
-                    message: data.message,
-                    to_email: 'guindoconstruction@gmail.com'
-                }).then(function(response) {
-                    showNotification('Votre demande a été envoyée avec succès! Nous vous contacterons dans les plus brefs délais.', 'success');
-                    document.getElementById('contactForm').reset();
-                }, function(error) {
+                // Submit form to Web3Forms
+                fetch(this.action, {
+                    method: 'POST',
+                    body: new FormData(this)
+                }).then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showNotification('Votre demande a été envoyée avec succès! Nous vous contacterons dans les plus brefs délais.', 'success');
+                        this.reset();
+                    } else {
+                        showNotification('Erreur lors de l\'envoi. Veuillez réessayer ou nous contacter directement.', 'error');
+                    }
+                }).catch(error => {
                     showNotification('Erreur lors de l\'envoi. Veuillez réessayer ou nous contacter directement.', 'error');
-                }).finally(function() {
+                }).finally(() => {
                     // Restore button state
                     submitBtn.innerHTML = originalText;
                     submitBtn.disabled = false;
