@@ -333,11 +333,14 @@
                             <textarea id="motivation" name="motivation" placeholder="Votre Motivation"></textarea>
                         </div>
                         <div class="form-group">
-                            <label for="cv">Votre CV *</label>
+                            <label for="cv">Votre CV (optionnel)</label>
                             <label for="cv" class="file-label" id="cv-label">
                                 <span id="cv-label-text"><i class="fas fa-upload" style="font-size:1.3em;margin-bottom:6px;"></i><br>Cliquez ou déplacez un fichier dans cette zone pour le téléverser.</span>
                             </label>
-                            <input type="file" id="cv" name="cv" required onchange="updateCVLabel(this)">
+                            <input type="file" id="cv" name="cv" onchange="updateCVLabel(this)">
+                            <small style="color: #666; font-size: 0.8em; margin-top: 5px; display: block;">
+                                Note: Vous pouvez aussi envoyer votre CV par email à guindoconstruction@gmail.com
+                            </small>
                         </div>
                         <button type="submit" class="btn btn-primary">Envoyer</button>
                         <p style="font-size:0.8em;color:#888;margin-top:8px;">Votre candidature sera envoyée directement à notre équipe RH</p>
@@ -614,14 +617,7 @@
                 }
             });
             
-            // Check CV file separately
-            const cvFile = document.getElementById('cv').files[0];
-            if (!cvFile) {
-                isValid = false;
-                document.getElementById('cv').style.borderColor = '#dc3545';
-            } else {
-                document.getElementById('cv').style.borderColor = '#e2e8f0';
-            }
+            // CV is now optional, so no validation needed
             
             if (isValid) {
                 // Show loading state
@@ -630,13 +626,29 @@
                 submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Envoi en cours...';
                 submitBtn.disabled = true;
                 
-                // Create FormData and add file info as text
-                const formData = new FormData(this);
+                // Create FormData without file (Web3Forms free doesn't support file uploads)
+                const formData = new FormData();
                 
-                // Add file information as text (since Web3Forms might have issues with file uploads)
+                // Add all form fields except the file
+                formData.append('nom', document.getElementById('nom').value);
+                formData.append('email', document.getElementById('email').value);
+                formData.append('telephone', document.getElementById('telephone').value);
+                formData.append('motivation', document.getElementById('motivation').value);
+                
+                // Add file information as text
+                const cvFile = document.getElementById('cv').files[0];
                 if (cvFile) {
                     formData.append('cv_info', `Fichier CV: ${cvFile.name} (${cvFile.size} bytes, type: ${cvFile.type})`);
+                } else {
+                    formData.append('cv_info', 'Aucun fichier CV joint - Candidat peut envoyer par email séparément');
                 }
+                
+                // Add hidden fields
+                formData.append('access_key', 'cf53af9f-c13b-4a19-bfd0-69c85ee9f19d');
+                formData.append('subject', 'Nouvelle candidature - GCBTP');
+                formData.append('from_name', 'Site GCBTP');
+                formData.append('redirect', 'false');
+                formData.append('redirect_url', 'https://giundo09.github.io/Guindo-construction/?candidature=success');
                 
                 // Submit form to Web3Forms
                 fetch(this.action, {
