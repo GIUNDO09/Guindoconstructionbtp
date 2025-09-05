@@ -15,7 +15,7 @@ Pour que les formulaires envoient automatiquement les emails à **guindoconstruc
 1. Dans le dashboard EmailJS, allez dans "Email Services"
 2. Cliquez sur "Add New Service"
 3. Choisissez "Gmail" (recommandé)
-4. Connectez votre compte Gmail : **guindoconstruction@gmail.com**
+4. Connectez votre compte Gmail : **J4guindoconstruction@gmail.com**
 5. Autorisez EmailJS à accéder à votre Gmail
 6. Notez l'**ID du service** (ex: `service_xxxxxxx`)
 
