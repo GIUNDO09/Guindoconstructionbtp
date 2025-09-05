@@ -154,13 +154,15 @@
     <header class="header">
         <nav class="navbar">
             <div class="nav-container">
-                <div class="nav-logo">
-                    <img src="Images/LOGO.jpg" alt="Logo GUINDO CONSTRUCTION BTP">
-                    <div class="nav-logo-text">
-                        <span class="nav-logo-title">GUINDO CONSTRUCTION BTP</span>
-                        <span class="nav-logo-sub">Bureau d'Études Techniques</span>
+                <a href="#accueil" class="nav-logo-link">
+                    <div class="nav-logo">
+                        <img src="Images/LOGO.jpg" alt="Logo GUINDO CONSTRUCTION BTP">
+                        <div class="nav-logo-text">
+                            <span class="nav-logo-title">GUINDO CONSTRUCTION BTP</span>
+                            <span class="nav-logo-sub">Bureau d'Études Techniques</span>
+                        </div>
                     </div>
-                </div>
+                </a>
                 <ul class="nav-menu">
                     <li><a href="#accueil" class="nav-link">Accueil</a></li>
                     <li><a href="#qui-sommes-nous" class="nav-link">Qui&nbsp;Sommes-Nous</a></li>
@@ -874,6 +876,17 @@
                 page_title: document.title,
                 page_location: window.location.href
             });
+            
+            // Logo click tracking
+            const logoLink = document.querySelector('.nav-logo-link');
+            if (logoLink) {
+                logoLink.addEventListener('click', function() {
+                    trackEvent('logo_click', {
+                        event_category: 'navigation',
+                        event_label: 'header_logo'
+                    });
+                });
+            }
             
             // Mobile Navigation Toggle
             const hamburger = document.querySelector('.hamburger');

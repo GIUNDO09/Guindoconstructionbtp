@@ -515,6 +515,15 @@ body {
     text-decoration: none;
     display: flex;
     align-items: center;
+    transition: var(--transition);
+}
+
+.nav-logo-link:hover {
+    transform: scale(1.02);
+}
+
+.nav-logo-link:hover .nav-logo-title {
+    color: var(--primary-color);
 }
 .nav-logo {
     display: flex;
