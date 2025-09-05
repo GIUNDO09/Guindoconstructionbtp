@@ -457,8 +457,10 @@
                         <input type="hidden" name="subject" value="Nouvelle candidature - GCBTP">
                         <input type="hidden" name="from_name" value="Site GCBTP">
                         <input type="hidden" name="to" value="guindoconstruction@gmail.com">
+                        <input type="hidden" name="replyto" value="guindoconstruction@gmail.com">
                         <input type="hidden" name="redirect" value="false">
                         <input type="hidden" name="redirect_url" value="https://giundo09.github.io/Guindo-construction/?candidature=success">
+                        <input type="hidden" name="honeypot" value="">
                         <div class="form-group">
                             <label for="nom">Nom et Prénom *</label>
                             <input type="text" id="nom" name="nom" placeholder="Votre Nom et Prénom" required>
@@ -639,7 +641,6 @@
                             </small>
                         </div>
                         <button type="submit" class="btn btn-primary">Envoyer ma demande</button>
-                        <button type="button" onclick="testEmailDelivery()" class="btn" style="background: #28a745; margin-left: 10px;">🧪 Test Email</button>
                         <p style="font-size:0.8em;color:#888;margin-top:8px;">Votre demande sera envoyée directement à notre équipe</p>
                     </form>
                     <div id="devis-confirm" style="display:none;padding:32px 0 0 0;">
@@ -945,67 +946,6 @@
             window.history.replaceState({}, document.title, window.location.pathname);
         }
         
-        // Solution alternative EmailJS (en cas de problème Web3Forms)
-        function sendEmailJS() {
-            // Configuration EmailJS
-            const serviceID = 'service_gcbtp';
-            const templateID = 'template_devis';
-            const publicKey = 'YOUR_EMAILJS_PUBLIC_KEY';
-            
-            const templateParams = {
-                to_email: 'guindoconstruction@gmail.com',
-                from_name: document.getElementById('nom-devis').value,
-                from_email: document.getElementById('email-devis').value,
-                message: `Demande de devis de ${document.getElementById('nom-devis').value}`,
-                telephone: document.getElementById('telephone-devis').value,
-                surface: document.getElementById('surface').value,
-                localisation: document.getElementById('localisation').value,
-                finition: document.getElementById('finition').value
-            };
-            
-            emailjs.send(serviceID, templateID, templateParams, publicKey)
-                .then(function(response) {
-                    console.log('EmailJS success:', response);
-                    alert('✅ Email envoyé avec succès via EmailJS!');
-                }, function(error) {
-                    console.log('EmailJS error:', error);
-                    alert('❌ Erreur EmailJS: ' + error.text);
-                });
-        }
-        
-        // Fonction de test email
-        function testEmailDelivery() {
-            const testData = new FormData();
-            testData.append('access_key', 'cf53af9f-c13b-4a19-bfd0-69c85ee9f19d');
-            testData.append('subject', 'TEST EMAIL - GCBTP');
-            testData.append('from_name', 'Test GCBTP');
-            testData.append('to', 'guindoconstruction@gmail.com');
-            testData.append('replyto', 'guindoconstruction@gmail.com');
-            testData.append('redirect', 'false');
-            testData.append('message', 'Ceci est un email de test pour vérifier la configuration Web3Forms. Si vous recevez ce message, la configuration fonctionne correctement.');
-            testData.append('nom', 'Test GCBTP');
-            testData.append('email', 'guindoconstruction@gmail.com');
-            testData.append('telephone', 'Test');
-            testData.append('honeypot', '');
-            
-            fetch('https://api.web3forms.com/submit', {
-                method: 'POST',
-                body: testData
-            })
-            .then(response => response.json())
-            .then(data => {
-                console.log('Test email response:', data);
-                if (data.success) {
-                    alert('✅ Email de test envoyé avec succès! Vérifiez votre boîte email guindoconstruction@gmail.com');
-                } else {
-                    alert('❌ Erreur lors de l\'envoi du test: ' + (data.message || 'Erreur inconnue'));
-                }
-            })
-            .catch(error => {
-                console.error('Test email error:', error);
-                alert('❌ Erreur de connexion lors du test');
-            });
-        }
     </script>
     <script>
         // CV upload function removed - now using URL field
