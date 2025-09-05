@@ -6,6 +6,207 @@
     box-sizing: border-box;
 }
 
+/* Animations et transitions globales */
+:root {
+    --primary-color: #2255cd;
+    --secondary-color: #1a5f7a;
+    --accent-color: #2c88a8;
+    --text-color: #333;
+    --bg-color: #fff;
+    --shadow: 0 4px 20px rgba(0,0,0,0.1);
+    --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+/* Smooth scrolling */
+html {
+    scroll-behavior: smooth;
+}
+
+/* Fade in animation */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeInLeft {
+    from {
+        opacity: 0;
+        transform: translateX(-30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes fadeInRight {
+    from {
+        opacity: 0;
+        transform: translateX(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+@keyframes float {
+    0%, 100% {
+        transform: translateY(0px);
+    }
+    50% {
+        transform: translateY(-10px);
+    }
+}
+
+@keyframes slideInDown {
+    from {
+        transform: translateY(-100%);
+    }
+    to {
+        transform: translateY(0);
+    }
+}
+
+/* Animation classes */
+.animate-fadeInUp {
+    animation: fadeInUp 0.8s ease-out;
+}
+
+.animate-fadeInLeft {
+    animation: fadeInLeft 0.8s ease-out;
+}
+
+.animate-fadeInRight {
+    animation: fadeInRight 0.8s ease-out;
+}
+
+.animate-pulse {
+    animation: pulse 2s infinite;
+}
+
+.animate-float {
+    animation: float 3s ease-in-out infinite;
+}
+
+.animate-slideInDown {
+    animation: slideInDown 0.5s ease-out;
+}
+
+/* Intersection Observer animations */
+.fade-in {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: var(--transition);
+}
+
+.fade-in.visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.slide-in-left {
+    opacity: 0;
+    transform: translateX(-50px);
+    transition: var(--transition);
+}
+
+.slide-in-left.visible {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.slide-in-right {
+    opacity: 0;
+    transform: translateX(50px);
+    transition: var(--transition);
+}
+
+.slide-in-right.visible {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.scale-in {
+    opacity: 0;
+    transform: scale(0.8);
+    transition: var(--transition);
+}
+
+.scale-in.visible {
+    opacity: 1;
+    transform: scale(1);
+}
+
+/* Calculateur de devis */
+.devis-calculator {
+    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+    border: 2px solid var(--primary-color);
+    border-radius: 12px;
+    padding: 20px;
+    margin: 20px 0;
+    box-shadow: var(--shadow);
+}
+
+.devis-calculator h4 {
+    color: var(--primary-color);
+    margin-bottom: 15px;
+    font-size: 1.2rem;
+    text-align: center;
+}
+
+.estimation-result {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.estimation-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    background: rgba(255, 255, 255, 0.7);
+    border-radius: 6px;
+    font-weight: 500;
+}
+
+.estimation-item.total {
+    background: var(--primary-color);
+    color: white;
+    font-weight: 700;
+    font-size: 1.1rem;
+    border-radius: 8px;
+}
+
+.estimation-item span:last-child {
+    font-weight: 600;
+    color: var(--primary-color);
+}
+
+.estimation-item.total span:last-child {
+    color: white;
+}
+
 body {
     font-family: 'Inter', sans-serif;
     line-height: 1.6;
@@ -392,10 +593,38 @@ body {
     text-decoration: none;
     border-radius: 6px;
     font-weight: 600;
-    transition: all 0.3s ease;
+    transition: var(--transition);
     border: none;
     cursor: pointer;
     font-size: 0.9rem;
+    position: relative;
+    overflow: hidden;
+    transform: translateY(0);
+}
+
+.btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    transition: left 0.5s;
+}
+
+.btn:hover::before {
+    left: 100%;
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(34, 85, 205, 0.3);
+}
+
+.btn:active {
+    transform: translateY(0);
+    transition: transform 0.1s;
 }
 
 .btn-primary {
