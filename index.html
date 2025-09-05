@@ -315,6 +315,7 @@
                         <input type="hidden" name="subject" value="Nouvelle candidature - GCBTP">
                         <input type="hidden" name="from_name" value="Site GCBTP">
                         <input type="hidden" name="redirect" value="false">
+                        <input type="hidden" name="redirect_url" value="https://giundo09.github.io/Guindo-construction/?candidature=success">
                         <div class="form-group">
                             <label for="nom">Nom et Prénom *</label>
                             <input type="text" id="nom" name="nom" placeholder="Votre Nom et Prénom" required>
@@ -580,6 +581,14 @@
 
     <script src="script.js"></script>
     <script>
+        // Check for success parameter in URL
+        if (window.location.search.includes('candidature=success')) {
+            alert('Votre candidature a été envoyée avec succès! Nous vous contacterons dans les plus brefs délais.');
+            // Clean URL
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }
+    </script>
+    <script>
         function updateCVLabel(input) {
             const label = document.getElementById('cv-label-text');
             if (input.files && input.files[0]) {
@@ -593,7 +602,7 @@
             e.preventDefault();
             
             // Validate required fields
-            const requiredFields = ['nom', 'email', 'telephone', 'cv'];
+            const requiredFields = ['nom', 'email', 'telephone'];
             let isValid = true;
             
             requiredFields.forEach(field => {
@@ -605,6 +614,15 @@
                 }
             });
             
+            // Check CV file separately
+            const cvFile = document.getElementById('cv').files[0];
+            if (!cvFile) {
+                isValid = false;
+                document.getElementById('cv').style.borderColor = '#dc3545';
+            } else {
+                document.getElementById('cv').style.borderColor = '#e2e8f0';
+            }
+            
             if (isValid) {
                 // Show loading state
                 const submitBtn = this.querySelector('.btn');
@@ -612,10 +630,18 @@
                 submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Envoi en cours...';
                 submitBtn.disabled = true;
                 
+                // Create FormData and add file info as text
+                const formData = new FormData(this);
+                
+                // Add file information as text (since Web3Forms might have issues with file uploads)
+                if (cvFile) {
+                    formData.append('cv_info', `Fichier CV: ${cvFile.name} (${cvFile.size} bytes, type: ${cvFile.type})`);
+                }
+                
                 // Submit form to Web3Forms
                 fetch(this.action, {
                     method: 'POST',
-                    body: new FormData(this)
+                    body: formData
                 }).then(response => {
                     if (!response.ok) {
                         throw new Error(`HTTP error! status: ${response.status}`);
@@ -633,7 +659,9 @@
                     }
                 }).catch(error => {
                     console.error('Fetch error:', error);
-                    alert('Erreur de connexion. Veuillez vérifier votre connexion internet et réessayer.');
+                    // Fallback: try direct form submission
+                    console.log('Trying fallback submission...');
+                    this.submit();
                 }).finally(() => {
                     // Restore button state
                     submitBtn.innerHTML = originalText;
