@@ -310,7 +310,7 @@
                     <h3>Rejoignez-nous</h3>
                     <p>La valeur de <strong>GCBTP</strong> passe d’abord par la qualité de nos équipes. Nous sélectionnons les meilleurs talents et portons une attention particulière à l’adhésion à nos valeurs. Après sélection de votre CV, vous serez convié à un entretien pour mieux vous connaître et apprécier vos motivations.</p>
                     <p>En rejoignant <strong>GCBTP</strong>, vous vous lancez dans une aventure passionnante et trouverez la liberté d’écrire votre histoire. Pour présenter votre candidature, remplissez le formulaire ci-dessous :</p>
-                    <form class="carrieres-form" enctype="multipart/form-data" action="https://formspree.io/f/xpzqkqkj" method="POST" id="carrieresForm">
+                    <form class="carrieres-form" enctype="multipart/form-data" id="carrieresForm">
                         <div class="form-group">
                             <label for="nom">Nom et Prénom *</label>
                             <input type="text" id="nom" name="nom" placeholder="Votre Nom et Prénom" required>
@@ -334,9 +334,6 @@
                             </label>
                             <input type="file" id="cv" name="cv" required onchange="updateCVLabel(this)">
                         </div>
-                        <input type="hidden" name="_subject" value="Nouvelle candidature - GCBTP">
-                        <input type="hidden" name="_replyto" value="">
-                        <input type="hidden" name="_cc" value="guindoconstruction@gmail.com">
                         <button type="submit" class="btn btn-primary">Envoyer</button>
                         <p style="font-size:0.8em;color:#888;margin-top:8px;">Votre candidature sera envoyée directement à notre équipe RH</p>
                     </form>
@@ -383,7 +380,7 @@
                     </div>
                 </div>
                 <div class="devis-right">
-                    <form class="devis-form" id="devisForm" action="https://formspree.io/f/xpzqkqkj" method="POST">
+                    <form class="devis-form" id="devisForm">
                         <div class="form-group">
                             <label for="nom-devis">Nom et Prénom *</label>
                             <input type="text" id="nom-devis" name="nom" placeholder="Votre Nom et Prénom" required>
@@ -427,9 +424,6 @@
                                 <option value=">1M">Plus de 1 000 000 000 FCFA</option>
                             </select>
                         </div>
-                        <input type="hidden" name="_subject" value="Nouvelle demande de devis - GCBTP">
-                        <input type="hidden" name="_replyto" value="">
-                        <input type="hidden" name="_cc" value="guindoconstruction@gmail.com">
                         <button type="submit" class="btn btn-primary">Envoyer ma demande</button>
                         <p style="font-size:0.8em;color:#888;margin-top:8px;">Votre demande sera envoyée directement à notre équipe</p>
                     </form>
@@ -608,26 +602,33 @@
             });
             
             if (isValid) {
-                // Set reply-to field to user's email
-                document.querySelector('input[name="_replyto"]').value = data.email;
+                // Create email content
+                const subject = encodeURIComponent('Nouvelle candidature - GCBTP');
+                const body = encodeURIComponent(`
+Nouvelle candidature reçue via le site GCBTP
+
+INFORMATIONS CANDIDAT:
+- Nom: ${data.nom}
+- Email: ${data.email}
+- Téléphone: ${data.telephone}
+- Motivation: ${data.motivation || 'Non spécifiée'}
+
+NOTE: Le CV est joint en pièce jointe (si disponible)
+
+---
+Message envoyé depuis le site GCBTP
+                `);
                 
-                // Submit form to Formspree
-                fetch(this.action, {
-                    method: 'POST',
-                    body: formData,
-                    headers: {
-                        'Accept': 'application/json'
-                    }
-                }).then(response => {
-                    if (response.ok) {
-                        document.getElementById('carrieresForm').style.display = 'none';
-                        document.getElementById('carrieres-confirm').style.display = 'block';
-                    } else {
-                        throw new Error('Erreur lors de l\'envoi');
-                    }
-                }).catch(error => {
-                    alert('Erreur lors de l\'envoi. Veuillez réessayer ou nous contacter directement.');
-                });
+                // Create mailto link
+                const mailtoLink = `mailto:guindoconstruction@gmail.com?subject=${subject}&body=${body}`;
+                
+                // Open email client
+                window.location.href = mailtoLink;
+                
+                // Show success message
+                document.getElementById('carrieresForm').style.display = 'none';
+                document.getElementById('carrieres-confirm').style.display = 'block';
+                
             } else {
                 alert('Veuillez remplir tous les champs obligatoires');
             }
@@ -654,26 +655,36 @@
             });
             
             if (isValid) {
-                // Set reply-to field to user's email
-                document.querySelector('input[name="_replyto"]').value = data.email;
+                // Create email content
+                const subject = encodeURIComponent('Nouvelle demande de devis - GCBTP');
+                const body = encodeURIComponent(`
+Nouvelle demande de devis reçue via le site GCBTP
+
+INFORMATIONS CLIENT:
+- Nom: ${data.nom}
+- Email: ${data.email}
+- Téléphone: ${data.telephone}
+- Entreprise: ${data.entreprise || 'Non spécifié'}
+
+DÉTAILS DU PROJET:
+- Type de projet: ${data['type-projet']}
+- Description: ${data.description}
+- Budget estimé: ${data.budget || 'Non spécifié'}
+
+---
+Message envoyé depuis le site GCBTP
+                `);
                 
-                // Submit form to Formspree
-                fetch(this.action, {
-                    method: 'POST',
-                    body: formData,
-                    headers: {
-                        'Accept': 'application/json'
-                    }
-                }).then(response => {
-                    if (response.ok) {
-                        document.getElementById('devisForm').style.display = 'none';
-                        document.getElementById('devis-confirm').style.display = 'block';
-                    } else {
-                        throw new Error('Erreur lors de l\'envoi');
-                    }
-                }).catch(error => {
-                    alert('Erreur lors de l\'envoi. Veuillez réessayer ou nous contacter directement.');
-                });
+                // Create mailto link
+                const mailtoLink = `mailto:guindoconstruction@gmail.com?subject=${subject}&body=${body}`;
+                
+                // Open email client
+                window.location.href = mailtoLink;
+                
+                // Show success message
+                document.getElementById('devisForm').style.display = 'none';
+                document.getElementById('devis-confirm').style.display = 'block';
+                
             } else {
                 alert('Veuillez remplir tous les champs obligatoires');
             }

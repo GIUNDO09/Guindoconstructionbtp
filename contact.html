@@ -281,7 +281,7 @@
                 <!-- Contact Form -->
                 <div class="contact-form">
                     <h3>Demande de Devis</h3>
-                    <form id="contactForm" action="https://formspree.io/f/xpzqkqkj" method="POST">
+                    <form id="contactForm">
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="firstName">Prénom *</label>
@@ -352,9 +352,6 @@
                             <textarea id="message" name="message" placeholder="Décrivez votre projet, vos besoins et vos attentes..." required></textarea>
                         </div>
                         
-                        <input type="hidden" name="_subject" value="Nouvelle demande de contact - GCBTP">
-                        <input type="hidden" name="_replyto" value="">
-                        <input type="hidden" name="_cc" value="guindoconstruction@gmail.com">
                         <button type="submit" class="submit-btn">
                             <i class="fas fa-paper-plane"></i> Envoyer la demande
                         </button>
@@ -445,26 +442,43 @@
             });
             
             if (isValid) {
-                // Set reply-to field to user's email
-                document.querySelector('input[name="_replyto"]').value = data.email;
+                // Create email content
+                const subject = encodeURIComponent('Nouvelle demande de contact - GCBTP');
+                const body = encodeURIComponent(`
+Nouvelle demande de contact reçue via le site GCBTP
+
+INFORMATIONS CLIENT:
+- Nom: ${data.firstName} ${data.lastName}
+- Email: ${data.email}
+- Téléphone: ${data.phone}
+- Entreprise: ${data.company || 'Non spécifié'}
+
+DÉTAILS DE LA DEMANDE:
+- Service demandé: ${data.service}
+- Type de projet: ${data.projectType || 'Non spécifié'}
+- Budget estimé: ${data.budget || 'Non spécifié'}
+
+MESSAGE:
+${data.message}
+
+---
+Message envoyé depuis le site GCBTP
+                `);
                 
-                // Submit form to Formspree
-                fetch(this.action, {
-                    method: 'POST',
-                    body: formData,
-                    headers: {
-                        'Accept': 'application/json'
-                    }
-                }).then(response => {
-                    if (response.ok) {
-                        showNotification('Votre demande a été envoyée avec succès! Nous vous contacterons dans les plus brefs délais.', 'success');
-                        this.reset();
-                    } else {
-                        throw new Error('Erreur lors de l\'envoi');
-                    }
-                }).catch(error => {
-                    showNotification('Erreur lors de l\'envoi. Veuillez réessayer ou nous contacter directement.', 'error');
-                });
+                // Create mailto link
+                const mailtoLink = `mailto:guindoconstruction@gmail.com?subject=${subject}&body=${body}`;
+                
+                // Open email client
+                window.location.href = mailtoLink;
+                
+                // Show success message
+                showNotification('Votre client email s\'ouvre. Veuillez envoyer le message pour finaliser votre demande.', 'success');
+                
+                // Reset form after a delay
+                setTimeout(() => {
+                    this.reset();
+                }, 2000);
+                
             } else {
                 showNotification('Veuillez remplir tous les champs obligatoires', 'error');
             }
