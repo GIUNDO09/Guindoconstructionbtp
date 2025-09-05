@@ -207,6 +207,54 @@ html {
     color: white;
 }
 
+/* Section Carrières - Photo du fondateur */
+.carrieres-images {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.founder-photo {
+    position: relative;
+    text-align: center;
+}
+
+.founder-photo img {
+    transition: var(--transition);
+}
+
+.founder-photo:hover img {
+    transform: scale(1.02);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.2) !important;
+}
+
+.founder-info {
+    margin-top: 15px;
+    padding: 15px;
+    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+    border-radius: 8px;
+    border-left: 4px solid var(--primary-color);
+}
+
+.founder-info h4 {
+    color: var(--primary-color);
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin-bottom: 5px;
+}
+
+.founder-info p {
+    color: var(--text-color);
+    margin-bottom: 5px;
+    font-weight: 500;
+}
+
+.founder-info p:last-child {
+    font-style: italic;
+    color: #666;
+    font-size: 0.9em;
+}
+
 body {
     font-family: 'Inter', sans-serif;
     line-height: 1.6;
