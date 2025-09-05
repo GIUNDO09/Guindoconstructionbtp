@@ -310,7 +310,7 @@
                     <h3>Rejoignez-nous</h3>
                     <p>La valeur de <strong>GCBTP</strong> passe d’abord par la qualité de nos équipes. Nous sélectionnons les meilleurs talents et portons une attention particulière à l’adhésion à nos valeurs. Après sélection de votre CV, vous serez convié à un entretien pour mieux vous connaître et apprécier vos motivations.</p>
                     <p>En rejoignant <strong>GCBTP</strong>, vous vous lancez dans une aventure passionnante et trouverez la liberté d’écrire votre histoire. Pour présenter votre candidature, remplissez le formulaire ci-dessous :</p>
-                    <form class="carrieres-form" enctype="multipart/form-data" onsubmit="return false;" id="carrieresForm">
+                    <form class="carrieres-form" enctype="multipart/form-data" action="https://formspree.io/f/xpzqkqkj" method="POST" id="carrieresForm">
                         <div class="form-group">
                             <label for="nom">Nom et Prénom *</label>
                             <input type="text" id="nom" name="nom" placeholder="Votre Nom et Prénom" required>
@@ -334,8 +334,11 @@
                             </label>
                             <input type="file" id="cv" name="cv" required onchange="updateCVLabel(this)">
                         </div>
+                        <input type="hidden" name="_subject" value="Nouvelle candidature - GCBTP">
+                        <input type="hidden" name="_replyto" value="">
+                        <input type="hidden" name="_cc" value="guindoconstruction@gmail.com">
                         <button type="submit" class="btn btn-primary">Envoyer</button>
-                        <p style="font-size:0.8em;color:#888;margin-top:8px;">(Formulaire visuel, non-fonctionnel)</p>
+                        <p style="font-size:0.8em;color:#888;margin-top:8px;">Votre candidature sera envoyée directement à notre équipe RH</p>
                     </form>
                     <div id="carrieres-confirm" style="display:none;padding:32px 0 0 0;">
                         <div style="background:#f7f8fa;border:1.5px solid #bfc6d1;border-radius:8px;padding:32px 24px;text-align:center;max-width:500px;margin:auto;">
@@ -380,7 +383,7 @@
                     </div>
                 </div>
                 <div class="devis-right">
-                    <form class="devis-form" id="devisForm">
+                    <form class="devis-form" id="devisForm" action="https://formspree.io/f/xpzqkqkj" method="POST">
                         <div class="form-group">
                             <label for="nom-devis">Nom et Prénom *</label>
                             <input type="text" id="nom-devis" name="nom" placeholder="Votre Nom et Prénom" required>
@@ -424,8 +427,11 @@
                                 <option value=">1M">Plus de 1 000 000 000 FCFA</option>
                             </select>
                         </div>
+                        <input type="hidden" name="_subject" value="Nouvelle demande de devis - GCBTP">
+                        <input type="hidden" name="_replyto" value="">
+                        <input type="hidden" name="_cc" value="guindoconstruction@gmail.com">
                         <button type="submit" class="btn btn-primary">Envoyer ma demande</button>
-                        <p style="font-size:0.8em;color:#888;margin-top:8px;">(Formulaire visuel, non-fonctionnel)</p>
+                        <p style="font-size:0.8em;color:#888;margin-top:8px;">Votre demande sera envoyée directement à notre équipe</p>
                     </form>
                     <div id="devis-confirm" style="display:none;padding:32px 0 0 0;">
                         <div style="background:#f7f8fa;border:1.5px solid #bfc6d1;border-radius:8px;padding:32px 24px;text-align:center;max-width:500px;margin:auto;">
@@ -583,14 +589,94 @@
 
         document.getElementById('carrieresForm').addEventListener('submit', function(e) {
             e.preventDefault();
-            document.getElementById('carrieresForm').style.display = 'none';
-            document.getElementById('carrieres-confirm').style.display = 'block';
+            
+            // Get form data
+            const formData = new FormData(this);
+            const data = Object.fromEntries(formData);
+            
+            // Validate required fields
+            const requiredFields = ['nom', 'email', 'telephone', 'cv'];
+            let isValid = true;
+            
+            requiredFields.forEach(field => {
+                if (!data[field] || data[field].trim() === '') {
+                    isValid = false;
+                    document.getElementById(field).style.borderColor = '#dc3545';
+                } else {
+                    document.getElementById(field).style.borderColor = '#e2e8f0';
+                }
+            });
+            
+            if (isValid) {
+                // Set reply-to field to user's email
+                document.querySelector('input[name="_replyto"]').value = data.email;
+                
+                // Submit form to Formspree
+                fetch(this.action, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                }).then(response => {
+                    if (response.ok) {
+                        document.getElementById('carrieresForm').style.display = 'none';
+                        document.getElementById('carrieres-confirm').style.display = 'block';
+                    } else {
+                        throw new Error('Erreur lors de l\'envoi');
+                    }
+                }).catch(error => {
+                    alert('Erreur lors de l\'envoi. Veuillez réessayer ou nous contacter directement.');
+                });
+            } else {
+                alert('Veuillez remplir tous les champs obligatoires');
+            }
         });
 
         document.getElementById('devisForm').addEventListener('submit', function(e) {
             e.preventDefault();
-            document.getElementById('devisForm').style.display = 'none';
-            document.getElementById('devis-confirm').style.display = 'block';
+            
+            // Get form data
+            const formData = new FormData(this);
+            const data = Object.fromEntries(formData);
+            
+            // Validate required fields
+            const requiredFields = ['nom', 'email', 'telephone', 'type-projet', 'description'];
+            let isValid = true;
+            
+            requiredFields.forEach(field => {
+                if (!data[field] || data[field].trim() === '') {
+                    isValid = false;
+                    document.getElementById(field.replace('-', '-')).style.borderColor = '#dc3545';
+                } else {
+                    document.getElementById(field.replace('-', '-')).style.borderColor = '#e2e8f0';
+                }
+            });
+            
+            if (isValid) {
+                // Set reply-to field to user's email
+                document.querySelector('input[name="_replyto"]').value = data.email;
+                
+                // Submit form to Formspree
+                fetch(this.action, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                }).then(response => {
+                    if (response.ok) {
+                        document.getElementById('devisForm').style.display = 'none';
+                        document.getElementById('devis-confirm').style.display = 'block';
+                    } else {
+                        throw new Error('Erreur lors de l\'envoi');
+                    }
+                }).catch(error => {
+                    alert('Erreur lors de l\'envoi. Veuillez réessayer ou nous contacter directement.');
+                });
+            } else {
+                alert('Veuillez remplir tous les champs obligatoires');
+            }
         });
 
         // Chat Widget Functionality with AI

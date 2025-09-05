@@ -281,7 +281,7 @@
                 <!-- Contact Form -->
                 <div class="contact-form">
                     <h3>Demande de Devis</h3>
-                    <form id="contactForm">
+                    <form id="contactForm" action="https://formspree.io/f/xpzqkqkj" method="POST">
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="firstName">Prénom *</label>
@@ -352,6 +352,9 @@
                             <textarea id="message" name="message" placeholder="Décrivez votre projet, vos besoins et vos attentes..." required></textarea>
                         </div>
                         
+                        <input type="hidden" name="_subject" value="Nouvelle demande de contact - GCBTP">
+                        <input type="hidden" name="_replyto" value="">
+                        <input type="hidden" name="_cc" value="guindoconstruction@gmail.com">
                         <button type="submit" class="submit-btn">
                             <i class="fas fa-paper-plane"></i> Envoyer la demande
                         </button>
@@ -442,9 +445,26 @@
             });
             
             if (isValid) {
-                // Show success message
-                showNotification('Votre demande a été envoyée avec succès! Nous vous contacterons dans les plus brefs délais.', 'success');
-                this.reset();
+                // Set reply-to field to user's email
+                document.querySelector('input[name="_replyto"]').value = data.email;
+                
+                // Submit form to Formspree
+                fetch(this.action, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                }).then(response => {
+                    if (response.ok) {
+                        showNotification('Votre demande a été envoyée avec succès! Nous vous contacterons dans les plus brefs délais.', 'success');
+                        this.reset();
+                    } else {
+                        throw new Error('Erreur lors de l\'envoi');
+                    }
+                }).catch(error => {
+                    showNotification('Erreur lors de l\'envoi. Veuillez réessayer ou nous contacter directement.', 'error');
+                });
             } else {
                 showNotification('Veuillez remplir tous les champs obligatoires', 'error');
             }
