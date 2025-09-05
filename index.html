@@ -527,7 +527,7 @@
 
     <!-- Chat Widget -->
     <div id="chat-widget" class="chat-widget">
-        <div id="chat-toggle" class="chat-toggle">
+        <div id="chat-toggle" class="chat-toggle" title="Ouvrir le chat de support" aria-label="Ouvrir le chat de support" role="button" tabindex="0">
             <i class="fas fa-comments"></i>
             <span class="chat-badge">1</span>
         </div>
@@ -537,7 +537,7 @@
                     <h4>GCBTP Support</h4>
                     <span class="chat-status">En ligne</span>
                 </div>
-                <button id="chat-close" class="chat-close">
+                <button id="chat-close" class="chat-close" title="Fermer le chat" aria-label="Fermer le chat">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
@@ -555,14 +555,14 @@
             </div>
             <div class="chat-input-container">
                 <div class="quick-actions">
-                    <button class="quick-btn" data-message="Estimer mon projet">💰 Estimation</button>
-                    <button class="quick-btn" data-message="Demander un devis">📋 Devis</button>
-                    <button class="quick-btn" data-message="Informations sur vos services">ℹ️ Services</button>
-                    <button class="quick-btn" data-message="Prendre rendez-vous">📅 RDV</button>
+                    <button class="quick-btn" data-message="Estimer mon projet" title="Estimer mon projet" aria-label="Estimer mon projet">💰 Estimation</button>
+                    <button class="quick-btn" data-message="Demander un devis" title="Demander un devis" aria-label="Demander un devis">📋 Devis</button>
+                    <button class="quick-btn" data-message="Informations sur vos services" title="Informations sur vos services" aria-label="Informations sur vos services">ℹ️ Services</button>
+                    <button class="quick-btn" data-message="Prendre rendez-vous" title="Prendre rendez-vous" aria-label="Prendre rendez-vous">📅 RDV</button>
                 </div>
                 <div class="chat-input">
                     <input type="text" id="chat-input" placeholder="Tapez votre message..." maxlength="500">
-                    <button id="chat-send" class="chat-send">
+                    <button id="chat-send" class="chat-send" title="Envoyer le message" aria-label="Envoyer le message">
                         <i class="fas fa-paper-plane"></i>
                     </button>
                 </div>
