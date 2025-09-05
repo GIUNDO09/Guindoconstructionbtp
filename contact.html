@@ -286,6 +286,7 @@
                         <input type="hidden" name="subject" value="Nouvelle demande de contact - GCBTP">
                         <input type="hidden" name="from_name" value="Site GCBTP">
                         <input type="hidden" name="redirect" value="false">
+                        <input type="hidden" name="redirect_url" value="https://giundo09.github.io/Guindo-construction/contact.html?success=true">
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="firstName">Prénom *</label>
@@ -424,6 +425,13 @@
 
     <script src="script.js"></script>
     <script>
+        // Check for success parameter in URL
+        if (window.location.search.includes('success=true')) {
+            showNotification('Votre demande a été envoyée avec succès! Nous vous contacterons dans les plus brefs délais.', 'success');
+            // Clean URL
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }
+
         // Form handling for contact page with Web3Forms
         document.getElementById('contactForm').addEventListener('submit', function(e) {
             e.preventDefault();
@@ -452,16 +460,24 @@
                 fetch(this.action, {
                     method: 'POST',
                     body: new FormData(this)
-                }).then(response => response.json())
+                }).then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
                 .then(data => {
+                    console.log('Web3Forms response:', data);
                     if (data.success) {
                         showNotification('Votre demande a été envoyée avec succès! Nous vous contacterons dans les plus brefs délais.', 'success');
                         this.reset();
                     } else {
+                        console.error('Web3Forms error:', data);
                         showNotification('Erreur lors de l\'envoi. Veuillez réessayer ou nous contacter directement.', 'error');
                     }
                 }).catch(error => {
-                    showNotification('Erreur lors de l\'envoi. Veuillez réessayer ou nous contacter directement.', 'error');
+                    console.error('Fetch error:', error);
+                    showNotification('Erreur de connexion. Veuillez vérifier votre connexion internet et réessayer.', 'error');
                 }).finally(() => {
                     // Restore button state
                     submitBtn.innerHTML = originalText;

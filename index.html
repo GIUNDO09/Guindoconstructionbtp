@@ -616,16 +616,24 @@
                 fetch(this.action, {
                     method: 'POST',
                     body: new FormData(this)
-                }).then(response => response.json())
+                }).then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
                 .then(data => {
+                    console.log('Web3Forms response:', data);
                     if (data.success) {
                         document.getElementById('carrieresForm').style.display = 'none';
                         document.getElementById('carrieres-confirm').style.display = 'block';
                     } else {
+                        console.error('Web3Forms error:', data);
                         alert('Erreur lors de l\'envoi. Veuillez réessayer ou nous contacter directement.');
                     }
                 }).catch(error => {
-                    alert('Erreur lors de l\'envoi. Veuillez réessayer ou nous contacter directement.');
+                    console.error('Fetch error:', error);
+                    alert('Erreur de connexion. Veuillez vérifier votre connexion internet et réessayer.');
                 }).finally(() => {
                     // Restore button state
                     submitBtn.innerHTML = originalText;
@@ -665,16 +673,24 @@
                 fetch(this.action, {
                     method: 'POST',
                     body: new FormData(this)
-                }).then(response => response.json())
+                }).then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
                 .then(data => {
+                    console.log('Web3Forms response:', data);
                     if (data.success) {
                         document.getElementById('devisForm').style.display = 'none';
                         document.getElementById('devis-confirm').style.display = 'block';
                     } else {
+                        console.error('Web3Forms error:', data);
                         alert('Erreur lors de l\'envoi. Veuillez réessayer ou nous contacter directement.');
                     }
                 }).catch(error => {
-                    alert('Erreur lors de l\'envoi. Veuillez réessayer ou nous contacter directement.');
+                    console.error('Fetch error:', error);
+                    alert('Erreur de connexion. Veuillez vérifier votre connexion internet et réessayer.');
                 }).finally(() => {
                     // Restore button state
                     submitBtn.innerHTML = originalText;
