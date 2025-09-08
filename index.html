@@ -650,6 +650,11 @@
                         </div>
                         <button type="submit" class="btn btn-primary">Envoyer ma demande</button>
                         <p style="font-size:0.8em;color:#888;margin-top:8px;">Votre demande sera envoyée directement à notre équipe</p>
+                        
+                        <!-- Bouton de test pour diagnostiquer -->
+                        <button type="button" class="btn btn-secondary" onclick="testDevisEmail()" style="margin-top: 10px; background: #6c757d; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">
+                            <i class="fas fa-bug"></i> Test Email Devis
+                        </button>
                     </form>
                     <div id="devis-confirm" style="display:none;padding:32px 0 0 0;">
                         <div style="background:#f7f8fa;border:1.5px solid #bfc6d1;border-radius:8px;padding:32px 24px;text-align:center;max-width:500px;margin:auto;">
@@ -1068,9 +1073,21 @@
                 submitBtn.disabled = true;
                 
                 // Submit form to Web3Forms
+                const formData = new FormData(this);
+                
+                // Add hidden fields explicitly
+                formData.append('access_key', 'cf53af9f-c13b-4a19-bfd0-69c85ee9f19d');
+                formData.append('subject', 'Nouvelle demande de devis - GCBTP');
+                formData.append('from_name', 'Site GCBTP');
+                formData.append('to', 'guindoconstruction@gmail.com');
+                formData.append('replyto', 'guindoconstruction@gmail.com');
+                formData.append('redirect', 'false');
+                formData.append('redirect_url', 'https://giundo09.github.io/Guindo-construction/?devis=success');
+                formData.append('honeypot', '');
+                
                 fetch(this.action, {
                     method: 'POST',
-                    body: new FormData(this)
+                    body: formData
                 }).then(response => {
                     if (!response.ok) {
                         throw new Error(`HTTP error! status: ${response.status}`);
@@ -1832,6 +1849,53 @@
                 sendMessage(message);
             });
         });
+        
+        // Fonction de test pour diagnostiquer les emails de devis
+        function testDevisEmail() {
+            console.log('🧪 Test email devis démarré...');
+            
+            const testData = new FormData();
+            testData.append('access_key', 'cf53af9f-c13b-4a19-bfd0-69c85ee9f19d');
+            testData.append('subject', 'TEST - Demande de devis GCBTP');
+            testData.append('from_name', 'Site GCBTP - Test');
+            testData.append('to', 'guindoconstruction@gmail.com');
+            testData.append('replyto', 'guindoconstruction@gmail.com');
+            testData.append('redirect', 'false');
+            testData.append('redirect_url', 'https://giundo09.github.io/Guindo-construction/?devis=success');
+            testData.append('honeypot', '');
+            testData.append('nom', 'Test Devis GCBTP');
+            testData.append('email', 'test@example.com');
+            testData.append('telephone', '+221 77 123 45 67');
+            testData.append('type-projet', 'Construction');
+            testData.append('description', 'Ceci est un email de test pour vérifier la configuration Web3Forms du formulaire de devis. Si vous recevez ce message, la configuration fonctionne correctement.');
+            testData.append('surface', '100');
+            testData.append('localisation', 'Dakar');
+            testData.append('finition', 'Standard');
+            
+            fetch('https://api.web3forms.com/submit', {
+                method: 'POST',
+                body: testData
+            })
+            .then(response => {
+                console.log('📡 Réponse Web3Forms:', response.status, response.statusText);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('✅ Réponse complète Web3Forms:', data);
+                if (data.success) {
+                    alert('✅ Test réussi ! Email de test envoyé. Vérifiez votre boîte email guindoconstruction@gmail.com');
+                } else {
+                    alert('❌ Test échoué: ' + (data.message || 'Erreur inconnue'));
+                }
+            })
+            .catch(error => {
+                console.error('❌ Erreur test email:', error);
+                alert('❌ Erreur lors du test: ' + error.message);
+            });
+        }
     </script>
 </body>
 </html> 
