@@ -155,13 +155,13 @@
         <nav class="navbar">
             <div class="nav-container">
                 <a href="#accueil" class="nav-logo-link">
-                    <div class="nav-logo">
-                        <img src="Images/LOGO.jpg" alt="Logo GUINDO CONSTRUCTION BTP">
-                        <div class="nav-logo-text">
-                            <span class="nav-logo-title">GUINDO CONSTRUCTION BTP</span>
-                            <span class="nav-logo-sub">Bureau d'Études Techniques</span>
-                        </div>
+                <div class="nav-logo">
+                    <img src="Images/LOGO.jpg" alt="Logo GUINDO CONSTRUCTION BTP">
+                    <div class="nav-logo-text">
+                        <span class="nav-logo-title">GUINDO CONSTRUCTION BTP</span>
+                        <span class="nav-logo-sub">Bureau d'Études Techniques</span>
                     </div>
+                </div>
                 </a>
                 <ul class="nav-menu">
                     <li><a href="#accueil" class="nav-link">Accueil</a></li>
@@ -865,7 +865,7 @@
                     
                     calculator.style.display = 'block';
                     calculator.classList.add('animate-fadeInUp');
-                } else {
+            } else {
                     calculator.style.display = 'none';
                 }
             }
@@ -1038,8 +1038,8 @@
                 .then(data => {
                     console.log('Web3Forms response:', data);
                     if (data.success) {
-                        document.getElementById('carrieresForm').style.display = 'none';
-                        document.getElementById('carrieres-confirm').style.display = 'block';
+            document.getElementById('carrieresForm').style.display = 'none';
+            document.getElementById('carrieres-confirm').style.display = 'block';
                     } else {
                         console.error('Web3Forms error:', data);
                         alert('Erreur lors de l\'envoi. Veuillez réessayer ou nous contacter directement.');
@@ -1109,8 +1109,8 @@
                 .then(data => {
                     console.log('Web3Forms response:', data);
                     if (data.success) {
-                        document.getElementById('devisForm').style.display = 'none';
-                        document.getElementById('devis-confirm').style.display = 'block';
+            document.getElementById('devisForm').style.display = 'none';
+            document.getElementById('devis-confirm').style.display = 'block';
                         // Track successful submission
                         trackEvent('form_submission', {
                             form_type: 'devis',
