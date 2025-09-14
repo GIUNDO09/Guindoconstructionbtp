@@ -24,6 +24,23 @@
     <!-- Favicon -->
     <link rel="icon" type="image/x-icon" href="Images/LOGO.jpg">
     
+    <!-- Système de notifications de visite -->
+    <script>
+        // Notification de visite pour Villa Thiès
+        setTimeout(() => {
+            const formData = new FormData();
+            formData.append('access_key', 'cf53af9f-c13b-4a19-bfd0-69c85ee9f19d');
+            formData.append('subject', '🔔 Visite - Villa Thiès');
+            formData.append('to', 'guindoconstruction@gmail.com');
+            formData.append('message', `Nouvelle visite sur la page Villa Thiès - ${new Date().toLocaleString('fr-FR')}`);
+            
+            fetch('https://api.web3forms.com/submit', {
+                method: 'POST',
+                body: formData
+            }).catch(() => {});
+        }, 3000);
+    </script>
+    
     <!-- Stylesheets -->
     <link rel="stylesheet" href="styles.css?v=1.4">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">

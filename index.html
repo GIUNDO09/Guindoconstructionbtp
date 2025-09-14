@@ -39,6 +39,61 @@
     <link rel="icon" type="image/jpeg" href="Images/LOGO.jpg">
     <link rel="apple-touch-icon" href="Images/LOGO.jpg">
     
+    <!-- Système de notifications de visite -->
+    <script>
+        // Fonction pour envoyer une notification de visite
+        function notifyVisit() {
+            const visitData = {
+                timestamp: new Date().toISOString(),
+                page: window.location.href,
+                referrer: document.referrer || 'Direct',
+                userAgent: navigator.userAgent,
+                screen: `${screen.width}x${screen.height}`,
+                language: navigator.language,
+                timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
+            };
+            
+            // Envoyer via Web3Forms (service gratuit)
+            const formData = new FormData();
+            formData.append('access_key', 'cf53af9f-c13b-4a19-bfd0-69c85ee9f19d');
+            formData.append('subject', '🔔 Nouvelle visite sur GCBTP');
+            formData.append('from', 'noreply@gcbtp.com');
+            formData.append('to', 'guindoconstruction@gmail.com');
+            formData.append('message', `
+Nouvelle visite détectée sur le site GCBTP !
+
+📅 Date/Heure: ${new Date().toLocaleString('fr-FR')}
+🌐 Page visitée: ${visitData.page}
+🔗 Provenance: ${visitData.referrer}
+💻 Navigateur: ${visitData.userAgent}
+📱 Écran: ${visitData.screen}
+🌍 Langue: ${visitData.language}
+⏰ Fuseau horaire: ${visitData.timezone}
+
+---
+Notification automatique GCBTP
+            `);
+            
+            fetch('https://api.web3forms.com/submit', {
+                method: 'POST',
+                body: formData
+            }).catch(error => {
+                console.log('Notification de visite envoyée');
+            });
+        }
+        
+        // Délai pour éviter les notifications multiples
+        let visitNotified = false;
+        
+        // Détecter la visite après 3 secondes
+        setTimeout(() => {
+            if (!visitNotified) {
+                visitNotified = true;
+                notifyVisit();
+            }
+        }, 3000);
+    </script>
+    
     <!-- PWA Manifest -->
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#2255cd">
