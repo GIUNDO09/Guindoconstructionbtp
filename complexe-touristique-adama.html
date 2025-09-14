@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Complexe Touristique Adama - GCBTP</title>
+    <meta name="description" content="Découvrez le complexe touristique Adama par GCBTP. Projet hôtelier de prestige avec études techniques complètes au Sénégal.">
+    <meta name="keywords" content="complexe touristique, hôtel, Adama, GCBTP, études techniques, Sénégal, construction">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://giundo09.github.io/Guindo-construction/complexe-touristique-adama.html">
+    <meta property="og:title" content="Complexe Touristique Adama - GCBTP">
+    <meta property="og:description" content="Découvrez le complexe touristique Adama par GCBTP. Projet hôtelier de prestige avec études techniques complètes au Sénégal.">
+    <meta property="og:image" content="https://giundo09.github.io/Guindo-construction/Images/Hotel6.png">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://giundo09.github.io/Guindo-construction/complexe-touristique-adama.html">
+    <meta property="twitter:title" content="Complexe Touristique Adama - GCBTP">
+    <meta property="twitter:description" content="Découvrez le complexe touristique Adama par GCBTP. Projet hôtelier de prestige avec études techniques complètes au Sénégal.">
+    <meta property="twitter:image" content="https://giundo09.github.io/Guindo-construction/Images/Hotel6.png">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="Images/LOGO.jpg">
+    
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="styles.css?v=1.4">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <style>
+        /* Custom styles for Complexe Touristique Adama page */
+        .project-hero {
+            background: linear-gradient(135deg, #2255cd 0%, #1a5f7a 100%);
+            color: white;
+            padding: 120px 0 80px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .project-hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/><circle cx="50" cy="10" r="0.5" fill="white" opacity="0.1"/><circle cx="10" cy="60" r="0.5" fill="white" opacity="0.1"/><circle cx="90" cy="40" r="0.5" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+            opacity: 0.3;
+        }
+        
+        .project-hero-content {
+            position: relative;
+            z-index: 2;
+        }
+        
+        .project-hero h1 {
+            font-size: 3.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .project-subtitle {
+            font-size: 1.3rem;
+            margin-bottom: 2rem;
+            opacity: 0.9;
+        }
+        
+        .project-meta {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            flex-wrap: wrap;
+        }
+        
+        .project-meta span {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(255,255,255,0.2);
+            padding: 0.8rem 1.5rem;
+            border-radius: 25px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+        
+        .project-details {
+            padding: 80px 0;
+            background: #f8f9fa;
+        }
+        
+        .project-content {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 4rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .project-main {
+            background: white;
+            border-radius: 20px;
+            padding: 3rem;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+        
+        .project-image {
+            margin-bottom: 3rem;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+        }
+        
+        .project-image img {
+            width: 100%;
+            height: 400px;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+        
+        .project-image:hover img {
+            transform: scale(1.05);
+        }
+        
+        .project-description h2 {
+            color: #1a5f7a;
+            font-size: 2.2rem;
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+        
+        .project-description h2::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 0;
+            width: 60px;
+            height: 4px;
+            background: linear-gradient(90deg, #2255cd, #1a5f7a);
+            border-radius: 2px;
+        }
+        
+        .project-description p {
+            font-size: 1.1rem;
+            line-height: 1.8;
+            color: #555;
+            margin-bottom: 2rem;
+        }
+        
+        .project-description h3 {
+            color: #1a5f7a;
+            font-size: 1.6rem;
+            margin: 2.5rem 0 1.5rem;
+        }
+        
+        .characteristics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+        
+        .characteristic-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 1.5rem;
+            border-radius: 12px;
+            border: 1px solid #dee2e6;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .characteristic-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        }
+        
+        .characteristic-item i {
+            font-size: 2rem;
+            color: #2255cd;
+            min-width: 40px;
+        }
+        
+        .characteristic-item div {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .characteristic-item strong {
+            color: #1a5f7a;
+            font-size: 0.9rem;
+            margin-bottom: 0.3rem;
+        }
+        
+        .characteristic-item span {
+            color: #666;
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+        
+        .technical-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin: 2rem 0;
+        }
+        
+        .technical-item {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 2rem;
+            border-radius: 15px;
+            text-align: center;
+            border: 1px solid #dee2e6;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .technical-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        
+        .technical-item i {
+            font-size: 2.5rem;
+            color: #2255cd;
+            margin-bottom: 1rem;
+        }
+        
+        .technical-item h4 {
+            color: #1a5f7a;
+            font-size: 1.3rem;
+            margin-bottom: 1rem;
+        }
+        
+        .technical-item p {
+            color: #666;
+            line-height: 1.6;
+        }
+        
+        .project-challenges {
+            background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+            padding: 2.5rem;
+            border-radius: 15px;
+            border-left: 5px solid #ffc107;
+            margin: 3rem 0;
+        }
+        
+        .project-challenges h3 {
+            color: #856404;
+            margin-bottom: 1.5rem;
+        }
+        
+        .challenges-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+        
+        .challenge-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            background: rgba(255, 255, 255, 0.7);
+            padding: 1.5rem;
+            border-radius: 12px;
+            border: 1px solid rgba(133, 100, 4, 0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .challenge-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(133, 100, 4, 0.2);
+        }
+        
+        .challenge-item i {
+            font-size: 2rem;
+            color: #ffc107;
+            min-width: 40px;
+        }
+        
+        .challenge-item div {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .challenge-item strong {
+            color: #856404;
+            font-size: 1rem;
+            margin-bottom: 0.3rem;
+        }
+        
+        .challenge-item span {
+            color: #6c5b00;
+            font-size: 0.9rem;
+            line-height: 1.4;
+        }
+        
+        .project-sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+        
+        .project-info-card, .project-services, .project-contact {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+        
+        .project-info-card h3, .project-services h3, .project-contact h3 {
+            color: #1a5f7a;
+            font-size: 1.4rem;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #e9ecef;
+        }
+        
+        .info-item {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            padding: 0.8rem 0;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .info-item i {
+            color: #2255cd;
+            font-size: 1.1rem;
+            min-width: 20px;
+        }
+        
+        .info-item:last-child {
+            border-bottom: none;
+        }
+        
+        .info-label {
+            font-weight: 600;
+            color: #555;
+        }
+        
+        .info-value {
+            color: #1a5f7a;
+            font-weight: 500;
+        }
+        
+        .project-services ul {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .project-services li {
+            padding: 0.6rem 0;
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+        
+        .project-services i {
+            color: #28a745;
+            font-size: 1.1rem;
+        }
+        
+        .project-contact {
+            background: linear-gradient(135deg, #2255cd 0%, #1a5f7a 100%);
+            color: white;
+        }
+        
+        .project-contact h3 {
+            color: white;
+            border-bottom-color: rgba(255,255,255,0.3);
+        }
+        
+        .project-contact p {
+            margin-bottom: 1.5rem;
+            opacity: 0.9;
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 1rem 2rem;
+            background: white;
+            color: #2255cd;
+            text-decoration: none;
+            border-radius: 25px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border: 2px solid white;
+        }
+        
+        .btn:hover {
+            background: transparent;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .project-hero h1 {
+                font-size: 2.5rem;
+            }
+            
+            .project-meta {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .project-content {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+            }
+            
+            .project-main {
+                padding: 2rem;
+            }
+            
+            .technical-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <nav class="nav">
+            <div class="nav-container">
+                <div class="nav-logo">
+                    <img src="Images/LOGO.jpg" alt="GCBTP Logo" class="logo-img">
+                    <div class="logo-text">
+                        <span class="logo-main">GUINDO CONSTRUCTION BTP</span>
+                        <span class="logo-sub">Bureau d'Études Techniques</span>
+                    </div>
+                </div>
+                <ul class="nav-menu">
+                    <li class="nav-item">
+                        <a href="index.html" class="nav-link">Accueil</a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="index.html#projects" class="nav-link">Projets</a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="index.html#devis" class="nav-link">Devis</a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="contact.html" class="nav-link">Contact</a>
+                    </li>
+                </ul>
+                <div class="hamburger">
+                    <span class="bar"></span>
+                    <span class="bar"></span>
+                    <span class="bar"></span>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Project Hero Section -->
+    <section class="project-hero">
+        <div class="container">
+            <div class="project-hero-content">
+                <h1>🏨 Complexe Touristique Adama</h1>
+                <p class="project-subtitle">Projet hôtelier de prestige - Complexe touristique moderne</p>
+                <div class="project-meta">
+                    <span class="project-location"><i class="fas fa-map-marker-alt"></i> Adama, Sénégal</span>
+                    <span class="project-type"><i class="fas fa-hotel"></i> Touristique</span>
+                    <span class="project-year"><i class="fas fa-calendar"></i> 2024</span>
+                    <span class="project-status"><i class="fas fa-check-circle"></i> En cours</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Project Details Section -->
+    <section class="project-details">
+        <div class="container">
+            <div class="project-content">
+                <div class="project-main">
+                    <div class="project-image">
+                        <img src="Images/Hotel6.png" alt="Complexe Touristique Adama">
+                    </div>
+                    
+                    <div class="project-description">
+                        <h2>Description du Projet</h2>
+                        <p>GCBTP a été mandaté pour la conception et le suivi technique de la construction d'un complexe touristique de standing à Adama. Ce projet hôtelier de prestige comprend un hôtel 4 étoiles avec restaurant, spa, piscine et salles de conférence.</p>
+                        
+                        <h3>🏗️ Caractéristiques du Projet</h3>
+                        <div class="characteristics-grid">
+                            <div class="characteristic-item">
+                                <i class="fas fa-ruler-combined"></i>
+                                <div>
+                                    <strong>Surface totale</strong>
+                                    <span>2 500 m²</span>
+                                </div>
+                            </div>
+                            <div class="characteristic-item">
+                                <i class="fas fa-building"></i>
+                                <div>
+                                    <strong>Étages</strong>
+                                    <span>R+2</span>
+                                </div>
+                            </div>
+                            <div class="characteristic-item">
+                                <i class="fas fa-bed"></i>
+                                <div>
+                                    <strong>Chambres</strong>
+                                    <span>45 chambres</span>
+                                </div>
+                            </div>
+                            <div class="characteristic-item">
+                                <i class="fas fa-utensils"></i>
+                                <div>
+                                    <strong>Restaurant</strong>
+                                    <span>120 couverts</span>
+                                </div>
+                            </div>
+                            <div class="characteristic-item">
+                                <i class="fas fa-swimming-pool"></i>
+                                <div>
+                                    <strong>Piscine</strong>
+                                    <span>25x12m</span>
+                                </div>
+                            </div>
+                            <div class="characteristic-item">
+                                <i class="fas fa-spa"></i>
+                                <div>
+                                    <strong>Spa & Wellness</strong>
+                                    <span>Centre complet</span>
+                                </div>
+                            </div>
+                            <div class="characteristic-item">
+                                <i class="fas fa-users"></i>
+                                <div>
+                                    <strong>Salles de conférence</strong>
+                                    <span>3 salles</span>
+                                </div>
+                            </div>
+                            <div class="characteristic-item">
+                                <i class="fas fa-car"></i>
+                                <div>
+                                    <strong>Parking</strong>
+                                    <span>80 places</span>
+                                </div>
+                            </div>
+                            <div class="characteristic-item">
+                                <i class="fas fa-tree"></i>
+                                <div>
+                                    <strong>Jardin paysager</strong>
+                                    <span>1 200 m²</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="project-technical">
+                        <h3>Études Techniques Réalisées</h3>
+                        <div class="technical-grid">
+                            <div class="technical-item">
+                                <i class="fas fa-cube"></i>
+                                <h4>Structure</h4>
+                                <p>Étude de structure en béton armé avec fondations adaptées au sol d'Adama</p>
+                            </div>
+                            <div class="technical-item">
+                                <i class="fas fa-bolt"></i>
+                                <h4>Électricité</h4>
+                                <p>Installation électrique complète avec système de secours et éclairage extérieur</p>
+                            </div>
+                            <div class="technical-item">
+                                <i class="fas fa-tint"></i>
+                                <h4>Plomberie</h4>
+                                <p>Réseaux d'eau potable, évacuation et système de filtration piscine</p>
+                            </div>
+                            <div class="technical-item">
+                                <i class="fas fa-snowflake"></i>
+                                <h4>Climatisation</h4>
+                                <p>Système de climatisation centralisé avec VMC double flux</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="project-challenges">
+                        <h3>⚡ Défis Techniques</h3>
+                        <p>Le projet a présenté plusieurs défis techniques spécifiques à la région d'Adama :</p>
+                        <div class="challenges-grid">
+                            <div class="challenge-item">
+                                <i class="fas fa-mountain"></i>
+                                <div>
+                                    <strong>Sol rocheux</strong>
+                                    <span>Adaptation des fondations avec forage spécialisé</span>
+                                </div>
+                            </div>
+                            <div class="challenge-item">
+                                <i class="fas fa-thermometer-half"></i>
+                                <div>
+                                    <strong>Climat chaud</strong>
+                                    <span>Optimisation de l'isolation thermique et ventilation</span>
+                                </div>
+                            </div>
+                            <div class="challenge-item">
+                                <i class="fas fa-tint"></i>
+                                <div>
+                                    <strong>Ressources en eau</strong>
+                                    <span>Système de récupération d'eau de pluie et forage</span>
+                                </div>
+                            </div>
+                            <div class="challenge-item">
+                                <i class="fas fa-solar-panel"></i>
+                                <div>
+                                    <strong>Énergie</strong>
+                                    <span>Intégration de panneaux solaires et générateur de secours</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="project-sidebar">
+                    <div class="project-info-card">
+                        <h3>📋 Informations Projet</h3>
+                        <div class="info-item">
+                            <i class="fas fa-user"></i>
+                            <span class="info-label">Client :</span>
+                            <span class="info-value">Investisseur privé</span>
+                        </div>
+                        <div class="info-item">
+                            <i class="fas fa-drafting-compass"></i>
+                            <span class="info-label">Architecte :</span>
+                            <span class="info-value">Cabinet d'Architecture Adama</span>
+                        </div>
+                        <div class="info-item">
+                            <i class="fas fa-clock"></i>
+                            <span class="info-label">Durée :</span>
+                            <span class="info-value">18 mois</span>
+                        </div>
+                        <div class="info-item">
+                            <i class="fas fa-money-bill-wave"></i>
+                            <span class="info-label">Budget :</span>
+                            <span class="info-value">Confidentiel</span>
+                        </div>
+                        <div class="info-item">
+                            <i class="fas fa-hourglass-half"></i>
+                            <span class="info-label">Statut :</span>
+                            <span class="info-value">En cours</span>
+                        </div>
+                    </div>
+
+                    <div class="project-services">
+                        <h3>Services GCBTP</h3>
+                        <ul>
+                            <li><i class="fas fa-check"></i> Études de structure</li>
+                            <li><i class="fas fa-check"></i> Calculs de fondations</li>
+                            <li><i class="fas fa-check"></i> Plans techniques</li>
+                            <li><i class="fas fa-check"></i> Suivi de chantier</li>
+                            <li><i class="fas fa-check"></i> Contrôle qualité</li>
+                            <li><i class="fas fa-check"></i> Réception des travaux</li>
+                        </ul>
+                    </div>
+
+                    <div class="project-contact">
+                        <h3>📞 Contact Direct</h3>
+                        <p><i class="fas fa-envelope"></i> guindoconstruction@gmail.com</p>
+                        <p><i class="fas fa-phone"></i> +221 777935765</p>
+                        <p><i class="fas fa-clock"></i> Lun - Ven: 8h00 - 18h00</p>
+                        <a href="index.html#devis" class="btn btn-primary">Demander un Devis</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>GCBTP</h3>
+                    <p>Bureau d'études techniques spécialisé dans la conception et le suivi de projets de construction au Sénégal.</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Services</h4>
+                    <ul>
+                        <li><a href="index.html#services">Études de Structure</a></li>
+                        <li><a href="index.html#services">Lots Techniques</a></li>
+                        <li><a href="index.html#services">VRD</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Contact</h4>
+                    <p><i class="fas fa-envelope"></i> guindoconstruction@gmail.com</p>
+                    <p><i class="fas fa-phone"></i> +221 777935765</p>
+                    <p><i class="fas fa-map-marker-alt"></i> Parcelle Unité 02, Villa 110<br>Dakar, Sénégal</p>
+                    <p><i class="fas fa-clock"></i> Lun - Ven: 8h00 - 18h00</p>
+                    <!-- Contact mis à jour le 2024 -->
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 GCBTP. Tous droits réservés.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Mobile menu toggle
+        const hamburger = document.querySelector('.hamburger');
+        const navMenu = document.querySelector('.nav-menu');
+
+        hamburger.addEventListener('click', () => {
+            hamburger.classList.toggle('active');
+            navMenu.classList.toggle('active');
+        });
+
+        // Close mobile menu when clicking on a link
+        document.querySelectorAll('.nav-link').forEach(n => n.addEventListener('click', () => {
+            hamburger.classList.remove('active');
+            navMenu.classList.remove('active');
+        }));
+
+        // Smooth scrolling for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Add scroll effect to header
+        window.addEventListener('scroll', () => {
+            const header = document.querySelector('.header');
+            if (window.scrollY > 100) {
+                header.classList.add('scrolled');
+            } else {
+                header.classList.remove('scrolled');
+            }
+        });
+    </script>
+</body>
+</html>
