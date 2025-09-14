@@ -548,15 +548,7 @@
                     </div>
                 </div>
                 <div class="devis-right">
-                    <form class="devis-form" id="devisForm" action="https://api.web3forms.com/submit" method="POST">
-                        <input type="hidden" name="access_key" value="cf53af9f-c13b-4a19-bfd0-69c85ee9f19d">
-                        <input type="hidden" name="subject" value="Nouvelle demande de devis - GCBTP">
-                        <input type="hidden" name="from_name" value="Site GCBTP">
-                        <input type="hidden" name="to" value="guindoconstruction@gmail.com">
-                        <input type="hidden" name="replyto" value="guindoconstruction@gmail.com">
-                        <input type="hidden" name="redirect" value="false">
-                        <input type="hidden" name="redirect_url" value="https://giundo09.github.io/Guindo-construction/?devis=success">
-                        <input type="hidden" name="honeypot" value="">
+                    <form class="devis-form" id="devisForm">
                         <div class="form-group">
                             <label for="nom-devis">Nom et Prénom</label>
                             <input type="text" id="nom-devis" name="nom" placeholder="Votre Nom et Prénom">
@@ -648,14 +640,15 @@
                                 * Estimation indicative basée sur les prix du marché sénégalais
                             </small>
                         </div>
-                        <button type="submit" class="btn btn-primary">Envoyer ma demande</button>
-                        <p style="font-size:0.8em;color:#888;margin-top:8px;">Votre demande sera envoyée directement à notre équipe</p>
+                        <button type="submit" class="btn btn-primary">📧 Ouvrir Gmail</button>
+                        <p style="font-size:0.8em;color:#888;margin-top:8px;">Cliquez pour ouvrir Gmail avec votre demande pré-remplie</p>
                     </form>
                     <div id="devis-confirm" style="display:none;padding:32px 0 0 0;">
                         <div style="background:#f7f8fa;border:1.5px solid #bfc6d1;border-radius:8px;padding:32px 24px;text-align:center;max-width:500px;margin:auto;">
-                            <i class="fas fa-check-circle" style="color:#2255cd;font-size:2.5em;margin-bottom:12px;"></i>
-                            <h3 style="color:#2255cd;">Merci pour votre demande !</h3>
-                            <p>Nous vous contacterons dans les plus brefs délais pour étudier votre projet.</p>
+                            <i class="fas fa-envelope" style="color:#2255cd;font-size:2.5em;margin-bottom:12px;"></i>
+                            <h3 style="color:#2255cd;">Gmail ouvert !</h3>
+                            <p>Votre demande de devis a été préparée dans Gmail. Vérifiez l'onglet qui s'est ouvert et envoyez l'email.</p>
+                            <p style="font-size:0.9em;color:#666;margin-top:10px;">Si Gmail ne s'est pas ouvert, contactez-nous directement à <strong>guindoconstruction@gmail.com</strong></p>
                         </div>
                     </div>
                 </div>
@@ -1058,65 +1051,61 @@
         document.getElementById('devisForm').addEventListener('submit', function(e) {
             e.preventDefault();
             
-            // No validation required - send form directly
-            {
-                // Show loading state
-                const submitBtn = this.querySelector('.btn');
-                const originalText = submitBtn.innerHTML;
-                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Envoi en cours...';
-                submitBtn.disabled = true;
-                
-                // Submit form to Web3Forms (same as contact form)
-                const formData = new FormData(this);
-                
-                fetch('https://api.web3forms.com/submit', {
-                    method: 'POST',
-                    body: formData,
-                    headers: {
-                        'Accept': 'application/json'
-                    }
-                }).then(response => {
-                    console.log('📡 Réponse Web3Forms:', response.status, response.statusText);
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    console.log('✅ Réponse complète Web3Forms:', data);
-                    if (data.success) {
-                        document.getElementById('devisForm').style.display = 'none';
-                        document.getElementById('devis-confirm').style.display = 'block';
-                        // Track successful submission
-                        trackEvent('form_submission', {
-                            form_type: 'devis',
-                            success: true
-                        });
-                    } else {
-                        console.error('Web3Forms error:', data);
-                        alert('Erreur lors de l\'envoi: ' + (data.message || 'Erreur inconnue') + '. Veuillez réessayer ou nous contacter directement.');
-                        // Track failed submission
-                        trackEvent('form_submission', {
-                            form_type: 'devis',
-                            success: false,
-                            error: data.message
-                        });
-                    }
-                }).catch(error => {
-                    console.error('❌ Erreur de connexion ou de traitement:', error);
-                    alert('Erreur de connexion. Veuillez vérifier votre connexion internet et réessayer.');
-                    // Track connection error
-                    trackEvent('form_submission', {
-                        form_type: 'devis',
-                        success: false,
-                        error: 'connection_error'
-                    });
-                }).finally(() => {
-                    // Restore button state
-                    submitBtn.innerHTML = originalText;
-                    submitBtn.disabled = false;
-                });
-            }
+            // Collect form data
+            const nom = document.getElementById('nom-devis').value || 'Non spécifié';
+            const email = document.getElementById('email-devis').value || 'Non spécifié';
+            const telephone = document.getElementById('telephone-devis').value || 'Non spécifié';
+            const entreprise = document.getElementById('entreprise').value || 'Non spécifié';
+            const typeProjet = document.getElementById('type-projet').value || 'Non spécifié';
+            const description = document.getElementById('description-projet').value || 'Non spécifié';
+            const surface = document.getElementById('surface').value || 'Non spécifié';
+            const localisation = document.getElementById('localisation').value || 'Non spécifié';
+            const finition = document.getElementById('finition').value || 'Non spécifié';
+            const budget = document.getElementById('budget').value || 'Non spécifié';
+            
+            // Create email content
+            const subject = encodeURIComponent('Demande de devis - GCBTP');
+            const body = encodeURIComponent(`
+Bonjour,
+
+Je souhaite demander un devis pour un projet de construction.
+
+INFORMATIONS CLIENT :
+- Nom et Prénom : ${nom}
+- Email : ${email}
+- Téléphone : ${telephone}
+- Entreprise : ${entreprise}
+
+DÉTAILS DU PROJET :
+- Type de projet : ${typeProjet}
+- Description : ${description}
+- Surface : ${surface} m²
+- Localisation : ${localisation}
+- Niveau de finition souhaité : ${finition}
+- Budget estimé : ${budget}
+
+Je vous remercie de me contacter pour discuter de ce projet.
+
+Cordialement,
+${nom}
+            `);
+            
+            // Create Gmail URL
+            const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=guindoconstruction@gmail.com&su=${subject}&body=${body}`;
+            
+            // Open Gmail in new tab
+            window.open(gmailUrl, '_blank');
+            
+            // Show confirmation message
+            document.getElementById('devisForm').style.display = 'none';
+            document.getElementById('devis-confirm').style.display = 'block';
+            
+            // Track successful submission
+            trackEvent('form_submission', {
+                form_type: 'devis',
+                success: true,
+                method: 'gmail_redirect'
+            });
         });
 
         // Chat Widget Functionality with AI
