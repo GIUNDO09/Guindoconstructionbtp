@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configuration Formspree - GCBTP</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .setup-form {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        button {
+            background: #2255cd;
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background: #1a4ba8;
+        }
+        .instructions {
+            background: #e7f3ff;
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 4px solid #2255cd;
+            margin-bottom: 20px;
+        }
+        .code-block {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            border: 1px solid #e9ecef;
+            font-family: monospace;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="setup-form">
+        <h1>🔧 Configuration Formspree - GCBTP</h1>
+        
+        <div class="instructions">
+            <h3>📋 Instructions de configuration :</h3>
+            <ol>
+                <li>Allez sur <a href="https://formspree.io" target="_blank">formspree.io</a></li>
+                <li>Créez un compte gratuit</li>
+                <li>Créez un nouveau formulaire</li>
+                <li>Copiez l'URL de soumission fournie</li>
+                <li>Collez-la dans le champ ci-dessous</li>
+            </ol>
+        </div>
+        
+        <form id="formspreeForm">
+            <div class="form-group">
+                <label for="formspreeUrl">URL Formspree *</label>
+                <input type="url" id="formspreeUrl" name="formspreeUrl" placeholder="https://formspree.io/f/xxxxxxxx" required>
+                <small>Exemple: https://formspree.io/f/xpzgkqyw</small>
+            </div>
+            
+            <div class="form-group">
+                <label for="testEmail">Email de test</label>
+                <input type="email" id="testEmail" name="testEmail" value="guindoconstruction@gmail.com">
+            </div>
+            
+            <button type="submit">🚀 Tester Formspree</button>
+        </form>
+        
+        <div id="result" style="margin-top: 20px; padding: 15px; border-radius: 5px; display: none;"></div>
+    </div>
+
+    <div class="setup-form">
+        <h2>📝 Code à intégrer dans index.html</h2>
+        <p>Une fois Formspree configuré, remplacez le code JavaScript des formulaires par :</p>
+        
+        <div class="code-block">
+// Formulaire de devis avec Formspree
+document.getElementById('devisForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    formData.append('_subject', 'Nouvelle demande de devis - GCBTP');
+    formData.append('_replyto', document.getElementById('email-devis').value);
+    
+    fetch('VOTRE_URL_FORMSPREE', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.ok) {
+            document.getElementById('devisForm').style.display = 'none';
+            document.getElementById('devis-confirm').style.display = 'block';
+        } else {
+            alert('Erreur lors de l\'envoi. Veuillez réessayer.');
+        }
+    })
+    .catch(error => {
+        console.error('Erreur:', error);
+        alert('Erreur de connexion. Veuillez réessayer.');
+    });
+});
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('formspreeForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formspreeUrl = document.getElementById('formspreeUrl').value;
+            const testEmail = document.getElementById('testEmail').value;
+            const resultDiv = document.getElementById('result');
+            
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result';
+            resultDiv.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Test en cours...';
+            
+            // Test avec Formspree
+            const formData = new FormData();
+            formData.append('_subject', 'TEST Formspree - GCBTP');
+            formData.append('_replyto', testEmail);
+            formData.append('nom', 'Test GCBTP');
+            formData.append('email', testEmail);
+            formData.append('telephone', '+221 77 123 45 67');
+            formData.append('message', 'Ceci est un test de la configuration Formspree pour GCBTP.');
+            
+            try {
+                const response = await fetch(formspreeUrl, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (response.ok) {
+                    resultDiv.className = 'result success';
+                    resultDiv.innerHTML = `
+                        <h3>✅ Test Formspree réussi !</h3>
+                        <p>L'email de test a été envoyé avec succès à <strong>${testEmail}</strong></p>
+                        <p>Vérifiez votre boîte de réception.</p>
+                    `;
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.innerHTML = `
+                        <h3>❌ Erreur Formspree</h3>
+                        <p>Vérifiez que l'URL Formspree est correcte.</p>
+                    `;
+                }
+                
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `
+                    <h3>❌ Erreur de connexion</h3>
+                    <p>Erreur: ${error.message}</p>
+                `;
+            }
+        });
+    </script>
+</body>
+</html>

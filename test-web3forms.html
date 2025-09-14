@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Web3Forms - GCBTP</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-form {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        button {
+            background: #2255cd;
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background: #1a4ba8;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            display: none;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-form">
+        <h1>🧪 Test Web3Forms - GCBTP</h1>
+        <p>Ce formulaire teste directement la configuration Web3Forms pour diagnostiquer le problème d'email.</p>
+        
+        <form id="testForm">
+            <div class="form-group">
+                <label for="nom">Nom complet *</label>
+                <input type="text" id="nom" name="nom" value="Test GCBTP" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="email">Email *</label>
+                <input type="email" id="email" name="email" value="test@example.com" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="telephone">Téléphone</label>
+                <input type="tel" id="telephone" name="telephone" value="+221 77 123 45 67">
+            </div>
+            
+            <div class="form-group">
+                <label for="message">Message de test</label>
+                <textarea id="message" name="message" rows="4">Ceci est un test de la configuration Web3Forms pour GCBTP. Si vous recevez ce message, la configuration fonctionne correctement.</textarea>
+            </div>
+            
+            <button type="submit">🚀 Envoyer le test</button>
+        </form>
+        
+        <div id="result" class="result"></div>
+    </div>
+
+    <script>
+        document.getElementById('testForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const resultDiv = document.getElementById('result');
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result';
+            resultDiv.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Envoi en cours...';
+            
+            // Configuration Web3Forms
+            const formData = new FormData();
+            formData.append('access_key', 'cf53af9f-c13b-4a19-bfd0-69c85ee9f19d');
+            formData.append('subject', 'TEST Web3Forms - GCBTP');
+            formData.append('from_name', 'Site GCBTP - Test');
+            formData.append('to', 'guindoconstruction@gmail.com');
+            formData.append('replyto', document.getElementById('email').value);
+            formData.append('redirect', 'false');
+            formData.append('honeypot', '');
+            
+            // Données du formulaire
+            formData.append('nom', document.getElementById('nom').value);
+            formData.append('email', document.getElementById('email').value);
+            formData.append('telephone', document.getElementById('telephone').value);
+            formData.append('message', document.getElementById('message').value);
+            
+            try {
+                console.log('📡 Envoi du test Web3Forms...');
+                console.log('🔑 Access Key:', 'cf53af9f-c13b-4a19-bfd0-69c85ee9f19d');
+                console.log('📧 Destination:', 'guindoconstruction@gmail.com');
+                
+                const response = await fetch('https://api.web3forms.com/submit', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                console.log('📡 Réponse HTTP:', response.status, response.statusText);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                console.log('✅ Réponse Web3Forms:', data);
+                
+                if (data.success) {
+                    resultDiv.className = 'result success';
+                    resultDiv.innerHTML = `
+                        <h3>✅ Test réussi !</h3>
+                        <p><strong>Message ID:</strong> ${data.messageId || 'N/A'}</p>
+                        <p>L'email de test a été envoyé avec succès à <strong>guindoconstruction@gmail.com</strong></p>
+                        <p>Vérifiez votre boîte de réception, dossier spam et promotions.</p>
+                    `;
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.innerHTML = `
+                        <h3>❌ Erreur Web3Forms</h3>
+                        <p><strong>Message:</strong> ${data.message || 'Erreur inconnue'}</p>
+                        <p><strong>Code:</strong> ${data.code || 'N/A'}</p>
+                    `;
+                }
+                
+            } catch (error) {
+                console.error('❌ Erreur:', error);
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `
+                    <h3>❌ Erreur de connexion</h3>
+                    <p><strong>Erreur:</strong> ${error.message}</p>
+                    <p>Vérifiez votre connexion internet et réessayez.</p>
+                `;
+            }
+        });
+    </script>
+</body>
+</html>
