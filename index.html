@@ -558,24 +558,24 @@
                         <input type="hidden" name="redirect_url" value="https://giundo09.github.io/Guindo-construction/?devis=success">
                         <input type="hidden" name="honeypot" value="">
                         <div class="form-group">
-                            <label for="nom-devis">Nom et Prénom *</label>
-                            <input type="text" id="nom-devis" name="nom" placeholder="Votre Nom et Prénom" required>
+                            <label for="nom-devis">Nom et Prénom</label>
+                            <input type="text" id="nom-devis" name="nom" placeholder="Votre Nom et Prénom">
                         </div>
                         <div class="form-group">
-                            <label for="email-devis">Email *</label>
-                            <input type="email" id="email-devis" name="email" placeholder="votre@email.com" required>
+                            <label for="email-devis">Email</label>
+                            <input type="email" id="email-devis" name="email" placeholder="votre@email.com">
                         </div>
                         <div class="form-group">
-                            <label for="telephone-devis">Téléphone *</label>
-                            <input type="tel" id="telephone-devis" name="telephone" placeholder="Votre Numéro de Téléphone" required>
+                            <label for="telephone-devis">Téléphone</label>
+                            <input type="tel" id="telephone-devis" name="telephone" placeholder="Votre Numéro de Téléphone">
                         </div>
                         <div class="form-group">
                             <label for="entreprise">Entreprise</label>
                             <input type="text" id="entreprise" name="entreprise" placeholder="Nom de votre entreprise">
                         </div>
                         <div class="form-group">
-                            <label for="type-projet">Type de Projet *</label>
-                            <select id="type-projet" name="type-projet" required>
+                            <label for="type-projet">Type de Projet</label>
+                            <select id="type-projet" name="type-projet">
                                 <option value="">Sélectionnez le type de projet</option>
                                 <option value="residentiel">Bâtiment Résidentiel</option>
                                 <option value="tertiaire">Bâtiment Tertiaire</option>
@@ -586,8 +586,8 @@
                             </select>
                         </div>
                         <div class="form-group">
-                            <label for="description-projet">Description du Projet *</label>
-                            <textarea id="description-projet" name="description" placeholder="Décrivez votre projet en détail..." required></textarea>
+                            <label for="description-projet">Description du Projet</label>
+                            <textarea id="description-projet" name="description" placeholder="Décrivez votre projet en détail..."></textarea>
                         </div>
                         <div class="form-group">
                             <label for="surface">Surface du projet (m²)</label>
@@ -1058,50 +1058,16 @@
         document.getElementById('devisForm').addEventListener('submit', function(e) {
             e.preventDefault();
             
-            // Validate required fields
-            const requiredFields = ['nom-devis', 'email-devis', 'telephone-devis', 'type-projet', 'description-projet'];
-            let isValid = true;
-            
-            requiredFields.forEach(fieldId => {
-                if (!document.getElementById(fieldId).value.trim()) {
-                    isValid = false;
-                    document.getElementById(fieldId).style.borderColor = '#dc3545';
-                } else {
-                    document.getElementById(fieldId).style.borderColor = '#e2e8f0';
-                }
-            });
-            
-            if (isValid) {
+            // No validation required - send form directly
+            {
                 // Show loading state
                 const submitBtn = this.querySelector('.btn');
                 const originalText = submitBtn.innerHTML;
                 submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Envoi en cours...';
                 submitBtn.disabled = true;
                 
-                // Create FormData manually to avoid duplication issues
-                const formData = new FormData();
-                
-                // Add all form fields
-                formData.append('nom', document.getElementById('nom-devis').value);
-                formData.append('email', document.getElementById('email-devis').value);
-                formData.append('telephone', document.getElementById('telephone-devis').value);
-                formData.append('entreprise', document.getElementById('entreprise').value || 'Non spécifié');
-                formData.append('type-projet', document.getElementById('type-projet').value);
-                formData.append('description', document.getElementById('description-projet').value);
-                formData.append('surface', document.getElementById('surface').value || 'Non spécifié');
-                formData.append('localisation', document.getElementById('localisation').value || 'Non spécifié');
-                formData.append('finition', document.getElementById('finition').value || 'Non spécifié');
-                formData.append('budget', document.getElementById('budget').value || 'Non spécifié');
-                
-                // Add hidden fields explicitly
-                formData.append('access_key', 'cf53af9f-c13b-4a19-bfd0-69c85ee9f19d');
-                formData.append('subject', 'Nouvelle demande de devis - GCBTP');
-                formData.append('from_name', 'Site GCBTP');
-                formData.append('to', 'guindoconstruction@gmail.com');
-                formData.append('replyto', document.getElementById('email-devis').value); // Use user's email for replyto
-                formData.append('redirect', 'false');
-                formData.append('redirect_url', 'https://giundo09.github.io/Guindo-construction/?devis=success');
-                formData.append('honeypot', '');
+                // Submit form to Web3Forms (same as contact form)
+                const formData = new FormData(this);
                 
                 fetch('https://api.web3forms.com/submit', {
                     method: 'POST',
@@ -1137,63 +1103,19 @@
                         });
                     }
                 }).catch(error => {
-                    console.error('❌ Erreur Web3Forms:', error);
-                    
-                    // Solution de secours : essayer avec Formspree
-                    console.log('🔄 Tentative avec Formspree...');
-                    
-                    // Créer un nouveau FormData pour Formspree
-                    const formspreeData = new FormData();
-                    formspreeData.append('nom', document.getElementById('nom-devis').value);
-                    formspreeData.append('email', document.getElementById('email-devis').value);
-                    formspreeData.append('telephone', document.getElementById('telephone-devis').value);
-                    formspreeData.append('entreprise', document.getElementById('entreprise').value || 'Non spécifié');
-                    formspreeData.append('type-projet', document.getElementById('type-projet').value);
-                    formspreeData.append('description', document.getElementById('description-projet').value);
-                    formspreeData.append('surface', document.getElementById('surface').value || 'Non spécifié');
-                    formspreeData.append('localisation', document.getElementById('localisation').value || 'Non spécifié');
-                    formspreeData.append('finition', document.getElementById('finition').value || 'Non spécifié');
-                    formspreeData.append('budget', document.getElementById('budget').value || 'Non spécifié');
-                    formspreeData.append('_subject', 'Nouvelle demande de devis - GCBTP');
-                    formspreeData.append('_replyto', document.getElementById('email-devis').value);
-                    
-                    // Essayer Formspree (remplacez par votre URL Formspree)
-                    fetch('https://formspree.io/f/xpzgkqyw', {
-                        method: 'POST',
-                        body: formspreeData
-                    })
-                    .then(response => {
-                        console.log('📡 Réponse Formspree:', response.status);
-                        if (response.ok) {
-                            document.getElementById('devisForm').style.display = 'none';
-                            document.getElementById('devis-confirm').style.display = 'block';
-                            trackEvent('form_submission', {
-                                form_type: 'devis',
-                                success: true,
-                                method: 'formspree_fallback'
-                            });
-                        } else {
-                            throw new Error('Formspree aussi en erreur');
-                        }
-                    })
-                    .catch(formspreeError => {
-                        console.error('❌ Erreur Formspree aussi:', formspreeError);
-                        alert('Erreur de connexion. Veuillez nous contacter directement à guindoconstruction@gmail.com ou par téléphone.');
-                        trackEvent('form_submission', {
-                            form_type: 'devis',
-                            success: false,
-                            error: 'both_services_failed'
-                        });
-                    })
-                    .finally(() => {
-                        // Restore button state
-                        submitBtn.innerHTML = originalText;
-                        submitBtn.disabled = false;
+                    console.error('❌ Erreur de connexion ou de traitement:', error);
+                    alert('Erreur de connexion. Veuillez vérifier votre connexion internet et réessayer.');
+                    // Track connection error
+                    trackEvent('form_submission', {
+                        form_type: 'devis',
+                        success: false,
+                        error: 'connection_error'
                     });
+                }).finally(() => {
+                    // Restore button state
+                    submitBtn.innerHTML = originalText;
+                    submitBtn.disabled = false;
                 });
-                
-            } else {
-                alert('Veuillez remplir tous les champs obligatoires marqués d\'un astérisque (*)');
             }
         });
 
