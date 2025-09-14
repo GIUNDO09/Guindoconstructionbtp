@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configuration Formspree - GCBTP</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .setup-form {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        .instructions {
+            background: #e7f3ff;
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 4px solid #2255cd;
+            margin-bottom: 20px;
+        }
+        .code-block {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            border: 1px solid #e9ecef;
+            font-family: monospace;
+            margin: 10px 0;
+            white-space: pre-wrap;
+        }
+        .step {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            border-left: 4px solid #28a745;
+        }
+    </style>
+</head>
+<body>
+    <div class="setup-form">
+        <h1>🔧 Solution Formspree - GCBTP</h1>
+        
+        <div class="instructions">
+            <h3>📋 Instructions de configuration Formspree :</h3>
+            <p><strong>Formspree est plus fiable que Web3Forms pour éviter les erreurs "Failed to fetch"</strong></p>
+        </div>
+        
+        <div class="step">
+            <h4>Étape 1 : Créer un compte Formspree</h4>
+            <p>1. Allez sur <a href="https://formspree.io" target="_blank">formspree.io</a></p>
+            <p>2. Cliquez sur "Get Started"</p>
+            <p>3. Créez un compte gratuit</p>
+        </div>
+        
+        <div class="step">
+            <h4>Étape 2 : Créer un nouveau formulaire</h4>
+            <p>1. Cliquez sur "New Form"</p>
+            <p>2. Donnez un nom : "GCBTP Devis"</p>
+            <p>3. Sélectionnez "Email" comme destination</p>
+            <p>4. Entrez votre email : <strong>guindoconstruction@gmail.com</strong></p>
+        </div>
+        
+        <div class="step">
+            <h4>Étape 3 : Récupérer l'URL</h4>
+            <p>1. Copiez l'URL fournie (exemple : https://formspree.io/f/xpzgkqyw)</p>
+            <p>2. Cette URL remplacera l'action du formulaire</p>
+        </div>
+        
+        <div class="step">
+            <h4>Étape 4 : Code à intégrer</h4>
+            <p>Remplacez le code JavaScript du formulaire de devis par :</p>
+        </div>
+        
+        <div class="code-block">// Formulaire de devis avec Formspree (solution de secours)
+document.getElementById('devisForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    // Validate required fields
+    const requiredFields = ['nom-devis', 'email-devis', 'telephone-devis', 'type-projet', 'description-projet'];
+    let isValid = true;
+    
+    requiredFields.forEach(field => {
+        if (!document.getElementById(field).value.trim()) {
+            isValid = false;
+            document.getElementById(field).style.borderColor = '#dc3545';
+        } else {
+            document.getElementById(field).style.borderColor = '#e2e8f0';
+        }
+    });
+    
+    if (isValid) {
+        // Show loading state
+        const submitBtn = this.querySelector('.btn');
+        const originalText = submitBtn.innerHTML;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Envoi en cours...';
+        submitBtn.disabled = true;
+        
+        // Create FormData for Formspree
+        const formData = new FormData();
+        
+        // Add all form fields
+        formData.append('nom', document.getElementById('nom-devis').value);
+        formData.append('email', document.getElementById('email-devis').value);
+        formData.append('telephone', document.getElementById('telephone-devis').value);
+        formData.append('entreprise', document.getElementById('entreprise').value || 'Non spécifié');
+        formData.append('type-projet', document.getElementById('type-projet').value);
+        formData.append('description', document.getElementById('description-projet').value);
+        formData.append('surface', document.getElementById('surface').value || 'Non spécifié');
+        formData.append('localisation', document.getElementById('localisation').value || 'Non spécifié');
+        formData.append('finition', document.getElementById('finition').value || 'Non spécifié');
+        formData.append('budget', document.getElementById('budget').value || 'Non spécifié');
+        
+        // Formspree specific fields
+        formData.append('_subject', 'Nouvelle demande de devis - GCBTP');
+        formData.append('_replyto', document.getElementById('email-devis').value);
+        formData.append('_next', 'https://giundo09.github.io/Guindo-construction/?devis=success');
+        
+        // Submit to Formspree
+        fetch('VOTRE_URL_FORMSPREE_ICI', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => {
+            console.log('📡 Réponse Formspree:', response.status, response.statusText);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('✅ Réponse Formspree:', data);
+            if (data.ok) {
+                document.getElementById('devisForm').style.display = 'none';
+                document.getElementById('devis-confirm').style.display = 'block';
+            } else {
+                throw new Error(data.error || 'Erreur inconnue');
+            }
+        })
+        .catch(error => {
+            console.error('❌ Erreur Formspree:', error);
+            alert('Erreur lors de l\'envoi: ' + error.message + '. Veuillez réessayer ou nous contacter directement.');
+        })
+        .finally(() => {
+            // Restore button state
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
+        });
+        
+    } else {
+        alert('Veuillez remplir tous les champs obligatoires');
+    }
+});</div>
+        
+        <div class="step">
+            <h4>Étape 5 : Modifier l'action du formulaire</h4>
+            <p>Dans le HTML, changez l'action du formulaire :</p>
+        </div>
+        
+        <div class="code-block">&lt;form class="devis-form" id="devisForm" action="VOTRE_URL_FORMSPREE_ICI" method="POST"&gt;</div>
+        
+        <div class="step">
+            <h4>✅ Avantages de Formspree :</h4>
+            <ul>
+                <li>✅ Plus fiable que Web3Forms</li>
+                <li>✅ Moins d'erreurs CORS</li>
+                <li>✅ Plan gratuit généreux</li>
+                <li>✅ Interface simple</li>
+                <li>✅ Support technique</li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>

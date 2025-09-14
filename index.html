@@ -1106,7 +1106,10 @@
                 
                 fetch('https://api.web3forms.com/submit', {
                     method: 'POST',
-                    body: formData
+                    body: formData,
+                    headers: {
+                        'Accept': 'application/json'
+                    }
                 }).then(response => {
                     console.log('📡 Réponse Web3Forms:', response.status, response.statusText);
                     if (!response.ok) {
@@ -1135,18 +1138,59 @@
                         });
                     }
                 }).catch(error => {
-                    console.error('❌ Erreur de connexion ou de traitement:', error);
-                    alert('Erreur de connexion. Veuillez vérifier votre connexion internet et réessayer.');
-                    // Track connection error
-                    trackEvent('form_submission', {
-                        form_type: 'devis',
-                        success: false,
-                        error: 'connection_error'
+                    console.error('❌ Erreur Web3Forms:', error);
+                    
+                    // Solution de secours : essayer avec Formspree
+                    console.log('🔄 Tentative avec Formspree...');
+                    
+                    // Créer un nouveau FormData pour Formspree
+                    const formspreeData = new FormData();
+                    formspreeData.append('nom', document.getElementById('nom-devis').value);
+                    formspreeData.append('email', document.getElementById('email-devis').value);
+                    formspreeData.append('telephone', document.getElementById('telephone-devis').value);
+                    formspreeData.append('entreprise', document.getElementById('entreprise').value || 'Non spécifié');
+                    formspreeData.append('type-projet', document.getElementById('type-projet').value);
+                    formspreeData.append('description', document.getElementById('description-projet').value);
+                    formspreeData.append('surface', document.getElementById('surface').value || 'Non spécifié');
+                    formspreeData.append('localisation', document.getElementById('localisation').value || 'Non spécifié');
+                    formspreeData.append('finition', document.getElementById('finition').value || 'Non spécifié');
+                    formspreeData.append('budget', document.getElementById('budget').value || 'Non spécifié');
+                    formspreeData.append('_subject', 'Nouvelle demande de devis - GCBTP');
+                    formspreeData.append('_replyto', document.getElementById('email-devis').value);
+                    
+                    // Essayer Formspree (remplacez par votre URL Formspree)
+                    fetch('https://formspree.io/f/xpzgkqyw', {
+                        method: 'POST',
+                        body: formspreeData
+                    })
+                    .then(response => {
+                        console.log('📡 Réponse Formspree:', response.status);
+                        if (response.ok) {
+                            document.getElementById('devisForm').style.display = 'none';
+                            document.getElementById('devis-confirm').style.display = 'block';
+                            trackEvent('form_submission', {
+                                form_type: 'devis',
+                                success: true,
+                                method: 'formspree_fallback'
+                            });
+                        } else {
+                            throw new Error('Formspree aussi en erreur');
+                        }
+                    })
+                    .catch(formspreeError => {
+                        console.error('❌ Erreur Formspree aussi:', formspreeError);
+                        alert('Erreur de connexion. Veuillez nous contacter directement à guindoconstruction@gmail.com ou par téléphone.');
+                        trackEvent('form_submission', {
+                            form_type: 'devis',
+                            success: false,
+                            error: 'both_services_failed'
+                        });
+                    })
+                    .finally(() => {
+                        // Restore button state
+                        submitBtn.innerHTML = originalText;
+                        submitBtn.disabled = false;
                     });
-                }).finally(() => {
-                    // Restore button state
-                    submitBtn.innerHTML = originalText;
-                    submitBtn.disabled = false;
                 });
                 
             } else {

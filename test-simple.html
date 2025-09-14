@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Simple - GCBTP</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-form {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        button {
+            background: #2255cd;
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-right: 10px;
+        }
+        button:hover {
+            background: #1a4ba8;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            display: none;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-form">
+        <h1>🧪 Test Simple - GCBTP</h1>
+        <p>Ce formulaire teste différentes méthodes d'envoi d'email pour diagnostiquer le problème.</p>
+        
+        <form id="testForm">
+            <div class="form-group">
+                <label for="nom">Nom complet *</label>
+                <input type="text" id="nom" name="nom" value="Test GCBTP" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="email">Email *</label>
+                <input type="email" id="email" name="email" value="test@example.com" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="message">Message de test</label>
+                <textarea id="message" name="message" rows="4">Ceci est un test simple pour diagnostiquer le problème d'envoi d'email.</textarea>
+            </div>
+            
+            <button type="button" onclick="testWeb3Forms()">🚀 Test Web3Forms</button>
+            <button type="button" onclick="testFormspree()">📧 Test Formspree</button>
+            <button type="button" onclick="testDirectSubmit()">📤 Test Soumission Directe</button>
+        </form>
+        
+        <div id="result" class="result"></div>
+        
+        <div class="info" style="margin-top: 20px; padding: 15px;">
+            <h3>📋 Instructions :</h3>
+            <ol>
+                <li><strong>Test Web3Forms</strong> : Teste la méthode actuelle</li>
+                <li><strong>Test Formspree</strong> : Teste la solution de secours</li>
+                <li><strong>Test Soumission Directe</strong> : Teste l'envoi direct du formulaire</li>
+            </ol>
+            <p><strong>Note :</strong> Si Web3Forms échoue mais Formspree fonctionne, nous migrerons vers Formspree.</p>
+        </div>
+    </div>
+
+    <script>
+        function showResult(message, type) {
+            const resultDiv = document.getElementById('result');
+            resultDiv.style.display = 'block';
+            resultDiv.className = `result ${type}`;
+            resultDiv.innerHTML = message;
+        }
+
+        async function testWeb3Forms() {
+            showResult('<i class="fas fa-spinner fa-spin"></i> Test Web3Forms en cours...', 'info');
+            
+            const formData = new FormData();
+            formData.append('access_key', 'cf53af9f-c13b-4a19-bfd0-69c85ee9f19d');
+            formData.append('subject', 'TEST Web3Forms - GCBTP');
+            formData.append('from_name', 'Site GCBTP - Test');
+            formData.append('to', 'guindoconstruction@gmail.com');
+            formData.append('replyto', document.getElementById('email').value);
+            formData.append('redirect', 'false');
+            formData.append('honeypot', '');
+            formData.append('nom', document.getElementById('nom').value);
+            formData.append('email', document.getElementById('email').value);
+            formData.append('message', document.getElementById('message').value);
+            
+            try {
+                const response = await fetch('https://api.web3forms.com/submit', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success) {
+                        showResult(`
+                            <h3>✅ Test Web3Forms réussi !</h3>
+                            <p>L'email a été envoyé avec succès à <strong>guindoconstruction@gmail.com</strong></p>
+                            <p>Vérifiez votre boîte de réception.</p>
+                        `, 'success');
+                    } else {
+                        showResult(`
+                            <h3>❌ Test Web3Forms échoué</h3>
+                            <p>Erreur: ${data.message || 'Erreur inconnue'}</p>
+                        `, 'error');
+                    }
+                } else {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+            } catch (error) {
+                showResult(`
+                    <h3>❌ Erreur Web3Forms</h3>
+                    <p><strong>Erreur:</strong> ${error.message}</p>
+                    <p>Le problème vient probablement de restrictions CORS ou de configuration réseau.</p>
+                `, 'error');
+            }
+        }
+
+        async function testFormspree() {
+            showResult('<i class="fas fa-spinner fa-spin"></i> Test Formspree en cours...', 'info');
+            
+            const formData = new FormData();
+            formData.append('_subject', 'TEST Formspree - GCBTP');
+            formData.append('_replyto', document.getElementById('email').value);
+            formData.append('nom', document.getElementById('nom').value);
+            formData.append('email', document.getElementById('email').value);
+            formData.append('message', document.getElementById('message').value);
+            
+            try {
+                const response = await fetch('https://formspree.io/f/xpzgkqyw', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (response.ok) {
+                    showResult(`
+                        <h3>✅ Test Formspree réussi !</h3>
+                        <p>L'email a été envoyé avec succès via Formspree.</p>
+                        <p>Formspree est plus fiable que Web3Forms.</p>
+                    `, 'success');
+                } else {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+            } catch (error) {
+                showResult(`
+                    <h3>❌ Erreur Formspree</h3>
+                    <p><strong>Erreur:</strong> ${error.message}</p>
+                    <p>L'URL Formspree doit être configurée correctement.</p>
+                `, 'error');
+            }
+        }
+
+        function testDirectSubmit() {
+            showResult('<i class="fas fa-spinner fa-spin"></i> Test soumission directe en cours...', 'info');
+            
+            // Créer un formulaire temporaire pour test
+            const tempForm = document.createElement('form');
+            tempForm.action = 'https://api.web3forms.com/submit';
+            tempForm.method = 'POST';
+            tempForm.style.display = 'none';
+            
+            // Ajouter les champs
+            const fields = {
+                'access_key': 'cf53af9f-c13b-4a19-bfd0-69c85ee9f19d',
+                'subject': 'TEST Direct Submit - GCBTP',
+                'from_name': 'Site GCBTP - Test',
+                'to': 'guindoconstruction@gmail.com',
+                'replyto': document.getElementById('email').value,
+                'redirect': 'false',
+                'honeypot': '',
+                'nom': document.getElementById('nom').value,
+                'email': document.getElementById('email').value,
+                'message': document.getElementById('message').value
+            };
+            
+            Object.keys(fields).forEach(key => {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = key;
+                input.value = fields[key];
+                tempForm.appendChild(input);
+            });
+            
+            document.body.appendChild(tempForm);
+            tempForm.submit();
+            
+            setTimeout(() => {
+                document.body.removeChild(tempForm);
+                showResult(`
+                    <h3>📤 Test soumission directe lancé</h3>
+                    <p>Le formulaire a été soumis directement. Vérifiez votre boîte email.</p>
+                    <p>Si vous recevez l'email, le problème vient du JavaScript fetch.</p>
+                `, 'info');
+            }, 1000);
+        }
+    </script>
+</body>
+</html>
