@@ -1059,11 +1059,10 @@
             e.preventDefault();
             
             // Validate required fields
-            const requiredFields = ['nom', 'email', 'telephone', 'type-projet', 'description'];
+            const requiredFields = ['nom-devis', 'email-devis', 'telephone-devis', 'type-projet', 'description-projet'];
             let isValid = true;
             
-            requiredFields.forEach(field => {
-                const fieldId = field.replace('-', '-');
+            requiredFields.forEach(fieldId => {
                 if (!document.getElementById(fieldId).value.trim()) {
                     isValid = false;
                     document.getElementById(fieldId).style.borderColor = '#dc3545';
@@ -1194,7 +1193,7 @@
                 });
                 
             } else {
-                alert('Veuillez remplir tous les champs obligatoires');
+                alert('Veuillez remplir tous les champs obligatoires marqués d\'un astérisque (*)');
             }
         });
 
