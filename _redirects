@@ -1,0 +1,16 @@
+# Redirections pour GitHub Pages
+# Format: /ancien-chemin /nouveau-chemin [code]
+
+# Redirection de l'ancien nom vers le nouveau
+/hotel-deep-c.html /hotel-deep-c.html 200
+
+# Redirection pour les pages sans extension
+/hotel-deep-c /hotel-deep-c.html 200
+/hotel-hopital-ibn-rochd /hotel-hopital-ibn-rochd.html 200
+/hotel-medina-gardens /hotel-medina-gardens.html 200
+
+# Redirection de la page d'accueil
+/ /index.html 200
+
+# Gestion des erreurs 404
+/* /index.html 404

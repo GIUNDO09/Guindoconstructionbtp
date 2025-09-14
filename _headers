@@ -1,0 +1,24 @@
+# Configuration des en-têtes HTTP pour GitHub Pages
+# Optimisation des performances et sécurité
+
+/*
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  X-XSS-Protection: 1; mode=block
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=()
+
+# Cache pour les images
+/Images/*
+  Cache-Control: public, max-age=31536000
+
+# Cache pour les fichiers CSS et JS
+/*.css
+  Cache-Control: public, max-age=86400
+
+/*.js
+  Cache-Control: public, max-age=86400
+
+# Cache pour les fichiers HTML
+/*.html
+  Cache-Control: public, max-age=3600
