@@ -288,25 +288,67 @@ Notification automatique GCBTP
                     <div class="service-icon">
                         <i class="fas fa-drafting-compass"></i>
                     </div>
+                    <div class="service-image">
+                        <img src="Images/1.png" alt="Structure du Bâtiment" loading="lazy">
+                    </div>
                     <h3>Structure du Bâtiment</h3>
                     <p>Nos ingénieurs peuvent travailler sur tous les types de structures (Béton Armé, Construction métallique, etc.)</p>
-                    <a href="#" class="service-link">Voir Plus <i class="fas fa-arrow-right"></i></a>
+                    <a href="#" class="service-link" onclick="showServiceDetails('Structure du Bâtiment')">Voir Plus <i class="fas fa-arrow-right"></i></a>
                 </div>
                 <div class="service-card fade-in">
                     <div class="service-icon">
                         <i class="fas fa-cogs"></i>
                     </div>
+                    <div class="service-image">
+                        <img src="Images/2.png" alt="Lots Techniques" loading="lazy">
+                    </div>
                     <h3>Lots Techniques du Bâtiment</h3>
                     <p>Fluides – énergétique, Climatisation, chauffage, ventilation (CVC), etc.</p>
-                    <a href="#" class="service-link">Voir Plus <i class="fas fa-arrow-right"></i></a>
+                    <a href="#" class="service-link" onclick="showServiceDetails('Lots Techniques du Bâtiment')">Voir Plus <i class="fas fa-arrow-right"></i></a>
                 </div>
                 <div class="service-card slide-in-right">
                     <div class="service-icon">
                         <i class="fas fa-road"></i>
                     </div>
+                    <div class="service-image">
+                        <img src="Images/3.png" alt="VRD" loading="lazy">
+                    </div>
                     <h3>VRD</h3>
                     <p>Voirie, Électrification et éclairage extérieur, etc.</p>
-                    <a href="#" class="service-link">Voir Plus <i class="fas fa-arrow-right"></i></a>
+                    <a href="#" class="service-link" onclick="showServiceDetails('VRD')">Voir Plus <i class="fas fa-arrow-right"></i></a>
+                </div>
+                <div class="service-card fade-in">
+                    <div class="service-icon">
+                        <i class="fas fa-hammer"></i>
+                    </div>
+                    <div class="service-image">
+                        <img src="Images/4.png" alt="Construction" loading="lazy">
+                    </div>
+                    <h3>Construction</h3>
+                    <p>Suivi de chantier, coordination des travaux, contrôle qualité et respect des délais pour tous vos projets de construction.</p>
+                    <a href="#" class="service-link" onclick="showServiceDetails('Construction')">Voir Plus <i class="fas fa-arrow-right"></i></a>
+                </div>
+                <div class="service-card slide-in-left">
+                    <div class="service-icon">
+                        <i class="fas fa-drafting-compass"></i>
+                    </div>
+                    <div class="service-image">
+                        <img src="Images/acceuil.png" alt="Architecture" loading="lazy">
+                    </div>
+                    <h3>Architecture</h3>
+                    <p>Conception architecturale, plans d'exécution, études de faisabilité et design d'espaces fonctionnels et esthétiques.</p>
+                    <a href="#" class="service-link" onclick="showServiceDetails('Architecture')">Voir Plus <i class="fas fa-arrow-right"></i></a>
+                </div>
+                <div class="service-card slide-in-right">
+                    <div class="service-icon">
+                        <i class="fas fa-palette"></i>
+                    </div>
+                    <div class="service-image">
+                        <img src="Images/bureau gcbtp.png" alt="Design" loading="lazy">
+                    </div>
+                    <h3>Design & Aménagement</h3>
+                    <p>Design d'intérieur, aménagement d'espaces, décoration et optimisation de l'ergonomie pour vos projets résidentiels et commerciaux.</p>
+                    <a href="#" class="service-link" onclick="showServiceDetails('Design & Aménagement')">Voir Plus <i class="fas fa-arrow-right"></i></a>
                 </div>
             </div>
         </div>
@@ -1969,5 +2011,235 @@ ${nom}
             }
         }
     </style>
+    
+    <!-- Fonction JavaScript pour les boutons Voir Plus -->
+    <script>
+        function showServiceDetails(serviceTitle) {
+            // Créer l'overlay
+            const overlay = document.createElement('div');
+            overlay.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.8);
+                z-index: 10000;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                opacity: 0;
+                transition: opacity 0.3s ease;
+            `;
+
+            // Créer la modal
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                background: white;
+                border-radius: 15px;
+                padding: 30px;
+                max-width: 600px;
+                width: 90%;
+                max-height: 80vh;
+                overflow-y: auto;
+                position: relative;
+                transform: scale(0.8);
+                transition: transform 0.3s ease;
+                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            `;
+
+            // Contenu de la modal
+            modal.innerHTML = `
+                <button class="modal-close" style="
+                    position: absolute;
+                    top: 15px;
+                    right: 20px;
+                    background: none;
+                    border: none;
+                    font-size: 24px;
+                    cursor: pointer;
+                    color: #666;
+                    transition: color 0.3s ease;
+                ">&times;</button>
+                <div class="modal-content">
+                    <h2 style="
+                        color: #1a5f7a;
+                        margin-bottom: 20px;
+                        font-size: 28px;
+                        font-weight: 700;
+                    ">${serviceTitle}</h2>
+                    <div class="modal-description" style="
+                        color: #333;
+                        line-height: 1.6;
+                        margin-bottom: 25px;
+                        font-size: 16px;
+                    ">${getDetailedServiceDescription(serviceTitle)}</div>
+                    <div class="modal-features" style="
+                        background: #f8f9fa;
+                        padding: 20px;
+                        border-radius: 10px;
+                        margin-bottom: 25px;
+                    ">
+                        <h3 style="color: #1a5f7a; margin-bottom: 15px; font-size: 20px;">Nos Expertises</h3>
+                        <ul style="list-style: none; padding: 0;">
+                            ${getServiceFeatures(serviceTitle)}
+                        </ul>
+                    </div>
+                    <div class="modal-cta" style="text-align: center;">
+                        <a href="contact.html" style="
+                            display: inline-block;
+                            background: linear-gradient(135deg, #1a5f7a, #2c88a8);
+                            color: white;
+                            padding: 15px 30px;
+                            border-radius: 25px;
+                            text-decoration: none;
+                            font-weight: 600;
+                            transition: transform 0.3s ease;
+                            box-shadow: 0 4px 15px rgba(26, 95, 122, 0.3);
+                        ">Demander un Devis</a>
+                    </div>
+                </div>
+            `;
+
+            overlay.appendChild(modal);
+            document.body.appendChild(overlay);
+
+            // Animer l'ouverture
+            setTimeout(() => {
+                overlay.style.opacity = '1';
+                modal.style.transform = 'scale(1)';
+            }, 10);
+
+            // Gestionnaire de fermeture
+            const closeModal = () => {
+                overlay.style.opacity = '0';
+                modal.style.transform = 'scale(0.8)';
+                setTimeout(() => {
+                    document.body.removeChild(overlay);
+                }, 300);
+            };
+
+            // Événements de fermeture
+            modal.querySelector('.modal-close').addEventListener('click', closeModal);
+            overlay.addEventListener('click', function(e) {
+                if (e.target === overlay) {
+                    closeModal();
+                }
+            });
+
+            // Fermeture avec Escape
+            const handleEscape = (e) => {
+                if (e.key === 'Escape') {
+                    closeModal();
+                    document.removeEventListener('keydown', handleEscape);
+                }
+            };
+            document.addEventListener('keydown', handleEscape);
+        }
+
+        // Fonction pour obtenir la description détaillée du service
+        function getDetailedServiceDescription(serviceTitle) {
+            const descriptions = {
+                'Structure du Bâtiment': `
+                    <p>Notre expertise en structure du bâtiment couvre tous les aspects de l'ingénierie structurelle moderne. Nous concevons et calculons des structures robustes, durables et économiques.</p>
+                    <p>Nos ingénieurs maîtrisent les dernières normes de construction et utilisent des logiciels de pointe pour garantir la sécurité et l'optimisation de vos projets.</p>
+                `,
+                'Lots Techniques du Bâtiment': `
+                    <p>Nous nous spécialisons dans la conception et l'optimisation des systèmes techniques du bâtiment. Notre approche intègre l'efficacité énergétique et le confort des occupants.</p>
+                    <p>De la climatisation à la ventilation, en passant par les réseaux de fluides, nous assurons une coordination parfaite entre tous les lots techniques.</p>
+                `,
+                'VRD': `
+                    <p>Nos services VRD (Voirie et Réseaux Divers) couvrent la conception complète des infrastructures extérieures. Nous optimisons la circulation et l'accessibilité de vos projets.</p>
+                    <p>De l'éclairage public à l'électrification extérieure, nous créons des espaces fonctionnels et esthétiques qui s'intègrent parfaitement à l'environnement urbain.</p>
+                `,
+                'Construction': `
+                    <p>Notre expertise en construction couvre tous les aspects du suivi de chantier et de la coordination des travaux. Nous garantissons la qualité et le respect des délais.</p>
+                    <p>De la planification à la livraison, nous accompagnons vos projets avec professionnalisme et rigueur technique.</p>
+                `,
+                'Architecture': `
+                    <p>Notre service d'architecture combine créativité et fonctionnalité pour créer des espaces uniques et adaptés à vos besoins. Nous concevons des bâtiments durables et esthétiques.</p>
+                    <p>De la conception initiale aux plans d'exécution, nous transformons vos idées en réalité architecturale.</p>
+                `,
+                'Design & Aménagement': `
+                    <p>Notre équipe de design et d'aménagement crée des espaces intérieurs fonctionnels, esthétiques et adaptés à votre mode de vie ou à votre activité professionnelle.</p>
+                    <p>Nous optimisons l'ergonomie, la circulation et l'ambiance de vos espaces pour maximiser le confort et l'efficacité.</p>
+                `
+            };
+            return descriptions[serviceTitle] || `<p>${serviceTitle} - Service professionnel de haute qualité pour tous vos besoins en ingénierie.</p>`;
+        }
+
+        // Fonction pour obtenir les fonctionnalités du service
+        function getServiceFeatures(serviceTitle) {
+            const features = {
+                'Structure du Bâtiment': [
+                    'Calcul de structures en béton armé',
+                    'Conception de structures métalliques',
+                    'Analyse sismique et parasismique',
+                    'Dimensionnement des fondations',
+                    'Études de stabilité et de résistance',
+                    'Optimisation des coûts de construction'
+                ],
+                'Lots Techniques du Bâtiment': [
+                    'Conception CVC (Chauffage, Ventilation, Climatisation)',
+                    'Réseaux de fluides (eau, gaz, électricité)',
+                    'Études thermiques et énergétiques',
+                    'Systèmes de sécurité incendie',
+                    'Automatisation et domotique',
+                    'Certification énergétique'
+                ],
+                'VRD': [
+                    'Conception de voirie et espaces publics',
+                    'Éclairage public et signalisation',
+                    'Réseaux d'assainissement et eaux pluviales',
+                    'Électrification extérieure',
+                    'Aménagement paysager technique',
+                    'Accessibilité PMR et normes'
+                ],
+                'Construction': [
+                    'Suivi de chantier et coordination',
+                    'Contrôle qualité et conformité',
+                    'Gestion des délais et planning',
+                    'Coordination des corps de métier',
+                    'Réception des travaux',
+                    'Maintenance préventive'
+                ],
+                'Architecture': [
+                    'Conception architecturale',
+                    'Plans d\'exécution détaillés',
+                    'Études de faisabilité',
+                    'Design d\'espaces fonctionnels',
+                    'Respect des normes et réglementations',
+                    'Optimisation énergétique'
+                ],
+                'Design & Aménagement': [
+                    'Design d\'intérieur personnalisé',
+                    'Aménagement d\'espaces commerciaux',
+                    'Décoration et finitions',
+                    'Optimisation de l\'ergonomie',
+                    'Sélection de matériaux et couleurs',
+                    'Éclairage et ambiance'
+                ]
+            };
+            
+            const serviceFeatures = features[serviceTitle] || ['Service professionnel', 'Expertise technique', 'Accompagnement personnalisé'];
+            
+            return serviceFeatures.map(feature => `
+                <li style="
+                    padding: 8px 0;
+                    border-bottom: 1px solid #e9ecef;
+                    position: relative;
+                    padding-left: 25px;
+                ">
+                    <i class="fas fa-check" style="
+                        color: #28a745;
+                        position: absolute;
+                        left: 0;
+                        top: 8px;
+                    "></i>
+                    ${feature}
+                </li>
+            `).join('');
+        }
+    </script>
 </body>
 </html> 

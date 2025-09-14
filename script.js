@@ -154,6 +154,8 @@ document.addEventListener('DOMContentLoaded', function() {
         
         if (type === 'success') {
             notification.style.background = '#28a745';
+        } else if (type === 'info') {
+            notification.style.background = '#17a2b8';
         } else {
             notification.style.background = '#dc3545';
         }
@@ -172,6 +174,209 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.body.removeChild(notification);
             }, 300);
         }, 3000);
+    }
+
+    // Service modal system
+    function showServiceModal(title, description) {
+        // Créer l'overlay
+        const overlay = document.createElement('div');
+        overlay.className = 'service-modal-overlay';
+        overlay.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 10000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        `;
+
+        // Créer la modal
+        const modal = document.createElement('div');
+        modal.className = 'service-modal';
+        modal.style.cssText = `
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            position: relative;
+            transform: scale(0.8);
+            transition: transform 0.3s ease;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        `;
+
+        // Contenu de la modal
+        modal.innerHTML = `
+            <button class="modal-close" style="
+                position: absolute;
+                top: 15px;
+                right: 20px;
+                background: none;
+                border: none;
+                font-size: 24px;
+                cursor: pointer;
+                color: #666;
+                transition: color 0.3s ease;
+            ">&times;</button>
+            <div class="modal-content">
+                <h2 style="
+                    color: #1a5f7a;
+                    margin-bottom: 20px;
+                    font-size: 28px;
+                    font-weight: 700;
+                ">${title}</h2>
+                <div class="modal-description" style="
+                    color: #333;
+                    line-height: 1.6;
+                    margin-bottom: 25px;
+                    font-size: 16px;
+                ">${getDetailedServiceDescription(title)}</div>
+                <div class="modal-features" style="
+                    background: #f8f9fa;
+                    padding: 20px;
+                    border-radius: 10px;
+                    margin-bottom: 25px;
+                ">
+                    <h3 style="color: #1a5f7a; margin-bottom: 15px; font-size: 20px;">Nos Expertises</h3>
+                    <ul style="list-style: none; padding: 0;">
+                        ${getServiceFeatures(title)}
+                    </ul>
+                </div>
+                <div class="modal-cta" style="text-align: center;">
+                    <a href="contact.html" style="
+                        display: inline-block;
+                        background: linear-gradient(135deg, #1a5f7a, #2c88a8);
+                        color: white;
+                        padding: 15px 30px;
+                        border-radius: 25px;
+                        text-decoration: none;
+                        font-weight: 600;
+                        transition: transform 0.3s ease;
+                        box-shadow: 0 4px 15px rgba(26, 95, 122, 0.3);
+                    ">Demander un Devis</a>
+                </div>
+            </div>
+        `;
+
+        overlay.appendChild(modal);
+        document.body.appendChild(overlay);
+
+        // Animer l'ouverture
+        setTimeout(() => {
+            overlay.style.opacity = '1';
+            modal.style.transform = 'scale(1)';
+        }, 10);
+
+        // Gestionnaire de fermeture
+        const closeModal = () => {
+            overlay.style.opacity = '0';
+            modal.style.transform = 'scale(0.8)';
+            setTimeout(() => {
+                document.body.removeChild(overlay);
+            }, 300);
+        };
+
+        // Événements de fermeture
+        modal.querySelector('.modal-close').addEventListener('click', closeModal);
+        overlay.addEventListener('click', function(e) {
+            if (e.target === overlay) {
+                closeModal();
+            }
+        });
+
+        // Fermeture avec Escape
+        const handleEscape = (e) => {
+            if (e.key === 'Escape') {
+                closeModal();
+                document.removeEventListener('keydown', handleEscape);
+            }
+        };
+        document.addEventListener('keydown', handleEscape);
+
+        // Hover effect sur le bouton CTA
+        const ctaButton = modal.querySelector('.modal-cta a');
+        ctaButton.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-2px)';
+        });
+        ctaButton.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+        });
+    }
+
+    // Fonction pour obtenir la description détaillée du service
+    function getDetailedServiceDescription(serviceTitle) {
+        const descriptions = {
+            'Structure du Bâtiment': `
+                <p>Notre expertise en structure du bâtiment couvre tous les aspects de l'ingénierie structurelle moderne. Nous concevons et calculons des structures robustes, durables et économiques.</p>
+                <p>Nos ingénieurs maîtrisent les dernières normes de construction et utilisent des logiciels de pointe pour garantir la sécurité et l'optimisation de vos projets.</p>
+            `,
+            'Lots Techniques du Bâtiment': `
+                <p>Nous nous spécialisons dans la conception et l'optimisation des systèmes techniques du bâtiment. Notre approche intègre l'efficacité énergétique et le confort des occupants.</p>
+                <p>De la climatisation à la ventilation, en passant par les réseaux de fluides, nous assurons une coordination parfaite entre tous les lots techniques.</p>
+            `,
+            'VRD': `
+                <p>Nos services VRD (Voirie et Réseaux Divers) couvrent la conception complète des infrastructures extérieures. Nous optimisons la circulation et l'accessibilité de vos projets.</p>
+                <p>De l'éclairage public à l'électrification extérieure, nous créons des espaces fonctionnels et esthétiques qui s'intègrent parfaitement à l'environnement urbain.</p>
+            `
+        };
+        return descriptions[serviceTitle] || `<p>${serviceTitle} - Service professionnel de haute qualité pour tous vos besoins en ingénierie.</p>`;
+    }
+
+    // Fonction pour obtenir les fonctionnalités du service
+    function getServiceFeatures(serviceTitle) {
+        const features = {
+            'Structure du Bâtiment': [
+                'Calcul de structures en béton armé',
+                'Conception de structures métalliques',
+                'Analyse sismique et parasismique',
+                'Dimensionnement des fondations',
+                'Études de stabilité et de résistance',
+                'Optimisation des coûts de construction'
+            ],
+            'Lots Techniques du Bâtiment': [
+                'Conception CVC (Chauffage, Ventilation, Climatisation)',
+                'Réseaux de fluides (eau, gaz, électricité)',
+                'Études thermiques et énergétiques',
+                'Systèmes de sécurité incendie',
+                'Automatisation et domotique',
+                'Certification énergétique'
+            ],
+            'VRD': [
+                'Conception de voirie et espaces publics',
+                'Éclairage public et signalisation',
+                'Réseaux d'assainissement et eaux pluviales',
+                'Électrification extérieure',
+                'Aménagement paysager technique',
+                'Accessibilité PMR et normes'
+            ]
+        };
+        
+        const serviceFeatures = features[serviceTitle] || ['Service professionnel', 'Expertise technique', 'Accompagnement personnalisé'];
+        
+        return serviceFeatures.map(feature => `
+            <li style="
+                padding: 8px 0;
+                border-bottom: 1px solid #e9ecef;
+                position: relative;
+                padding-left: 25px;
+            ">
+                <i class="fas fa-check" style="
+                    color: #28a745;
+                    position: absolute;
+                    left: 0;
+                    top: 8px;
+                "></i>
+                ${feature}
+            </li>
+        `).join('');
     }
 
     // Lazy loading for images (if any are added later)
@@ -220,6 +425,20 @@ document.addEventListener('DOMContentLoaded', function() {
         card.addEventListener('click', function() {
             const projectName = this.querySelector('h4').textContent;
             showNotification(`Projet ${projectName} - Détails à venir`, 'info');
+        });
+    });
+
+    // Service "Voir Plus" button handlers
+    const serviceLinks = document.querySelectorAll('.service-link');
+    serviceLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            const serviceCard = this.closest('.service-card');
+            const serviceTitle = serviceCard.querySelector('h3').textContent;
+            const serviceDescription = serviceCard.querySelector('p').textContent;
+            
+            // Créer une modal avec les détails du service
+            showServiceModal(serviceTitle, serviceDescription);
         });
     });
 
