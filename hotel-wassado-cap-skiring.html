@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HÔTEL WASSADO - CAP SKIRING | GUINDO CONSTRUCTION BTP</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <style>
+        .project-hero {
+            background: linear-gradient(135deg, #1a5f7a 0%, #2c88a8 100%);
+            color: white;
+            padding: 120px 0 80px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .project-hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="50" cy="50" r="1" fill="rgba(255,255,255,0.1)"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+            opacity: 0.3;
+        }
+        
+        .project-hero-content {
+            position: relative;
+            z-index: 2;
+        }
+        
+        .project-title {
+            font-size: 3.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .project-subtitle {
+            font-size: 1.3rem;
+            margin-bottom: 2rem;
+            opacity: 0.9;
+        }
+        
+        .project-meta {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            flex-wrap: wrap;
+        }
+        
+        .project-meta span {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(255,255,255,0.2);
+            padding: 0.8rem 1.5rem;
+            border-radius: 25px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+        
+        .project-details {
+            padding: 80px 0;
+            background: #f8f9fa;
+        }
+        
+        .project-content {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 4rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .project-main {
+            background: white;
+            border-radius: 20px;
+            padding: 3rem;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+        
+        .project-sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+        
+        .project-info {
+            background: white;
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+        
+        .info-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 12px;
+        }
+        
+        .info-item i {
+            font-size: 1.5rem;
+            color: #1a5f7a;
+            width: 30px;
+        }
+        
+        .info-label {
+            font-weight: 600;
+            color: #333;
+            min-width: 100px;
+        }
+        
+        .info-value {
+            color: #666;
+        }
+        
+        .project-services {
+            background: white;
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+        
+        .project-services h3 {
+            color: #1a5f7a;
+            margin-bottom: 1.5rem;
+            font-size: 1.5rem;
+        }
+        
+        .project-services ul {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .project-services li {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            margin-bottom: 1rem;
+            padding: 0.8rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        
+        .project-services i {
+            color: #28a745;
+            font-size: 1.2rem;
+        }
+        
+        .project-contact {
+            background: linear-gradient(135deg, #1a5f7a, #2c88a8);
+            color: white;
+            border-radius: 20px;
+            padding: 2rem;
+            text-align: center;
+        }
+        
+        .project-contact h3 {
+            margin-bottom: 1.5rem;
+            font-size: 1.5rem;
+        }
+        
+        .project-contact p {
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+        
+        .project-description {
+            margin-bottom: 2rem;
+        }
+        
+        .project-description h2 {
+            color: #1a5f7a;
+            margin-bottom: 1.5rem;
+            font-size: 2rem;
+        }
+        
+        .project-description p {
+            color: #666;
+            line-height: 1.8;
+            margin-bottom: 1.5rem;
+            font-size: 1.1rem;
+        }
+        
+        .project-highlights {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 2rem;
+            margin: 2rem 0;
+        }
+        
+        .project-highlights h3 {
+            color: #1a5f7a;
+            margin-bottom: 1.5rem;
+            font-size: 1.5rem;
+        }
+        
+        .highlights-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+        
+        .highlight-item {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        
+        .highlight-item i {
+            font-size: 2.5rem;
+            color: #1a5f7a;
+            margin-bottom: 1rem;
+        }
+        
+        .highlight-item h4 {
+            color: #333;
+            margin-bottom: 0.5rem;
+            font-size: 1.2rem;
+        }
+        
+        .highlight-item p {
+            color: #666;
+            font-size: 0.95rem;
+        }
+        
+        /* Gallery Styles */
+        .project-gallery {
+            padding: 80px 0;
+            background: white;
+        }
+        
+        .gallery-grid {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .main-gallery {
+            margin-bottom: 2rem;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+        
+        .main-gallery img {
+            width: 100%;
+            height: 500px;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+        
+        .main-gallery img:hover {
+            transform: scale(1.02);
+        }
+        
+        .gallery-thumbnails {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 1rem;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        
+        .gallery-thumbnails img {
+            width: 100%;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 3px solid transparent;
+        }
+        
+        .gallery-thumbnails img:hover {
+            transform: scale(1.05);
+            border-color: #1a5f7a;
+            box-shadow: 0 4px 15px rgba(26, 95, 122, 0.3);
+        }
+        
+        .gallery-thumbnails img.active {
+            border-color: #1a5f7a;
+            box-shadow: 0 4px 15px rgba(26, 95, 122, 0.5);
+        }
+
+        @media (max-width: 768px) {
+            .project-content {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+            }
+            
+            .project-title {
+                font-size: 2.5rem;
+            }
+            
+            .project-meta {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .highlights-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .main-gallery img {
+                height: 300px;
+            }
+            
+            .gallery-thumbnails {
+                grid-template-columns: repeat(4, 1fr);
+            }
+            
+            .gallery-thumbnails img {
+                height: 80px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <nav class="navbar">
+            <div class="nav-container">
+                <a href="index.html" class="nav-logo-link">
+                    <div class="nav-logo">
+                        <img src="Images/LOGO.jpg" alt="Logo GUINDO CONSTRUCTION BTP">
+                        <div class="nav-logo-text">
+                            <span class="nav-logo-title">GUINDO CONSTRUCTION BTP</span>
+                            <span class="nav-logo-sub">Bureau d'Études Techniques</span>
+                        </div>
+                    </div>
+                </a>
+                <ul class="nav-menu">
+                    <li><a href="index.html#accueil" class="nav-link">Accueil</a></li>
+                    <li><a href="index.html#qui-sommes-nous" class="nav-link">Qui Sommes-Nous</a></li>
+                    <li><a href="index.html#equipe" class="nav-link">L'équipe</a></li>
+                    <li><a href="index.html#projets" class="nav-link">Projets</a></li>
+                    <li><a href="index.html#carrieres" class="nav-link">Carrières</a></li>
+                    <li><a href="contact.html" class="nav-link">Contact</a></li>
+                </ul>
+                <div class="nav-buttons">
+                    <a href="#devis" class="btn btn-primary">Demander un Devis</a>
+                    <div class="hamburger">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Project Hero -->
+    <section class="project-hero">
+        <div class="container">
+            <div class="project-hero-content">
+                <h1 class="project-title">HÔTEL WASSADO</h1>
+                <p class="project-subtitle">Installation Électrique et Plomberie - Cap Skiring</p>
+                <div class="project-meta">
+                    <span><i class="fas fa-map-marker-alt"></i> Cap Skiring, Sénégal</span>
+                    <span><i class="fas fa-building"></i> R+1 - Hama & Salle de Massage</span>
+                    <span><i class="fas fa-calendar"></i> 2024</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Project Gallery -->
+    <section class="project-gallery">
+        <div class="container">
+            <h2 class="section-title">Galerie du Projet</h2>
+            <div class="gallery-grid">
+                <div class="gallery-item main-gallery">
+                    <img src="Images/WASSADO IMAGES/WhatsApp Image 2025-10-05 à 16.08.18_41ac9478.jpg" alt="Hôtel Wassado - Vue générale" id="mainGalleryImg">
+                </div>
+                <div class="gallery-thumbnails">
+                    <img src="Images/WASSADO IMAGES/WhatsApp Image 2025-10-05 à 16.08.18_41ac9478.jpg" alt="Vue générale" onclick="changeGalleryImg(this)">
+                    <img src="Images/WASSADO IMAGES/WhatsApp Image 2025-10-05 à 16.08.18_56bd2b6c.jpg" alt="Installation électrique" onclick="changeGalleryImg(this)">
+                    <img src="Images/WASSADO IMAGES/WhatsApp Image 2025-10-05 à 16.08.18_57c97925.jpg" alt="Réseaux plomberie" onclick="changeGalleryImg(this)">
+                    <img src="Images/WASSADO IMAGES/WhatsApp Image 2025-10-05 à 16.08.18_6e996203.jpg" alt="Travaux en cours" onclick="changeGalleryImg(this)">
+                    <img src="Images/WASSADO IMAGES/WhatsApp Image 2025-10-05 à 16.08.18_741e7ad8.jpg" alt="Détails techniques" onclick="changeGalleryImg(this)">
+                    <img src="Images/WASSADO IMAGES/WhatsApp Image 2025-10-05 à 16.08.18_c4f87eaa.jpg" alt="Installations" onclick="changeGalleryImg(this)">
+                    <img src="Images/WASSADO IMAGES/WhatsApp Image 2025-10-06 à 20.43.32_0b378c63.jpg" alt="Progression travaux" onclick="changeGalleryImg(this)">
+                    <img src="Images/WASSADO IMAGES/WhatsApp Image 2025-10-06 à 20.43.35_47261f7f.jpg" alt="Équipements" onclick="changeGalleryImg(this)">
+                    <img src="Images/WASSADO IMAGES/WhatsApp Image 2025-10-06 à 20.43.35_fa280e3c.jpg" alt="Finitions" onclick="changeGalleryImg(this)">
+                    <img src="Images/WASSADO IMAGES/WhatsApp Image 2025-10-08 à 20.34.19_9565a61b.jpg" alt="Contrôle qualité" onclick="changeGalleryImg(this)">
+                    <img src="Images/WASSADO IMAGES/WhatsApp Image 2025-10-12 à 17.40.29_fe2a3f2e.jpg" alt="Mise en service" onclick="changeGalleryImg(this)">
+                    <img src="Images/WASSADO IMAGES/WhatsApp Image 2025-10-12 à 17.41.01_3afa5b7b.jpg" alt="Tests finaux" onclick="changeGalleryImg(this)">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Project Details -->
+    <section class="project-details">
+        <div class="container">
+            <div class="project-content">
+                <div class="project-main">
+                    <div class="project-description">
+                        <h2>Installation Électrique et Plomberie</h2>
+                        <p>GCBTP a été chargé de la conception et de l'installation complète des réseaux électriques et de plomberie pour un bâtiment R+1 à usage hama et salle de massage à l'Hôtel Wassado, situé dans la station balnéaire de Cap Skiring au Sénégal.</p>
+                        
+                        <p>Ce projet touristique de prestige nécessitait une approche technique rigoureuse pour répondre aux exigences spécifiques des espaces de bien-être et de relaxation, tout en respectant les normes de sécurité et de confort les plus élevées.</p>
+                        
+                        <p>Notre équipe d'experts a mis en œuvre des solutions techniques innovantes pour assurer un fonctionnement optimal des installations sanitaires et électriques dans cet environnement côtier particulier.</p>
+                    </div>
+
+                    <div class="project-highlights">
+                        <h3>Points Forts du Projet</h3>
+                        <div class="highlights-grid">
+                            <div class="highlight-item">
+                                <i class="fas fa-bolt"></i>
+                                <h4>Installation Électrique</h4>
+                                <p>Réseaux électriques complets avec éclairage adapté aux espaces de bien-être</p>
+                            </div>
+                            <div class="highlight-item">
+                                <i class="fas fa-tint"></i>
+                                <h4>Réseaux de Plomberie</h4>
+                                <p>Systèmes sanitaires et d'alimentation en eau pour hama et salle de massage</p>
+                            </div>
+                            <div class="highlight-item">
+                                <i class="fas fa-shield-alt"></i>
+                                <h4>Sécurité</h4>
+                                <p>Respect des normes de sécurité électrique et sanitaire en milieu touristique</p>
+                            </div>
+                            <div class="highlight-item">
+                                <i class="fas fa-leaf"></i>
+                                <h4>Environnement</h4>
+                                <p>Solutions adaptées à l'environnement côtier de Cap Skiring</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="project-sidebar">
+                    <div class="project-info">
+                        <h3>Informations du Projet</h3>
+                        <div class="info-item">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <span class="info-label">Localisation :</span>
+                            <span class="info-value">Cap Skiring, Sénégal</span>
+                        </div>
+                        <div class="info-item">
+                            <i class="fas fa-building"></i>
+                            <span class="info-label">Type :</span>
+                            <span class="info-value">Bâtiment R+1</span>
+                        </div>
+                        <div class="info-item">
+                            <i class="fas fa-home"></i>
+                            <span class="info-label">Usage :</span>
+                            <span class="info-value">Hama & Salle de Massage</span>
+                        </div>
+                        <div class="info-item">
+                            <i class="fas fa-hotel"></i>
+                            <span class="info-label">Client :</span>
+                            <span class="info-value">Hôtel Wassado</span>
+                        </div>
+                        <div class="info-item">
+                            <i class="fas fa-calendar"></i>
+                            <span class="info-label">Année :</span>
+                            <span class="info-value">2024</span>
+                        </div>
+                        <div class="info-item">
+                            <i class="fas fa-check-circle"></i>
+                            <span class="info-label">Statut :</span>
+                            <span class="info-value">En cours</span>
+                        </div>
+                    </div>
+
+                    <div class="project-services">
+                        <h3>Services GCBTP</h3>
+                        <ul>
+                            <li><i class="fas fa-check"></i> Études électriques</li>
+                            <li><i class="fas fa-check"></i> Conception plomberie</li>
+                            <li><i class="fas fa-check"></i> Plans d'exécution</li>
+                            <li><i class="fas fa-check"></i> Suivi de chantier</li>
+                            <li><i class="fas fa-check"></i> Contrôle qualité</li>
+                            <li><i class="fas fa-check"></i> Mise en service</li>
+                        </ul>
+                    </div>
+
+                    <div class="project-contact">
+                        <h3>📞 Contact Direct</h3>
+                        <p><i class="fas fa-envelope"></i> guindoconstruction@gmail.com</p>
+                        <p><i class="fas fa-phone"></i> +221-777935765</p>
+                        <p><i class="fas fa-mobile-alt"></i> +212 623834865</p>
+                        <p><i class="fas fa-clock"></i> Lun - Ven: 8h00 - 18h00</p>
+                        <a href="index.html#devis" class="btn btn-primary">Demander un Devis</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>GCBTP</h3>
+                    <p>Bureau d'études techniques spécialisé dans la conception et le suivi de projets de construction au Sénégal.</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Services</h4>
+                    <ul>
+                        <li><a href="index.html#services">Études de Structure</a></li>
+                        <li><a href="index.html#services">Lots Techniques</a></li>
+                        <li><a href="index.html#services">VRD</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Contact</h4>
+                    <p><i class="fas fa-envelope"></i> guindoconstruction@gmail.com</p>
+                    <p><i class="fas fa-phone"></i> +221-777935765</p>
+                    <p><i class="fas fa-mobile-alt"></i> +212 623834865</p>
+                    <p><i class="fas fa-map-marker-alt"></i> Parcelle Unité 02, Villa 110<br>Dakar, Sénégal</p>
+                    <p><i class="fas fa-clock"></i> Lun - Ven: 8h00 - 18h00</p>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 GCBTP. Tous droits réservés.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Mobile menu toggle
+        const hamburger = document.querySelector('.hamburger');
+        const navMenu = document.querySelector('.nav-menu');
+
+        hamburger.addEventListener('click', () => {
+            hamburger.classList.toggle('active');
+            navMenu.classList.toggle('active');
+        });
+
+        // Close mobile menu when clicking on a link
+        document.querySelectorAll('.nav-link').forEach(n => n.addEventListener('click', () => {
+            hamburger.classList.remove('active');
+            navMenu.classList.remove('active');
+        }));
+
+        // Smooth scrolling for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Add scroll effect to header
+        window.addEventListener('scroll', () => {
+            const header = document.querySelector('.header');
+            if (window.scrollY > 100) {
+                header.classList.add('scrolled');
+            } else {
+                header.classList.remove('scrolled');
+            }
+        });
+
+        // Gallery functionality
+        function changeGalleryImg(img) {
+            document.getElementById('mainGalleryImg').src = img.src;
+            document.querySelectorAll('.gallery-thumbnails img').forEach(el => el.classList.remove('active'));
+            img.classList.add('active');
+        }
+
+        // Initialize gallery
+        document.addEventListener('DOMContentLoaded', function() {
+            const thumbs = document.querySelectorAll('.gallery-thumbnails img');
+            if (thumbs.length) thumbs[0].classList.add('active');
+        });
+    </script>
+</body>
+</html>
