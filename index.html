@@ -61,58 +61,115 @@
         })();
     </script>
     
-    <!-- Système de notifications de visite -->
+    <!-- Système de notifications de visite quotidiennes -->
     <script>
-        // Fonction pour envoyer une notification de visite
-        function notifyVisit() {
-            const visitData = {
-                timestamp: new Date().toISOString(),
-                page: window.location.href,
-                referrer: document.referrer || 'Direct',
-                userAgent: navigator.userAgent,
-                screen: `${screen.width}x${screen.height}`,
-                language: navigator.language,
-                timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
-            };
+        // Système de comptage des visites quotidiennes
+        function trackDailyVisit() {
+            const today = new Date().toDateString();
+            const storageKey = 'gcbpt_visits_' + today;
             
-            // Envoyer via Web3Forms (service gratuit)
-            const formData = new FormData();
-            formData.append('access_key', 'cf53af9f-c13b-4a19-bfd0-69c85ee9f19d');
-            formData.append('subject', '🔔 Nouvelle visite sur GCBTP');
-            formData.append('from', 'noreply@gcbtp.com');
-            formData.append('to', 'guindoconstruction@gmail.com');
-            formData.append('message', `
-Nouvelle visite détectée sur le site GCBTP !
-
-📅 Date/Heure: ${new Date().toLocaleString('fr-FR')}
-🌐 Page visitée: ${visitData.page}
-🔗 Provenance: ${visitData.referrer}
-💻 Navigateur: ${visitData.userAgent}
-📱 Écran: ${visitData.screen}
-🌍 Langue: ${visitData.language}
-⏰ Fuseau horaire: ${visitData.timezone}
-
----
-Notification automatique GCBTP
-            `);
+            // Récupérer le nombre de visites d'aujourd'hui
+            let todayVisits = parseInt(localStorage.getItem(storageKey)) || 0;
             
-            fetch('https://api.web3forms.com/submit', {
-                method: 'POST',
-                body: formData
-            }).catch(error => {
-                console.log('Notification de visite envoyée');
-            });
+            // Incrémenter le compteur
+            todayVisits++;
+            localStorage.setItem(storageKey, todayVisits.toString());
+            
+            // Vérifier si c'est la première visite de la journée
+            if (todayVisits === 1) {
+                // Programmer l'envoi du rapport quotidien à 18h00
+                scheduleDailyReport();
+            }
+            
+            console.log(`Visite ${todayVisits} du ${today}`);
         }
         
-        // Délai pour éviter les notifications multiples
-        let visitNotified = false;
+        // Programmer l'envoi du rapport quotidien
+        function scheduleDailyReport() {
+            const now = new Date();
+            const reportTime = new Date();
+            reportTime.setHours(18, 0, 0, 0); // 18h00
+            
+            // Si on est déjà après 18h, programmer pour le lendemain
+            if (now >= reportTime) {
+                reportTime.setDate(reportTime.getDate() + 1);
+            }
+            
+            const timeUntilReport = reportTime.getTime() - now.getTime();
+            
+            setTimeout(() => {
+                sendDailyReport();
+            }, timeUntilReport);
+            
+            console.log(`Rapport quotidien programmé pour ${reportTime.toLocaleString('fr-FR')}`);
+        }
+        
+        // Envoyer le rapport quotidien
+        function sendDailyReport() {
+            const today = new Date().toDateString();
+            const homeVisits = parseInt(localStorage.getItem('gcbpt_visits_' + today)) || 0;
+            const contactVisits = parseInt(localStorage.getItem('gcbpt_contact_visits_' + today)) || 0;
+            const totalVisits = homeVisits + contactVisits;
+            
+            if (totalVisits > 0) {
+                const formData = new FormData();
+                formData.append('access_key', 'cf53af9f-c13b-4a19-bfd0-69c85ee9f19d');
+                formData.append('subject', '📊 Rapport Quotidien GCBTP - ' + new Date().toLocaleDateString('fr-FR'));
+                formData.append('from', 'noreply@gcbtp.com');
+                formData.append('to', 'guindoconstruction@gmail.com');
+                formData.append('message', `📈 Rapport quotidien du site GCBTP
+
+📅 Date: ${new Date().toLocaleDateString('fr-FR')}
+👥 Nombre total de visites: ${totalVisits}
+
+📊 Statistiques par page:
+• 🏠 Page d'accueil: ${homeVisits} visite(s)
+• 📞 Page Contact: ${contactVisits} visite(s)
+• 📈 Total: ${totalVisits} visite(s)
+
+⏰ Heure du rapport: ${new Date().toLocaleTimeString('fr-FR')}
+🌐 Site: GUINDO CONSTRUCTION BTP
+🔗 URL: https://giundo09.github.io/Guindoconstructionbtp/
+
+---
+Rapport automatique quotidien GCBTP`);
+                
+                fetch('https://api.web3forms.com/submit', {
+                    method: 'POST',
+                    body: formData
+                }).then(() => {
+                    console.log('Rapport quotidien envoyé avec succès');
+                    // Nettoyer les données après envoi
+                    localStorage.removeItem('gcbpt_visits_' + today);
+                    localStorage.removeItem('gcbpt_contact_visits_' + today);
+                }).catch(error => {
+                    console.log('Erreur lors de l\'envoi du rapport:', error);
+                });
+            }
+        }
+        
+        // Nettoyer les anciennes données (plus de 7 jours)
+        function cleanupOldData() {
+            const sevenDaysAgo = new Date();
+            sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+            
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key && (key.startsWith('gcbpt_visits_') || key.startsWith('gcbpt_contact_visits_'))) {
+                    const dateStr = key.replace('gcbpt_visits_', '').replace('gcbpt_contact_visits_', '');
+                    const visitDate = new Date(dateStr);
+                    
+                    if (visitDate < sevenDaysAgo) {
+                        localStorage.removeItem(key);
+                    }
+                }
+            }
+        }
         
         // Détecter la visite après 3 secondes
         setTimeout(() => {
-            if (!visitNotified) {
-                visitNotified = true;
-                notifyVisit();
-            }
+            trackDailyVisit();
+            cleanupOldData();
         }, 3000);
     </script>
     
