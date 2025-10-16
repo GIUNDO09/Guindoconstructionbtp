@@ -8,20 +8,26 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
-    <!-- Système de notifications de visite -->
+    <!-- Système de notifications de visite quotidiennes -->
     <script>
-        // Notification de visite pour Contact
-        setTimeout(() => {
-            const formData = new FormData();
-            formData.append('access_key', 'cf53af9f-c13b-4a19-bfd0-69c85ee9f19d');
-            formData.append('subject', '🔔 Visite - Page Contact');
-            formData.append('to', 'guindoconstruction@gmail.com');
-            formData.append('message', `Nouvelle visite sur la page Contact - ${new Date().toLocaleString('fr-FR')}`);
+        // Système de comptage des visites quotidiennes pour la page Contact
+        function trackContactVisit() {
+            const today = new Date().toDateString();
+            const storageKey = 'gcbpt_contact_visits_' + today;
             
-            fetch('https://api.web3forms.com/submit', {
-                method: 'POST',
-                body: formData
-            }).catch(() => {});
+            // Récupérer le nombre de visites d'aujourd'hui
+            let todayVisits = parseInt(localStorage.getItem(storageKey)) || 0;
+            
+            // Incrémenter le compteur
+            todayVisits++;
+            localStorage.setItem(storageKey, todayVisits.toString());
+            
+            console.log(`Visite Contact ${todayVisits} du ${today}`);
+        }
+        
+        // Détecter la visite après 3 secondes
+        setTimeout(() => {
+            trackContactVisit();
         }, 3000);
     </script>
     
