@@ -706,9 +706,7 @@ Rapport automatique quotidien GCBTP`);
 
                 <div class="team-member">
                     <div class="member-photo">
-                        <div class="photo-placeholder">
-                            <i class="fas fa-users-cog"></i>
-                        </div>
+                        <img src="Images/becaye guindo.png" alt="Becaye Guindo - Agent de Coordination GCBTP" class="member-photo-img">
                     </div>
                     <div class="member-info">
                         <h3 class="member-name">Becaye GUINDO</h3>
@@ -831,18 +829,26 @@ Rapport automatique quotidien GCBTP`);
                     </div>
                 </div>
                 <div class="devis-right">
-                    <form class="devis-form" id="devisForm">
+                    <form class="devis-form" id="devisForm" action="https://api.web3forms.com/submit" method="POST">
+                        <input type="hidden" name="access_key" value="cf53af9f-c13b-4a19-bfd0-69c85ee9f19d">
+                        <input type="hidden" name="subject" value="Nouvelle demande de devis - GCBTP">
+                        <input type="hidden" name="from_name" value="Site GCBTP">
+                        <input type="hidden" name="to" value="contact@guindoconstruction.xyz">
+                        <input type="hidden" name="replyto" value="contact@guindoconstruction.xyz">
+                        <input type="hidden" name="redirect" value="false">
+                        <input type="hidden" name="redirect_url" value="https://guindoconstruction.xyz/?devis=success">
+                        <input type="hidden" name="honeypot" value="">
                         <div class="form-group">
-                            <label for="nom-devis">Nom et Prénom</label>
-                            <input type="text" id="nom-devis" name="nom" placeholder="Votre Nom et Prénom">
+                            <label for="nom-devis">Nom et Prénom *</label>
+                            <input type="text" id="nom-devis" name="nom" placeholder="Votre Nom et Prénom" required>
                         </div>
                         <div class="form-group">
-                            <label for="email-devis">Email</label>
-                            <input type="email" id="email-devis" name="email" placeholder="votre@email.com">
+                            <label for="email-devis">Email *</label>
+                            <input type="email" id="email-devis" name="email" placeholder="votre@email.com" required>
                         </div>
                         <div class="form-group">
-                            <label for="telephone-devis">Téléphone</label>
-                            <input type="tel" id="telephone-devis" name="telephone" placeholder="Votre Numéro de Téléphone">
+                            <label for="telephone-devis">Téléphone *</label>
+                            <input type="tel" id="telephone-devis" name="telephone" placeholder="Votre Numéro de Téléphone" required>
                         </div>
                         <div class="form-group">
                             <label for="entreprise">Entreprise</label>
@@ -923,15 +929,15 @@ Rapport automatique quotidien GCBTP`);
                                 * Estimation indicative basée sur les prix du marché sénégalais
                             </small>
                         </div>
-                        <button type="submit" class="btn btn-primary">📧 Ouvrir Gmail</button>
-                        <p style="font-size:0.8em;color:#888;margin-top:8px;">Cliquez pour ouvrir Gmail avec votre demande pré-remplie</p>
+                        <button type="submit" class="btn btn-primary">✉️ Envoyer</button>
+                        <p style="font-size:0.8em;color:#888;margin-top:8px;">Votre demande sera envoyée directement à notre équipe</p>
                     </form>
                     <div id="devis-confirm" style="display:none;padding:32px 0 0 0;">
                         <div style="background:#f7f8fa;border:1.5px solid #bfc6d1;border-radius:8px;padding:32px 24px;text-align:center;max-width:500px;margin:auto;">
-                            <i class="fas fa-envelope" style="color:#2255cd;font-size:2.5em;margin-bottom:12px;"></i>
-                            <h3 style="color:#2255cd;">Gmail ouvert !</h3>
-                            <p>Votre demande de devis a été préparée dans Gmail. Vérifiez l'onglet qui s'est ouvert et envoyez l'email.</p>
-                            <p style="font-size:0.9em;color:#666;margin-top:10px;">Si Gmail ne s'est pas ouvert, contactez-nous directement à <strong>contact@guindoconstruction.xyz</strong></p>
+                            <i class="fas fa-check-circle" style="color:#28a745;font-size:2.5em;margin-bottom:12px;"></i>
+                            <h3 style="color:#28a745;">Demande envoyée avec succès !</h3>
+                            <p>Votre demande de devis a été envoyée à notre équipe. Nous vous contacterons dans les plus brefs délais.</p>
+                            <p style="font-size:0.9em;color:#666;margin-top:10px;">Vous recevrez une réponse sous 48h à l'adresse <strong id="confirm-email"></strong></p>
                         </div>
                     </div>
                 </div>
@@ -1339,10 +1345,28 @@ Rapport automatique quotidien GCBTP`);
         document.getElementById('devisForm').addEventListener('submit', function(e) {
             e.preventDefault();
             
-            // Collect form data
-            const nom = document.getElementById('nom-devis').value || 'Non spécifié';
-            const email = document.getElementById('email-devis').value || 'Non spécifié';
-            const telephone = document.getElementById('telephone-devis').value || 'Non spécifié';
+            // Get submit button and store original text
+            const submitBtn = this.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '⏳ Envoi en cours...';
+            
+            // Validate required fields
+            const nom = document.getElementById('nom-devis').value.trim();
+            const email = document.getElementById('email-devis').value.trim();
+            const telephone = document.getElementById('telephone-devis').value.trim();
+            
+            if (!nom || !email || !telephone) {
+                alert('Veuillez remplir tous les champs obligatoires (marqués d\'un *)');
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+                return;
+            }
+            
+            // Collect all form data
+            const formData = new FormData(this);
+            
+            // Add formatted message for email body
             const entreprise = document.getElementById('entreprise').value || 'Non spécifié';
             const typeProjet = document.getElementById('type-projet').value || 'Non spécifié';
             const description = document.getElementById('description-projet').value || 'Non spécifié';
@@ -1351,9 +1375,7 @@ Rapport automatique quotidien GCBTP`);
             const finition = document.getElementById('finition').value || 'Non spécifié';
             const budget = document.getElementById('budget').value || 'Non spécifié';
             
-            // Create email content
-            const subject = encodeURIComponent('Demande de devis - GCBTP');
-            const body = encodeURIComponent(`
+            const message = `
 Bonjour,
 
 Je souhaite demander un devis pour un projet de construction.
@@ -1376,23 +1398,47 @@ Je vous remercie de me contacter pour discuter de ce projet.
 
 Cordialement,
 ${nom}
-            `);
+            `;
             
-            // Create Gmail URL
-            const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=contact@guindoconstruction.xyz&su=${subject}&body=${body}`;
+            formData.append('message', message);
             
-            // Open Gmail in new tab
-            window.open(gmailUrl, '_blank');
-            
-            // Show confirmation message
-            document.getElementById('devisForm').style.display = 'none';
-            document.getElementById('devis-confirm').style.display = 'block';
-            
-            // Track successful submission
-            trackEvent('form_submission', {
-                form_type: 'devis',
-                success: true,
-                method: 'gmail_redirect'
+            // Submit form to Web3Forms
+            fetch(this.action, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Web3Forms response:', data);
+                if (data.success) {
+                    // Show confirmation message
+                    document.getElementById('devisForm').style.display = 'none';
+                    document.getElementById('devis-confirm').style.display = 'block';
+                    document.getElementById('confirm-email').textContent = email;
+                    
+                    // Track successful submission
+                    trackEvent('form_submission', {
+                        form_type: 'devis',
+                        success: true,
+                        method: 'web3forms'
+                    });
+                } else {
+                    console.error('Web3Forms error:', data);
+                    alert('Erreur lors de l\'envoi. Veuillez réessayer ou nous contacter directement à contact@guindoconstruction.xyz');
+                    submitBtn.innerHTML = originalText;
+                    submitBtn.disabled = false;
+                }
+            })
+            .catch(error => {
+                console.error('Fetch error:', error);
+                alert('Erreur lors de l\'envoi. Veuillez réessayer ou nous contacter directement à contact@guindoconstruction.xyz');
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
             });
         });
 
