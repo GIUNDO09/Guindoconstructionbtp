@@ -22,7 +22,7 @@
       ]
     },
     {
-      "source": "/sitemap.xml",
+      "source": "/public/mysites.xml",
       "headers": [
         {
           "key": "Content-Type",
