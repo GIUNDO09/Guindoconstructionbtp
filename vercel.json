@@ -39,12 +39,6 @@
         }
       ]
     }
-  ],
-  "rewrites": [
-    {
-      "source": "/gcbtp.xml",
-      "destination": "/gcbtp.xml"
-    }
   ]
 }
 
