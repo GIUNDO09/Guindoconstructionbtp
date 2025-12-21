@@ -6,8 +6,10 @@
     <title>GCBTP - Bureau d'Études Techniques | Ingénierie BTP Sénégal</title>
     
     <!-- SEO Meta Tags -->
-    <meta name="description" content="GCBTP - Bureau d'études techniques spécialisé dans la conception et le suivi de projets de construction au Sénégal. Ingénierie structure, lots techniques, VRD. Contactez-nous pour vos projets BTP.">
-    <meta name="keywords" content="GCBTP, bureau études techniques, ingénierie BTP, construction Sénégal, Mouhamed Guindo, structure bâtiment, lots techniques, VRD, Dakar, Kinshasa">
+    <meta name="description" content="GCBTP - Bureau d'études techniques spécialisé dans la conception et le suivi de projets de construction au Sénégal. Ingénierie structure (béton armé, métallique), lots techniques (électricité, plomberie, CVC), VRD. Contactez-nous pour vos projets BTP à Dakar.">
+    <meta name="keywords" content="GCBTP, bureau études techniques, ingénierie BTP, construction Sénégal, Mouhamed Guindo, structure bâtiment, béton armé, construction métallique, lots techniques, VRD, Dakar, bureau d'études Dakar, ingénierie structure Sénégal, études techniques BTP">
+    <meta name="theme-color" content="#1a5f7a">
+    <meta name="msapplication-TileColor" content="#1a5f7a">
     <meta name="author" content="GCBTP - Guindo Construction BTP">
     <meta name="robots" content="index, follow">
     <meta name="language" content="fr">
@@ -192,38 +194,73 @@ Rapport automatique quotidien GCBTP`);
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
-    <!-- Schema.org structured data -->
+    <!-- Schema.org structured data - Organization -->
     <script type="application/ld+json">
     {
         "@context": "https://schema.org",
-        "@type": "Organization",
+        "@type": ["Organization", "LocalBusiness", "EngineeringService"],
         "name": "GCBTP - Guindo Construction BTP",
         "alternateName": "GCBTP",
         "url": "https://giundo09.github.io/Guindo-construction/",
         "logo": "https://giundo09.github.io/Guindo-construction/Images/LOGO.jpg",
-        "description": "Bureau d'études techniques spécialisé dans la conception et le suivi de projets de construction au Sénégal",
+        "image": "https://giundo09.github.io/Guindo-construction/Images/LOGO.jpg",
+        "description": "Bureau d'études techniques spécialisé dans la conception et le suivi de projets de construction au Sénégal. Ingénierie structure, lots techniques, VRD.",
         "address": {
             "@type": "PostalAddress",
             "streetAddress": "Parcelle Unité 02, Villa 110",
             "addressLocality": "Dakar",
+            "addressRegion": "Dakar",
+            "postalCode": "",
             "addressCountry": "SN"
         },
-        "contactPoint": {
-            "@type": "ContactPoint",
-            "telephone": "+221-777935765",
-            "contactType": "customer service",
-            "availableLanguage": "French"
+        "geo": {
+            "@type": "GeoCoordinates",
+            "latitude": "14.6928",
+            "longitude": "-17.4467"
         },
+        "contactPoint": [
+            {
+                "@type": "ContactPoint",
+                "telephone": "+221-777935765",
+                "contactType": "customer service",
+                "availableLanguage": ["French"],
+                "areaServed": "SN"
+            },
+            {
+                "@type": "ContactPoint",
+                "email": "guindoconstruction@gmail.com",
+                "contactType": "customer service",
+                "availableLanguage": ["French"]
+            }
+        ],
         "email": "guindoconstruction@gmail.com",
+        "telephone": "+221-777935765",
         "foundingDate": "2010",
         "founder": {
             "@type": "Person",
-            "name": "Mouhamed Guindo"
+            "name": "Mouhamed Guindo",
+            "jobTitle": "Directeur Général - Ingénieur en Génie Civil"
         },
-        "serviceArea": {
+        "areaServed": {
             "@type": "Country",
             "name": "Sénégal"
         },
+        "priceRange": "$$",
+        "openingHoursSpecification": {
+            "@type": "OpeningHoursSpecification",
+            "dayOfWeek": [
+                "Monday",
+                "Tuesday",
+                "Wednesday",
+                "Thursday",
+                "Friday"
+            ],
+            "opens": "08:00",
+            "closes": "18:00"
+        },
+        "sameAs": [
+            "https://giundo09.github.io/Guindo-construction/"
+        ],
         "hasOfferCatalog": {
             "@type": "OfferCatalog",
             "name": "Services d'ingénierie BTP",
@@ -241,7 +278,7 @@ Rapport automatique quotidien GCBTP`);
                     "itemOffered": {
                         "@type": "Service",
                         "name": "Lots techniques",
-                        "description": "Électricité, plomberie, climatisation, ventilation"
+                        "description": "Électricité, plomberie, climatisation, ventilation, CVC"
                     }
                 },
                 {
@@ -249,7 +286,7 @@ Rapport automatique quotidien GCBTP`);
                     "itemOffered": {
                         "@type": "Service",
                         "name": "VRD",
-                        "description": "Voirie et réseaux divers"
+                        "description": "Voirie et réseaux divers, électrification et éclairage extérieur"
                     }
                 }
             ]
@@ -257,13 +294,20 @@ Rapport automatique quotidien GCBTP`);
     }
     </script>
     
-    <!-- Google Analytics -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=GA_MEASUREMENT_ID"></script>
-    <script>
-        window.dataLayer = window.dataLayer || [];
-        function gtag(){dataLayer.push(arguments);}
-        gtag('js', new Date());
-        gtag('config', 'GA_MEASUREMENT_ID');
+    <!-- Schema.org Breadcrumbs -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "Accueil",
+                "item": "https://giundo09.github.io/Guindo-construction/"
+            }
+        ]
+    }
     </script>
     
     <!-- Facebook Pixel -->
