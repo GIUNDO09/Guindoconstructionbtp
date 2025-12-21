@@ -113,5 +113,20 @@ AddDefaultCharset UTF-8
     AddType image/svg+xml .svg
     AddType application/font-woff .woff
     AddType application/font-woff2 .woff2
+    # Sitemap XML
+    AddType application/xml .xml
+    AddType text/xml .xml
 </IfModule>
+
+# Headers spécifiques pour sitemap.xml
+<FilesMatch "sitemap\.xml$">
+    Header set Content-Type "application/xml; charset=UTF-8"
+    Header set X-Content-Type-Options "nosniff"
+</FilesMatch>
+
+# S'assurer que sitemap.xml n'est pas compressé (certains outils ont du mal avec la compression)
+<FilesMatch "sitemap\.xml$">
+    SetEnv no-gzip 1
+    SetEnv no-vary 1
+</FilesMatch>
 
