@@ -2,8 +2,8 @@ User-agent: *
 Allow: /
 
 # Sitemap
-Sitemap: https://guindoconstructionbtp.vercel.app/sitemap.xml
-Sitemap: https://guindoconstructionbtp.vercel.app/gcbtp.xml
+Sitemap: https://guindoconstruction.xyz/sitemap.xml
+Sitemap: https://guindoconstruction.xyz/gcbtp.xml
 
 # Crawl-delay (optional, helps prevent server overload)
 Crawl-delay: 1
