@@ -118,23 +118,16 @@ AddDefaultCharset UTF-8
     AddType text/xml .xml
 </IfModule>
 
-# Headers spécifiques pour mysites.xml dans public/
-<FilesMatch "public/mysites\.xml$">
+# Headers spécifiques pour mysites.xml
+<FilesMatch "mysites\.xml$">
     Header set Content-Type "application/xml; charset=UTF-8"
     Header set X-Content-Type-Options "nosniff"
     Header set Access-Control-Allow-Origin "*"
 </FilesMatch>
 
 # S'assurer que mysites.xml n'est pas compressé (certains outils ont du mal avec la compression)
-<FilesMatch "public/mysites\.xml$">
+<FilesMatch "mysites\.xml$">
     SetEnv no-gzip 1
     SetEnv no-vary 1
 </FilesMatch>
-
-# Autoriser l'accès public au dossier public
-<Directory "public">
-    Options +Indexes
-    AllowOverride All
-    Require all granted
-</Directory>
 

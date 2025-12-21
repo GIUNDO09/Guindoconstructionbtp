@@ -2,7 +2,7 @@ User-agent: *
 Allow: /
 
 # Sitemap
-Sitemap: https://guindoconstruction.xyz/public/mysites.xml
+Sitemap: https://guindoconstruction.xyz/mysites.xml
 Sitemap: https://guindoconstruction.xyz/gcbtp.xml
 
 # Crawl-delay (optional, helps prevent server overload)
