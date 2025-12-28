@@ -1826,7 +1826,9 @@ ${nom}
             // Extract project type (more specific for Senegal market)
             if (lowerMessage.includes('villa') || lowerMessage.includes('maison individuelle')) {
                 userContext.projectType = 'villa';
-            } else if (lowerMessage.includes('immeuble') || lowerMessage.includes('appartement') || lowerMessage.includes('r+')) {
+            } else if (lowerMessage.includes('immeuble') || lowerMessage.includes('appartement') || 
+                      lowerMessage.includes('r+') || lowerMessage.includes('r +') || 
+                      lowerMessage.includes('plusieurs appartement') || lowerMessage.includes('plusieurs appartements')) {
                 userContext.projectType = 'immeuble';
             } else if (lowerMessage.includes('école') || lowerMessage.includes('ecole') || lowerMessage.includes('établissement scolaire')) {
                 userContext.projectType = 'ecole';
@@ -1840,10 +1842,17 @@ ${nom}
                 userContext.projectType = 'villa'; // Default to villa for residential
             }
             
-            // Extract surface area
-            const surfaceMatch = message.match(/(\d+)\s*(?:m²|m2|mètres? carrés?|mètres carrés)/i);
+            // Extract surface area - improved patterns
+            const surfaceMatch = message.match(/(\d+)\s*(?:m²|m2|mètres? carrés?|mètres carrés|m\s*au\s*sol|m\s*de\s*sol)/i);
             if (surfaceMatch) {
                 userContext.projectDetails.surface = parseInt(surfaceMatch[1]);
+            }
+            // Also check for "120m" or "120 m" patterns before "au sol"
+            if (!userContext.projectDetails.surface) {
+                const simpleSurfaceMatch = message.match(/(\d+)\s*m\s*(?:au\s*sol|de\s*sol|sol)/i);
+                if (simpleSurfaceMatch) {
+                    userContext.projectDetails.surface = parseInt(simpleSurfaceMatch[1]);
+                }
             }
             
             // Extract number of floors
@@ -1878,11 +1887,13 @@ ${nom}
                 if (budgetMatch) userContext.budget = budgetMatch[1];
             }
             
-            // Extract location (Senegal specific)
+            // Extract location (Senegal specific) - improved detection
             if (lowerMessage.includes('dakar') || lowerMessage.includes('capitale')) {
                 userContext.location = 'dakar';
+            } else if (lowerMessage.includes('thies') || lowerMessage.includes('thiès') || lowerMessage.includes('thies')) {
+                userContext.location = 'regions';
             } else if (lowerMessage.includes('région') || lowerMessage.includes('region') || lowerMessage.includes('intérieur') || 
-                      lowerMessage.includes('thies') || lowerMessage.includes('kaolack') || lowerMessage.includes('saint-louis') ||
+                      lowerMessage.includes('kaolack') || lowerMessage.includes('saint-louis') ||
                       lowerMessage.includes('ziguinchor') || lowerMessage.includes('tambacounda') || lowerMessage.includes('kolda') ||
                       lowerMessage.includes('matam') || lowerMessage.includes('louga') || lowerMessage.includes('fatick') ||
                       lowerMessage.includes('kédougou') || lowerMessage.includes('sédhiou') || lowerMessage.includes('diourbel')) {
@@ -1903,10 +1914,16 @@ ${nom}
                 project: ['projet', 'construction', 'bâtiment', 'maison', 'bureau', 'villa', 'immeuble', 'école', 'hôpital', 'entrepôt'],
                 team: ['équipe', 'ingénieur', 'mouhamed', 'amadou', 'bernard', 'directeur', 'technicien'],
                 experience: ['expérience', 'référence', 'projet réalisé', 'client', 'réalisations', 'portfolio'],
+                company: ['guindo', 'gcbpt', 'gcbtp', 'entreprise', 'société', 'compagnie', 'parle', 'parler', 'raconte', 'raconter', 'présente', 'présenter', 'qui êtes', 'qui etes', 'à propos', 'a propos'],
                 help: ['aide', 'help', 'comment', 'que faire', 'que puis-je', 'peux-tu', 'peut-on']
             };
             
-            // Check for estimation keywords first (higher priority)
+            // Check for company/about keywords first (higher priority)
+            if (intents.company.some(keyword => message.includes(keyword))) {
+                return 'company';
+            }
+            
+            // Check for estimation keywords (higher priority)
             if (intents.estimation.some(keyword => message.includes(keyword))) {
                 return 'estimation';
             }
@@ -1920,7 +1937,7 @@ ${nom}
             
             // Check other intents
             for (const [intent, keywords] of Object.entries(intents)) {
-                if (intent !== 'estimation' && keywords.some(keyword => message.includes(keyword))) {
+                if (intent !== 'estimation' && intent !== 'company' && keywords.some(keyword => message.includes(keyword))) {
                     return intent;
                 }
             }
@@ -2011,10 +2028,34 @@ ${nom}
         // Generate AI-powered response
         function generateAIResponse(message, intent, sentiment) {
             const context = userContext;
-            const history = conversationHistory.slice(-3); // Last 3 messages for context
+            const history = conversationHistory.slice(-5); // Last 5 messages for context
+            
+            // Check if user is repeating the same question
+            const lastUserMessage = history.filter(msg => msg.role === 'user').slice(-1)[0];
+            const lastBotMessage = history.filter(msg => msg.role === 'assistant').slice(-1)[0];
+            const isRepeating = lastUserMessage && lastBotMessage && 
+                               lastUserMessage.content.toLowerCase() === message.toLowerCase();
+            
+            // Company/About information
+            if (intent === 'company') {
+                return `🏢 **À PROPOS DE GUINDO CONSTRUCTION BTP (GCBTP)**\n\n` +
+                       `GCBTP est un **bureau d'études techniques** et une **entreprise de construction** spécialisée dans la conception, le suivi et la réalisation de projets de construction au Sénégal.\n\n` +
+                       `**Fondateur :** Mouhamed GUINDO - Ingénieur en Génie Civil\n\n` +
+                       `**Nos services :**\n` +
+                       `🏗️ Études de structure (Béton armé, métallique)\n` +
+                       `⚡ Lots techniques (Électricité, plomberie, CVC)\n` +
+                       `🛣️ VRD (Voirie et réseaux divers)\n` +
+                       `📋 Construction et rénovation\n\n` +
+                       `**Notre mission :** Une ingénierie responsable et une entreprise de construction attentive à la technicité et à l'optimisation de votre projet.\n\n` +
+                       `**Contact :** +221 777935765 | contact@guindoconstruction.xyz\n\n` +
+                       `Souhaitez-vous en savoir plus sur nos services ou nos réalisations ?`;
+            }
             
             // Personalized greeting
             if (intent === 'greeting') {
+                if (isRepeating && lastBotMessage) {
+                    return "Je suis toujours là pour vous aider ! 😊 Que souhaitez-vous savoir sur GCBTP ?";
+                }
                 if (context.name) {
                     return `Bonjour ${context.name} ! 👋 Ravi de vous revoir. Comment puis-je vous aider avec votre projet de construction aujourd'hui ?`;
                 }
@@ -2150,6 +2191,31 @@ ${nom}
             
             // Project consultation
             if (intent === 'project') {
+                // Check if user already provided project details
+                const hasProjectInfo = message.toLowerCase().includes('r+4') || 
+                                      message.toLowerCase().includes('immeuble') ||
+                                      message.toLowerCase().includes('villa') ||
+                                      message.toLowerCase().includes('appartement');
+                
+                if (hasProjectInfo && !context.projectDetails.surface) {
+                    // Extract project details from message
+                    extractUserContext(message);
+                    const updatedContext = userContext;
+                    
+                    if (updatedContext.projectDetails.surface) {
+                        return `Parfait ! Je comprends que vous envisagez un projet d'immeuble R+4. ` +
+                               `Pour vous donner une estimation précise, j'ai besoin de connaître la surface totale en m². ` +
+                               `Par exemple : "120 m² au sol" ou "surface totale de 500 m²".`;
+                    }
+                }
+                
+                // Check if repeating same question
+                if (isRepeating && lastBotMessage && lastBotMessage.content.includes('Décrivez-moi votre projet')) {
+                    return `Je vois que vous avez mentionné un projet d'immeuble R+4. ` +
+                           `Pour vous aider au mieux, pouvez-vous me donner plus de détails ? ` +
+                           `Par exemple : "immeuble R+4 de 120 m² au sol à Thiès, composé de plusieurs appartements".`;
+                }
+                
                 let response = "Excellent ! Je vais vous accompagner dans votre projet.\n\n";
                 
                 if (!context.projectType) {
@@ -2231,6 +2297,16 @@ ${nom}
                 return `Parfait ! ${context.projectDetails.surface} m² à ${context.location}. ` +
                        `Dernière question : quel niveau de finition souhaitez-vous ? ` +
                        `"Économique", "Standard", "Haut standing" ou "Luxe" ?`;
+            }
+            
+            // Check if user is repeating the same message
+            if (isRepeating && lastBotMessage) {
+                return `Je comprends que vous souhaitez plus d'informations. ` +
+                       `Pouvez-vous préciser votre demande ? Par exemple :\n` +
+                       `• "Je veux un devis pour un immeuble R+4"\n` +
+                       `• "Quels sont vos tarifs ?"\n` +
+                       `• "Parlez-moi de vos services"\n` +
+                       `• "Contactez-moi"`;
             }
             
             // Default intelligent response (less generic)
