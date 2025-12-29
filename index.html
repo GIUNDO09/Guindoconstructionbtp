@@ -1576,6 +1576,9 @@ ${nom}
             budget: null,
             location: null,
             interests: [],
+            wantsAppointment: false,
+            phone: null,
+            email: null,
             projectDetails: {
                 surface: null,
                 etages: null,
@@ -1817,10 +1820,28 @@ ${nom}
         function extractUserContext(message) {
             const lowerMessage = message.toLowerCase();
             
-            // Extract name
-            if (!userContext.name && (lowerMessage.includes('je m\'appelle') || lowerMessage.includes('mon nom est'))) {
-                const nameMatch = message.match(/(?:je m'appelle|mon nom est)\s+([a-zA-Z\s]+)/i);
-                if (nameMatch) userContext.name = nameMatch[1].trim();
+            // Extract name - improved patterns
+            if (!userContext.name) {
+                if (lowerMessage.includes('je m\'appelle') || lowerMessage.includes('mon nom est')) {
+                    const nameMatch = message.match(/(?:je m'appelle|mon nom est)\s+([a-zA-Z\s]+)/i);
+                    if (nameMatch) userContext.name = nameMatch[1].trim();
+                }
+            }
+            
+            // Extract phone number
+            if (!userContext.phone) {
+                const phoneMatch = message.match(/(?:\+221|221|77|78|76|70|75)\s*[\d\s\-\.]{8,}/);
+                if (phoneMatch) {
+                    userContext.phone = phoneMatch[0].replace(/\s/g, '');
+                }
+            }
+            
+            // Extract email
+            if (!userContext.email) {
+                const emailMatch = message.match(/([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/);
+                if (emailMatch) {
+                    userContext.email = emailMatch[1];
+                }
             }
             
             // Extract project type (more specific for Senegal market)
@@ -1910,7 +1931,8 @@ ${nom}
                 pricing: ['prix', 'coût', 'devis', 'tarif', 'combien', 'coûte', 'coûter'],
                 estimation: ['estimation', 'estimer', 'calculer', 'évaluer', 'évaluation', 'coût total', 'prix total', 'calcul', 'estime'],
                 services: ['service', 'prestation', 'étude', 'structure', 'technique', 'ingénierie', 'conception'],
-                contact: ['contact', 'téléphone', 'email', 'adresse', 'rendez-vous', 'appeler', 'joindre'],
+                contact: ['contact', 'téléphone', 'email', 'adresse', 'appeler', 'joindre'],
+                appointment: ['rendez-vous', 'rendez vous', 'rdv', 'planifier', 'planification', 'rencontrer', 'rencontre', 'visite'],
                 project: ['projet', 'construction', 'bâtiment', 'maison', 'bureau', 'villa', 'immeuble', 'école', 'hôpital', 'entrepôt'],
                 team: ['équipe', 'ingénieur', 'mouhamed', 'amadou', 'bernard', 'directeur', 'technicien'],
                 experience: ['expérience', 'référence', 'projet réalisé', 'client', 'réalisations', 'portfolio'],
@@ -1923,9 +1945,36 @@ ${nom}
                 return 'company';
             }
             
+            // Check for appointment keywords (higher priority)
+            if (intents.appointment.some(keyword => message.includes(keyword))) {
+                return 'appointment';
+            }
+            
             // Check for estimation keywords (higher priority)
             if (intents.estimation.some(keyword => message.includes(keyword))) {
                 return 'estimation';
+            }
+            
+            // Check for affirmative responses (oui, ok, d'accord) after contact question
+            const lowerMessage = message.toLowerCase().trim();
+            const affirmativeWords = ['oui', 'ok', 'd\'accord', 'daccord', 'parfait', 'bien', 'volontiers', 'avec plaisir', 'je souhaite', 'je veux', 'souhaite', 'veux'];
+            const isAffirmative = affirmativeWords.some(word => 
+                lowerMessage === word || 
+                lowerMessage.startsWith(word + ' ') || 
+                lowerMessage.includes(' ' + word + ' ') ||
+                lowerMessage.endsWith(' ' + word) ||
+                lowerMessage.includes('je souhaite') ||
+                lowerMessage.includes('je veux')
+            );
+            
+            if (isAffirmative) {
+                // Check last bot message to see if it was asking about appointment
+                const lastBotMsg = conversationHistory.filter(msg => msg.role === 'assistant').slice(-1)[0];
+                if (lastBotMsg && (lastBotMsg.content.includes('rendez-vous') || 
+                                   lastBotMsg.content.includes('planifier') ||
+                                   lastBotMsg.content.includes('Souhaitez-vous'))) {
+                    return 'appointment';
+                }
             }
             
             // Check for project-related keywords that might need estimation
@@ -1937,7 +1986,7 @@ ${nom}
             
             // Check other intents
             for (const [intent, keywords] of Object.entries(intents)) {
-                if (intent !== 'estimation' && intent !== 'company' && keywords.some(keyword => message.includes(keyword))) {
+                if (intent !== 'estimation' && intent !== 'company' && intent !== 'appointment' && keywords.some(keyword => message.includes(keyword))) {
                     return intent;
                 }
             }
@@ -2187,6 +2236,51 @@ ${nom}
                        `**Adresse :** Parcelle Unité 02, Villa 110, Dakar, Sénégal\n\n` +
                        `**Horaires :** Lun-Ven 9h-19h, Sam 9h-12h30\n\n` +
                        `Souhaitez-vous planifier un rendez-vous ?`;
+            }
+            
+            // Appointment/Meeting scheduling
+            if (intent === 'appointment') {
+                // Store appointment intent in context
+                userContext.wantsAppointment = true;
+                
+                // Check if user is repeating the same request
+                const lastBotMsg = conversationHistory.filter(msg => msg.role === 'assistant').slice(-1)[0];
+                const isRepeatingAppointment = lastBotMsg && 
+                    (lastBotMsg.content.includes('Planification de rendez-vous') || 
+                     lastBotMsg.content.includes('planifier votre rendez-vous'));
+                
+                if (isRepeatingAppointment) {
+                    return `Je comprends que vous souhaitez planifier un rendez-vous. ` +
+                           `Pour avancer, j'ai besoin de vos informations. ` +
+                           `Pouvez-vous me donner votre nom et votre numéro de téléphone ? ` +
+                           `Par exemple : "Je m'appelle [Votre nom], mon téléphone est [votre numéro]".`;
+                }
+                
+                // Check if we already have some user info
+                if (!userContext.name && !userContext.phone && !userContext.email) {
+                    return `📅 **Planification de rendez-vous**\n\n` +
+                           `Parfait ! Pour planifier votre rendez-vous, j'ai besoin de quelques informations :\n\n` +
+                           `❓ **Votre nom complet**\n` +
+                           `❓ **Votre numéro de téléphone**\n` +
+                           `❓ **Votre email** (optionnel)\n` +
+                           `❓ **Sujet du rendez-vous** (type de projet, consultation, etc.)\n` +
+                           `❓ **Date et heure souhaitées** (ex: "lundi prochain à 14h")\n\n` +
+                           `Vous pouvez me donner ces informations maintenant, ou je peux vous rediriger vers notre formulaire de contact. ` +
+                           `Que préférez-vous ?`;
+                } else {
+                    // We have some info, ask for missing details
+                    let response = `📅 **Planification de rendez-vous**\n\n`;
+                    response += `Merci ! Pour finaliser votre rendez-vous, j'ai besoin de :\n\n`;
+                    
+                    if (!userContext.name) response += `❓ Votre nom complet\n`;
+                    if (!userContext.phone) response += `❓ Votre numéro de téléphone\n`;
+                    if (!userContext.email) response += `❓ Votre email (optionnel)\n`;
+                    response += `❓ Sujet du rendez-vous\n`;
+                    response += `❓ Date et heure souhaitées\n\n`;
+                    response += `Une fois ces informations reçues, notre équipe vous contactera pour confirmer le rendez-vous.`;
+                    
+                    return response;
+                }
             }
             
             // Project consultation
