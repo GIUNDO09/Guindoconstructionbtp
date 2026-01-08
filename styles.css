@@ -383,6 +383,10 @@ body {
     }
     
     /* About Section */
+    .about {
+        padding: 40px 0;
+    }
+    
     .about-content {
         flex-direction: column;
         gap: 2rem;
@@ -394,6 +398,11 @@ body {
     
     .about-image {
         order: 1;
+    }
+    
+    .expertise-grid {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
     }
     
     /* Team Section */
@@ -548,13 +557,31 @@ body {
         padding: 1rem;
     }
     
+    .about {
+        padding: 30px 0;
+    }
+    
     .about-content {
         gap: 1.5rem;
+    }
+    
+    .expertise-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
     }
     
     .section-title {
         font-size: 1.6rem;
         margin-bottom: 1.2rem;
+    }
+    
+    .hero-container {
+        padding: 80px 12px 40px 12px;
+    }
+    
+    .services-grid,
+    .projects-grid {
+        gap: 1rem;
     }
 }
 
