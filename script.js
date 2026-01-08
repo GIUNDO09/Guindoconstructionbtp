@@ -352,7 +352,7 @@ document.addEventListener('DOMContentLoaded', function() {
             'VRD': [
                 'Conception de voirie et espaces publics',
                 'Éclairage public et signalisation',
-                'Réseaux d'assainissement et eaux pluviales',
+                'Réseaux d\'assainissement et eaux pluviales',
                 'Électrification extérieure',
                 'Aménagement paysager technique',
                 'Accessibilité PMR et normes'

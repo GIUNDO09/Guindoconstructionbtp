@@ -397,18 +397,37 @@ body {
     }
     
     /* Team Section */
+    .team {
+        padding: 40px 0;
+    }
+    
+    .team-intro {
+        max-width: 100%;
+        margin: 0 0 2rem 0;
+        padding: 0;
+    }
+    
+    .team-intro p {
+        font-size: 1rem;
+        text-align: left;
+        margin-bottom: 1.2rem;
+    }
+    
     .team-members {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: 1fr;
         gap: 1.5rem;
     }
     
     .team-member {
         flex-direction: column;
         text-align: center;
+        padding: 1.2rem;
     }
     
     .member-photo {
         margin-bottom: 1rem;
+        width: 150px;
+        height: 150px;
     }
     
     /* Forms */
@@ -500,6 +519,42 @@ body {
     .nav-logo img {
         width: 40px;
         height: 40px;
+    }
+    
+    .trust-logos {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .team {
+        padding: 30px 0;
+    }
+    
+    .team-intro {
+        margin: 0 0 1.5rem 0;
+    }
+    
+    .team-intro p {
+        font-size: 0.95rem;
+        text-align: left;
+    }
+    
+    .member-photo {
+        width: 120px;
+        height: 120px;
+    }
+    
+    .team-member {
+        padding: 1rem;
+    }
+    
+    .about-content {
+        gap: 1.5rem;
+    }
+    
+    .section-title {
+        font-size: 1.6rem;
+        margin-bottom: 1.2rem;
     }
 }
 
@@ -766,6 +821,13 @@ body {
     flex-direction: column;
     cursor: pointer;
     gap: 4px;
+    z-index: 1001;
+}
+
+@media (max-width: 768px) {
+    .hamburger {
+        display: flex;
+    }
 }
 
 .hamburger span {
@@ -1390,16 +1452,9 @@ body {
         grid-template-columns: 1fr;
     }
     
-        .trust-logos {
+    .trust-logos {
         grid-template-columns: repeat(2, 1fr);
         gap: 1.5rem;
-    }
-    
-    @media (max-width: 480px) {
-        .trust-logos {
-            grid-template-columns: 1fr;
-            gap: 1rem;
-        }
     }
 
     .about-content {
@@ -1427,9 +1482,20 @@ body {
     }
 
     .team-member {
-        grid-template-columns: 1fr;
+        flex-direction: column;
         text-align: center;
-        gap: 2rem;
+        padding: 1.2rem;
+    }
+    
+    .team-intro {
+        max-width: 100%;
+        margin: 0 0 2rem 0;
+        padding: 0;
+    }
+    
+    .team-intro p {
+        font-size: 1rem;
+        text-align: left;
     }
     
     .photo-placeholder {
@@ -1461,15 +1527,15 @@ body {
 
 @media (max-width: 480px) {
     .container {
-        padding: 0 15px;
+        padding: 0 12px;
     }
     
     .hero-content h1 {
-        font-size: 2rem;
+        font-size: 1.8rem;
     }
     
     .hero-content h2 {
-        font-size: 1.2rem;
+        font-size: 1.1rem;
     }
     
     .hero-placeholder {
@@ -1482,12 +1548,12 @@ body {
     }
     
     .service-card {
-        padding: 1.5rem;
+        padding: 1rem;
     }
     
     .btn {
-        padding: 10px 20px;
-        font-size: 0.8rem;
+        padding: 10px 16px;
+        font-size: 0.9rem;
     }
 }
 
