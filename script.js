@@ -675,9 +675,55 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Initialiser pour les descriptions des membres de l'équipe
+    // Afficher uniquement le premier paragraphe, cacher les autres
     const memberDescriptions = document.querySelectorAll('.member-description');
     memberDescriptions.forEach(function(desc) {
-        initReadMore(desc, 120);
+        const paragraphs = desc.querySelectorAll('p');
+        
+        // Si il y a plus d'un paragraphe
+        if (paragraphs.length > 1) {
+            // Cacher tous les paragraphes sauf le premier
+            for (let i = 1; i < paragraphs.length; i++) {
+                paragraphs[i].classList.add('hidden-paragraph');
+            }
+            
+            // Vérifier si un bouton existe déjà
+            const existingButton = desc.querySelector('.read-more-btn');
+            if (existingButton) {
+                return; // Déjà initialisé
+            }
+            
+            // Créer le bouton "Voir plus" après le premier paragraphe
+            const button = document.createElement('button');
+            button.className = 'read-more-btn';
+            button.innerHTML = 'Voir plus <i class="fas fa-chevron-down"></i>';
+            button.setAttribute('aria-label', 'Afficher plus de contenu');
+            button.setAttribute('type', 'button');
+            
+            // Insérer le bouton après le premier paragraphe
+            paragraphs[0].parentNode.insertBefore(button, paragraphs[1]);
+            
+            // Gérer le clic sur le bouton
+            button.addEventListener('click', function() {
+                const hiddenParagraphs = desc.querySelectorAll('p.hidden-paragraph');
+                
+                if (hiddenParagraphs.length > 0 && !hiddenParagraphs[0].classList.contains('show')) {
+                    // Afficher tous les paragraphes cachés
+                    hiddenParagraphs.forEach(function(p) {
+                        p.classList.add('show');
+                    });
+                    button.innerHTML = 'Voir moins <i class="fas fa-chevron-up"></i>';
+                    button.classList.add('expanded');
+                } else {
+                    // Cacher tous les paragraphes sauf le premier
+                    hiddenParagraphs.forEach(function(p) {
+                        p.classList.remove('show');
+                    });
+                    button.innerHTML = 'Voir plus <i class="fas fa-chevron-down"></i>';
+                    button.classList.remove('expanded');
+                }
+            });
+        }
     });
     
     // Initialiser pour l'intro de l'équipe
@@ -714,9 +760,23 @@ document.addEventListener('DOMContentLoaded', function() {
                 el.style.maxHeight = '';
             });
             
-            // Réinitialiser
+            // Réinitialiser les descriptions des membres
             memberDescriptions.forEach(function(desc) {
-                initReadMore(desc, 120);
+                const paragraphs = desc.querySelectorAll('p');
+                const button = desc.querySelector('.read-more-btn');
+                
+                if (paragraphs.length > 1) {
+                    // Cacher tous les paragraphes sauf le premier
+                    for (let i = 1; i < paragraphs.length; i++) {
+                        paragraphs[i].classList.add('hidden-paragraph');
+                        paragraphs[i].classList.remove('show');
+                    }
+                    
+                    if (button) {
+                        button.innerHTML = 'Voir plus <i class="fas fa-chevron-down"></i>';
+                        button.classList.remove('expanded');
+                    }
+                }
             });
             if (teamIntro) initReadMore(teamIntro, 150);
             if (aboutDescription) initReadMore(aboutDescription, 200);
