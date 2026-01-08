@@ -1880,9 +1880,10 @@ html {
     display: block;
 }
 
-.member-description .read-more-btn {
-    display: inline-block;
+.member-read-more-btn {
+    display: inline-block !important;
     margin-top: 0.5rem;
+    margin-bottom: 0.5rem;
     padding: 0.5rem 1rem;
     background: #2255cd;
     color: white;
@@ -1893,19 +1894,20 @@ html {
     font-weight: 500;
     transition: background 0.3s ease;
     text-align: center;
+    width: auto;
 }
 
-.member-description .read-more-btn:hover {
+.member-read-more-btn:hover {
     background: #1a5f7a;
 }
 
-.member-description .read-more-btn i {
+.member-read-more-btn i {
     margin-left: 0.5rem;
     transition: transform 0.3s ease;
     font-size: 0.75rem;
 }
 
-.member-description .read-more-btn.expanded i {
+.member-read-more-btn.expanded i {
     transform: rotate(180deg);
 }
 
