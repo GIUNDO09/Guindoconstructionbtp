@@ -1515,13 +1515,13 @@ html {
 
 /* Team Section */
 .team {
-    padding: 60px 0;
+    padding: 80px 0;
     background: #fff;
 }
 .team-intro {
     text-align: left;
-    max-width: 100%;
-    margin: 0 0 4rem 0;
+    max-width: 1000px;
+    margin: 0 auto 4rem auto;
     padding: 0;
     line-height: 1.8;
 }
@@ -1529,6 +1529,7 @@ html {
     margin-bottom: 1.5rem;
     font-size: 1.1rem;
     color: #555;
+    text-align: justify;
 }
 .team-members {
     display: grid;
