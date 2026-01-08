@@ -688,14 +688,14 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             
             // Vérifier si un bouton existe déjà
-            const existingButton = desc.querySelector('.read-more-btn');
+            const existingButton = desc.querySelector('.member-read-more-btn');
             if (existingButton) {
                 return; // Déjà initialisé
             }
             
             // Créer le bouton "Voir plus" après le premier paragraphe
             const button = document.createElement('button');
-            button.className = 'read-more-btn';
+            button.className = 'read-more-btn member-read-more-btn';
             button.innerHTML = 'Voir plus <i class="fas fa-chevron-down"></i>';
             button.setAttribute('aria-label', 'Afficher plus de contenu');
             button.setAttribute('type', 'button');
@@ -763,7 +763,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // Réinitialiser les descriptions des membres
             memberDescriptions.forEach(function(desc) {
                 const paragraphs = desc.querySelectorAll('p');
-                const button = desc.querySelector('.read-more-btn');
+                const button = desc.querySelector('.member-read-more-btn');
                 
                 if (paragraphs.length > 1) {
                     // Cacher tous les paragraphes sauf le premier
