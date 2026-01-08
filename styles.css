@@ -497,6 +497,71 @@ body {
         box-sizing: border-box;
     }
     
+    .member-description {
+        position: relative;
+    }
+    
+    .member-description.collapsed {
+        max-height: 150px;
+        overflow: hidden;
+    }
+    
+    .member-description.collapsed::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 60px;
+        background: linear-gradient(to bottom, transparent, #f8f9fa);
+        pointer-events: none;
+    }
+    
+    .read-more-btn {
+        display: block !important;
+        margin-top: 0.8rem;
+    }
+    
+    .team-intro {
+        position: relative;
+    }
+    
+    .team-intro.collapsed {
+        max-height: 200px;
+        overflow: hidden;
+    }
+    
+    .team-intro.collapsed::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 60px;
+        background: linear-gradient(to bottom, transparent, #fff);
+        pointer-events: none;
+    }
+    
+    .about-description {
+        position: relative;
+    }
+    
+    .about-description.collapsed {
+        max-height: 300px;
+        overflow: hidden;
+    }
+    
+    .about-description.collapsed::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 60px;
+        background: linear-gradient(to bottom, transparent, #f8f9fa);
+        pointer-events: none;
+    }
+    
     /* Forms */
     .devis-content,
     .carrieres-content {
@@ -1184,7 +1249,7 @@ body {
 
 /* Projects Section */
 .projects {
-    padding: 80px 0;
+    padding: 50px 0;
     background: #f8fafc;
 }
 
@@ -1254,7 +1319,7 @@ body {
 
 /* Stats Section */
 .stats {
-    padding: 80px 0;
+    padding: 50px 0;
     background: linear-gradient(135deg, #1a5f7a 0%, #2c88a8 100%);
     color: white;
 }
@@ -1280,14 +1345,14 @@ body {
 
 /* About Section */
 .about {
-    padding: 80px 0;
+    padding: 50px 0;
     background: #f8f9fa;
 }
 
 .about-content {
     display: flex;
     flex-direction: row;
-    gap: 48px;
+    gap: 32px;
     align-items: stretch;
 }
 .about-text {
@@ -1440,7 +1505,7 @@ body {
 
 /* Trust Section */
 .trust {
-    padding: 80px 0;
+    padding: 50px 0;
     background: white;
 }
 
@@ -1711,13 +1776,13 @@ html {
 
 /* Team Section */
 .team {
-    padding: 80px 0;
+    padding: 50px 0;
     background: #fff;
 }
 .team-intro {
     text-align: left;
     max-width: 1000px;
-    margin: 0 auto 4rem auto;
+    margin: 0 auto 2.5rem auto;
     padding: 0;
     line-height: 1.8;
 }
@@ -1730,7 +1795,7 @@ html {
 .team-members {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 2rem;
+    gap: 1.5rem;
 }
 .team-member {
     display: flex;
@@ -1800,6 +1865,76 @@ html {
     color: #555;
     font-size: 0.9rem;
     text-align: left;
+}
+
+/* Système "Voir plus" pour mobile */
+.read-more-container {
+    position: relative;
+}
+
+.read-more-content {
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+}
+
+.read-more-content.collapsed {
+    max-height: 150px;
+    position: relative;
+}
+
+.read-more-content.collapsed::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 60px;
+    background: linear-gradient(to bottom, transparent, #f8f9fa);
+    pointer-events: none;
+}
+
+.read-more-btn {
+    display: none;
+    margin-top: 1rem;
+    padding: 0.5rem 1rem;
+    background: #2255cd;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: background 0.3s ease;
+    text-align: center;
+    width: 100%;
+}
+
+.read-more-btn:hover {
+    background: #1a5f7a;
+}
+
+.read-more-btn i {
+    margin-left: 0.5rem;
+    transition: transform 0.3s ease;
+}
+
+.read-more-btn.expanded i {
+    transform: rotate(180deg);
+}
+
+/* Sur desktop, tout est visible */
+@media (min-width: 769px) {
+    .read-more-content.collapsed {
+        max-height: none;
+    }
+    
+    .read-more-content.collapsed::after {
+        display: none;
+    }
+    
+    .read-more-btn {
+        display: none !important;
+    }
 } 
 
 /* --- Carrières Section --- */
@@ -2212,7 +2347,7 @@ footer a:hover {
 /* Devis Section */
 .devis {
     background: #f8f9fa;
-    padding: 80px 0;
+    padding: 50px 0;
 }
 
 .devis-process-image {
