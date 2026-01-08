@@ -619,74 +619,83 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         
-        // Vérifier si le contenu dépasse la hauteur maximale
-        const originalHeight = element.scrollHeight;
-        if (originalHeight <= maxHeight) {
-            element.classList.remove('collapsed');
-            element.style.maxHeight = '';
-            return;
-        }
-        
-        // Vérifier si un bouton existe déjà
-        const existingButton = element.nextElementSibling;
-        if (existingButton && existingButton.classList.contains('read-more-btn')) {
-            return; // Déjà initialisé
-        }
-        
-        // Ajouter la classe collapsed
-        element.classList.add('collapsed');
-        element.style.maxHeight = maxHeight + 'px';
-        element.style.transition = 'max-height 0.3s ease';
-        
-        // Créer le bouton "Voir plus"
-        const button = document.createElement('button');
-        button.className = 'read-more-btn';
-        button.innerHTML = 'Voir plus <i class="fas fa-chevron-down"></i>';
-        button.setAttribute('aria-label', 'Afficher plus de contenu');
-        button.setAttribute('type', 'button');
-        
-        // Insérer le bouton après l'élément
-        element.parentNode.insertBefore(button, element.nextSibling);
-        
-        // Stocker la hauteur originale
-        element.dataset.originalHeight = originalHeight;
-        
-        // Gérer le clic sur le bouton
-        button.addEventListener('click', function() {
-            const storedHeight = parseInt(element.dataset.originalHeight) || originalHeight;
-            
-            if (element.classList.contains('collapsed')) {
-                // Afficher tout le contenu
+        // Attendre un peu pour que le DOM soit complètement rendu
+        setTimeout(function() {
+            // Vérifier si le contenu dépasse la hauteur maximale
+            const originalHeight = element.scrollHeight;
+            if (originalHeight <= maxHeight) {
                 element.classList.remove('collapsed');
-                element.style.maxHeight = storedHeight + 'px';
-                button.innerHTML = 'Voir moins <i class="fas fa-chevron-up"></i>';
-                button.classList.add('expanded');
-            } else {
-                // Réduire le contenu
-                element.classList.add('collapsed');
-                element.style.maxHeight = maxHeight + 'px';
-                button.innerHTML = 'Voir plus <i class="fas fa-chevron-down"></i>';
-                button.classList.remove('expanded');
+                element.style.maxHeight = '';
+                return;
             }
-        });
+            
+            // Vérifier si un bouton existe déjà
+            const existingButton = element.nextElementSibling;
+            if (existingButton && existingButton.classList.contains('read-more-btn')) {
+                return; // Déjà initialisé
+            }
+            
+            // Ajouter la classe collapsed
+            element.classList.add('collapsed');
+            element.style.maxHeight = maxHeight + 'px';
+            element.style.transition = 'max-height 0.3s ease';
+            
+            // Créer le bouton "Voir plus"
+            const button = document.createElement('button');
+            button.className = 'read-more-btn';
+            button.innerHTML = 'Voir plus <i class="fas fa-chevron-down"></i>';
+            button.setAttribute('aria-label', 'Afficher plus de contenu');
+            button.setAttribute('type', 'button');
+            
+            // Insérer le bouton après l'élément
+            element.parentNode.insertBefore(button, element.nextSibling);
+            
+            // Stocker la hauteur originale
+            element.dataset.originalHeight = originalHeight;
+            
+            // Gérer le clic sur le bouton
+            button.addEventListener('click', function() {
+                const storedHeight = parseInt(element.dataset.originalHeight) || originalHeight;
+                
+                if (element.classList.contains('collapsed')) {
+                    // Afficher tout le contenu
+                    element.classList.remove('collapsed');
+                    element.style.maxHeight = storedHeight + 'px';
+                    button.innerHTML = 'Voir moins <i class="fas fa-chevron-up"></i>';
+                    button.classList.add('expanded');
+                } else {
+                    // Réduire le contenu
+                    element.classList.add('collapsed');
+                    element.style.maxHeight = maxHeight + 'px';
+                    button.innerHTML = 'Voir plus <i class="fas fa-chevron-down"></i>';
+                    button.classList.remove('expanded');
+                }
+            });
+        }, 100);
     }
     
     // Initialiser pour les descriptions des membres de l'équipe
     const memberDescriptions = document.querySelectorAll('.member-description');
     memberDescriptions.forEach(function(desc) {
-        initReadMore(desc, 150);
+        initReadMore(desc, 120);
     });
     
     // Initialiser pour l'intro de l'équipe
     const teamIntro = document.querySelector('.team-intro');
     if (teamIntro) {
-        initReadMore(teamIntro, 200);
+        initReadMore(teamIntro, 150);
     }
     
     // Initialiser pour la description "Qui Sommes-Nous"
     const aboutDescription = document.querySelector('.about-description');
     if (aboutDescription) {
-        initReadMore(aboutDescription, 300);
+        initReadMore(aboutDescription, 200);
+    }
+    
+    // Initialiser pour toute la section about-text (contenu complet)
+    const aboutText = document.querySelector('.about-text');
+    if (aboutText) {
+        initReadMore(aboutText, 250);
     }
     
     // Réinitialiser lors du redimensionnement de la fenêtre
@@ -707,10 +716,11 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Réinitialiser
             memberDescriptions.forEach(function(desc) {
-                initReadMore(desc, 150);
+                initReadMore(desc, 120);
             });
-            if (teamIntro) initReadMore(teamIntro, 200);
-            if (aboutDescription) initReadMore(aboutDescription, 300);
+            if (teamIntro) initReadMore(teamIntro, 150);
+            if (aboutDescription) initReadMore(aboutDescription, 200);
+            if (aboutText) initReadMore(aboutText, 250);
         }, 250);
     });
 }); 
