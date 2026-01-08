@@ -502,7 +502,7 @@ body {
     }
     
     .member-description.collapsed {
-        max-height: 150px;
+        max-height: 120px;
         overflow: hidden;
     }
     
@@ -527,7 +527,7 @@ body {
     }
     
     .team-intro.collapsed {
-        max-height: 200px;
+        max-height: 150px;
         overflow: hidden;
     }
     
@@ -547,7 +547,7 @@ body {
     }
     
     .about-description.collapsed {
-        max-height: 300px;
+        max-height: 200px;
         overflow: hidden;
     }
     
@@ -560,6 +560,30 @@ body {
         height: 60px;
         background: linear-gradient(to bottom, transparent, #f8f9fa);
         pointer-events: none;
+    }
+    
+    .about-text {
+        position: relative;
+    }
+    
+    .about-text.collapsed {
+        max-height: 250px;
+        overflow: hidden;
+    }
+    
+    .about-text.collapsed::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 60px;
+        background: linear-gradient(to bottom, transparent, #f8f9fa);
+        pointer-events: none;
+    }
+    
+    .member-description.collapsed {
+        max-height: 120px;
     }
     
     /* Forms */
