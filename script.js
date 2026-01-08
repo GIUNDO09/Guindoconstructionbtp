@@ -612,31 +612,53 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Vérifier si on est sur mobile
         const isMobile = window.innerWidth <= 768;
-        if (!isMobile) return;
+        if (!isMobile) {
+            // Sur desktop, s'assurer que tout est visible
+            element.classList.remove('collapsed');
+            element.style.maxHeight = '';
+            return;
+        }
         
         // Vérifier si le contenu dépasse la hauteur maximale
         const originalHeight = element.scrollHeight;
-        if (originalHeight <= maxHeight) return;
+        if (originalHeight <= maxHeight) {
+            element.classList.remove('collapsed');
+            element.style.maxHeight = '';
+            return;
+        }
+        
+        // Vérifier si un bouton existe déjà
+        const existingButton = element.nextElementSibling;
+        if (existingButton && existingButton.classList.contains('read-more-btn')) {
+            return; // Déjà initialisé
+        }
         
         // Ajouter la classe collapsed
         element.classList.add('collapsed');
         element.style.maxHeight = maxHeight + 'px';
+        element.style.transition = 'max-height 0.3s ease';
         
         // Créer le bouton "Voir plus"
         const button = document.createElement('button');
         button.className = 'read-more-btn';
         button.innerHTML = 'Voir plus <i class="fas fa-chevron-down"></i>';
         button.setAttribute('aria-label', 'Afficher plus de contenu');
+        button.setAttribute('type', 'button');
         
         // Insérer le bouton après l'élément
         element.parentNode.insertBefore(button, element.nextSibling);
         
+        // Stocker la hauteur originale
+        element.dataset.originalHeight = originalHeight;
+        
         // Gérer le clic sur le bouton
         button.addEventListener('click', function() {
+            const storedHeight = parseInt(element.dataset.originalHeight) || originalHeight;
+            
             if (element.classList.contains('collapsed')) {
                 // Afficher tout le contenu
                 element.classList.remove('collapsed');
-                element.style.maxHeight = originalHeight + 'px';
+                element.style.maxHeight = storedHeight + 'px';
                 button.innerHTML = 'Voir moins <i class="fas fa-chevron-up"></i>';
                 button.classList.add('expanded');
             } else {
