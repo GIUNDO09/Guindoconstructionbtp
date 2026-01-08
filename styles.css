@@ -299,6 +299,7 @@ body {
     color: #333;
     overflow-x: hidden;
     width: 100%;
+    max-width: 100vw;
     margin: 0;
     padding: 0;
 }
@@ -385,58 +386,115 @@ body {
     /* About Section */
     .about {
         padding: 40px 0;
+        overflow-x: hidden;
     }
     
     .about-content {
         flex-direction: column;
         gap: 2rem;
+        width: 100%;
+        max-width: 100%;
     }
     
     .about-text {
         order: 2;
+        width: 100%;
+        max-width: 100%;
+        overflow-x: hidden;
     }
     
     .about-image {
         order: 1;
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+    }
+    
+    .about-image > div {
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
+    }
+    
+    .about-image img {
+        max-width: 100%;
+        height: auto;
+    }
+    
+    .about-description {
+        width: 100%;
+        max-width: 100%;
+        overflow-x: hidden;
+    }
+    
+    .about-description ul {
+        margin: 1rem 0 2rem 1rem;
+        padding-right: 0;
     }
     
     .expertise-grid {
         grid-template-columns: 1fr;
         gap: 1.5rem;
+        width: 100%;
+        max-width: 100%;
+    }
+    
+    .expertise-item {
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
     }
     
     /* Team Section */
     .team {
         padding: 40px 0;
+        overflow-x: hidden;
     }
     
     .team-intro {
         max-width: 100%;
+        width: 100%;
         margin: 0 0 2rem 0;
         padding: 0;
+        box-sizing: border-box;
+        overflow-x: hidden;
     }
     
     .team-intro p {
         font-size: 1rem;
         text-align: left;
         margin-bottom: 1.2rem;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
     }
     
     .team-members {
         grid-template-columns: 1fr;
         gap: 1.5rem;
+        width: 100%;
+        max-width: 100%;
     }
     
     .team-member {
         flex-direction: column;
         text-align: center;
         padding: 1.2rem;
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
     }
     
     .member-photo {
         margin-bottom: 1rem;
         width: 150px;
         height: 150px;
+        max-width: 100%;
+    }
+    
+    .member-info {
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
     }
     
     /* Forms */
@@ -559,15 +617,54 @@ body {
     
     .about {
         padding: 30px 0;
+        overflow-x: hidden;
     }
     
     .about-content {
         gap: 1.5rem;
+        width: 100%;
+        max-width: 100%;
+    }
+    
+    .about-text {
+        width: 100%;
+        max-width: 100%;
+    }
+    
+    .about-image {
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+    }
+    
+    .about-image > div {
+        width: 100%;
+        max-width: 100%;
+    }
+    
+    .about-image img {
+        max-width: 100%;
+        height: auto;
+    }
+    
+    .about-description ul {
+        margin-left: 0.5rem;
+        padding-right: 0.5rem;
     }
     
     .expertise-grid {
         grid-template-columns: 1fr;
         gap: 1rem;
+        width: 100%;
+        max-width: 100%;
+    }
+    
+    .team {
+        overflow-x: hidden;
+    }
+    
+    .team-intro {
+        padding: 0 0.5rem;
     }
     
     .section-title {
@@ -1211,6 +1308,8 @@ body {
 
 .about-description ul {
     margin: 1rem 0 2rem 2rem;
+    padding-right: 1rem;
+    box-sizing: border-box;
 }
 
 .about-description ul li {
@@ -1276,6 +1375,8 @@ body {
     display: flex;
     align-items: stretch;
     justify-content: stretch;
+    max-width: 100%;
+    box-sizing: border-box;
 }
 .about-image img {
     width: 100%;
@@ -1284,6 +1385,8 @@ body {
     border-radius: 16px;
     box-shadow: 0 4px 24px #0002;
     display: block;
+    max-width: 100%;
+    box-sizing: border-box;
 }
 
 .about-placeholder {
