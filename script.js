@@ -602,4 +602,93 @@ document.addEventListener('DOMContentLoaded', function () {
       magnifier.style.backgroundPosition = `${bgX}% ${bgY}%`;
     }
   });
+});
+
+// Système "Voir plus" / "Voir moins" pour mobile
+document.addEventListener('DOMContentLoaded', function() {
+    // Fonction pour initialiser le système "Voir plus" pour un élément
+    function initReadMore(element, maxHeight) {
+        if (!element) return;
+        
+        // Vérifier si on est sur mobile
+        const isMobile = window.innerWidth <= 768;
+        if (!isMobile) return;
+        
+        // Vérifier si le contenu dépasse la hauteur maximale
+        const originalHeight = element.scrollHeight;
+        if (originalHeight <= maxHeight) return;
+        
+        // Ajouter la classe collapsed
+        element.classList.add('collapsed');
+        element.style.maxHeight = maxHeight + 'px';
+        
+        // Créer le bouton "Voir plus"
+        const button = document.createElement('button');
+        button.className = 'read-more-btn';
+        button.innerHTML = 'Voir plus <i class="fas fa-chevron-down"></i>';
+        button.setAttribute('aria-label', 'Afficher plus de contenu');
+        
+        // Insérer le bouton après l'élément
+        element.parentNode.insertBefore(button, element.nextSibling);
+        
+        // Gérer le clic sur le bouton
+        button.addEventListener('click', function() {
+            if (element.classList.contains('collapsed')) {
+                // Afficher tout le contenu
+                element.classList.remove('collapsed');
+                element.style.maxHeight = originalHeight + 'px';
+                button.innerHTML = 'Voir moins <i class="fas fa-chevron-up"></i>';
+                button.classList.add('expanded');
+            } else {
+                // Réduire le contenu
+                element.classList.add('collapsed');
+                element.style.maxHeight = maxHeight + 'px';
+                button.innerHTML = 'Voir plus <i class="fas fa-chevron-down"></i>';
+                button.classList.remove('expanded');
+            }
+        });
+    }
+    
+    // Initialiser pour les descriptions des membres de l'équipe
+    const memberDescriptions = document.querySelectorAll('.member-description');
+    memberDescriptions.forEach(function(desc) {
+        initReadMore(desc, 150);
+    });
+    
+    // Initialiser pour l'intro de l'équipe
+    const teamIntro = document.querySelector('.team-intro');
+    if (teamIntro) {
+        initReadMore(teamIntro, 200);
+    }
+    
+    // Initialiser pour la description "Qui Sommes-Nous"
+    const aboutDescription = document.querySelector('.about-description');
+    if (aboutDescription) {
+        initReadMore(aboutDescription, 300);
+    }
+    
+    // Réinitialiser lors du redimensionnement de la fenêtre
+    let resizeTimer;
+    window.addEventListener('resize', function() {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(function() {
+            // Supprimer tous les boutons existants
+            document.querySelectorAll('.read-more-btn').forEach(function(btn) {
+                btn.remove();
+            });
+            
+            // Supprimer les classes collapsed
+            document.querySelectorAll('.collapsed').forEach(function(el) {
+                el.classList.remove('collapsed');
+                el.style.maxHeight = '';
+            });
+            
+            // Réinitialiser
+            memberDescriptions.forEach(function(desc) {
+                initReadMore(desc, 150);
+            });
+            if (teamIntro) initReadMore(teamIntro, 200);
+            if (aboutDescription) initReadMore(aboutDescription, 300);
+        }, 250);
+    });
 }); 
