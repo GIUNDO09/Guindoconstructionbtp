@@ -1,20 +1,20 @@
 const CACHE_NAME = 'gcbtp-v1.0.0';
 const urlsToCache = [
-    '/Guindo-construction/',
-    '/Guindo-construction/index.html',
-    '/Guindo-construction/contact.html',
-    '/Guindo-construction/styles.css',
-    '/Guindo-construction/script.js',
-    '/Guindo-construction/Images/LOGO.jpg',
-    '/Guindo-construction/Images/acceuil.png',
-    '/Guindo-construction/Images/bureau gcbtp.png',
-    '/Guindo-construction/Images/gcbtp1.png',
-    '/Guindo-construction/Images/Hotel1.png',
-    '/Guindo-construction/Images/Hotel2.png',
-    '/Guindo-construction/Images/Hotel3.png',
-    '/Guindo-construction/Images/Hotel4.png',
-    '/Guindo-construction/Images/Hotel5.png',
-    '/Guindo-construction/Images/Hotel6.png',
+    './',
+    './index.html',
+    './contact.html',
+    './styles.css',
+    './script.js',
+    './Images/LOGO.jpg',
+    './Images/acceuil.png',
+    './Images/bureau gcbtp.png',
+    './Images/gcbtp1.png',
+    './Images/Hotel1.png',
+    './Images/Hotel2.png',
+    './Images/Hotel3.png',
+    './Images/Hotel4.png',
+    './Images/Hotel5.png',
+    './Images/Hotel6.png',
     'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap',
     'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css'
 ];
@@ -25,7 +25,19 @@ self.addEventListener('install', function(event) {
         caches.open(CACHE_NAME)
             .then(function(cache) {
                 console.log('Cache ouvert');
-                return cache.addAll(urlsToCache);
+                // Utiliser addAll avec gestion d'erreur pour chaque URL
+                return Promise.allSettled(
+                    urlsToCache.map(function(url) {
+                        return cache.add(url).catch(function(err) {
+                            console.warn('Impossible de mettre en cache:', url, err);
+                            return null;
+                        });
+                    })
+                );
+            })
+            .then(function() {
+                // Forcer l'activation immédiate du nouveau service worker
+                return self.skipWaiting();
             })
     );
 });
@@ -82,8 +94,8 @@ self.addEventListener('fetch', function(event) {
 self.addEventListener('push', function(event) {
     const options = {
         body: event.data ? event.data.text() : 'Nouvelle notification de GCBTP',
-        icon: '/Guindo-construction/Images/LOGO.jpg',
-        badge: '/Guindo-construction/Images/LOGO.jpg',
+        icon: './Images/LOGO.jpg',
+        badge: './Images/LOGO.jpg',
         vibrate: [100, 50, 100],
         data: {
             dateOfArrival: Date.now(),
@@ -93,12 +105,12 @@ self.addEventListener('push', function(event) {
             {
                 action: 'explore',
                 title: 'Voir le site',
-                icon: '/Guindo-construction/Images/LOGO.jpg'
+                icon: './Images/LOGO.jpg'
             },
             {
                 action: 'close',
                 title: 'Fermer',
-                icon: '/Guindo-construction/Images/LOGO.jpg'
+                icon: './Images/LOGO.jpg'
             }
         ]
     };
@@ -114,7 +126,7 @@ self.addEventListener('notificationclick', function(event) {
 
     if (event.action === 'explore') {
         event.waitUntil(
-            clients.openWindow('/Guindo-construction/')
+            clients.openWindow('./')
         );
     }
 });
