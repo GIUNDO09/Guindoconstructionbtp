@@ -785,14 +785,16 @@ body {
     
     .nav-menu {
         display: none;
-        position: absolute;
-        top: 100%;
+        position: fixed;
+        top: 70px;
         left: 0;
         width: 100%;
         background: #fff;
         flex-direction: column;
         box-shadow: 0 4px 20px rgba(0,0,0,0.1);
         z-index: 999;
+        max-height: calc(100vh - 70px);
+        overflow-y: auto;
     }
     
     .nav-menu.active {
@@ -819,10 +821,15 @@ body {
     }
     
     .hamburger {
-        display: flex;
+        display: flex !important;
         flex-direction: column;
         cursor: pointer;
         padding: 8px;
+        z-index: 1001;
+        position: relative;
+        user-select: none;
+        -webkit-tap-highlight-color: transparent;
+        touch-action: manipulation;
     }
     
     .hamburger span {
@@ -832,6 +839,7 @@ body {
         margin: 3px 0;
         transition: 0.3s;
         border-radius: 2px;
+        display: block;
     }
     
     .hamburger.active span:nth-child(1) {
@@ -1016,11 +1024,14 @@ body {
     cursor: pointer;
     gap: 4px;
     z-index: 1001;
+    position: relative;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
 }
 
 @media (max-width: 768px) {
     .hamburger {
-        display: flex;
+        display: flex !important;
     }
 }
 
