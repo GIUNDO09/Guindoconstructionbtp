@@ -255,14 +255,14 @@ html {
     font-size: 0.9em;
 }
 
-/* Photo des membres de l'équipe */
+/* Photo des membres de l'équipe - classe utilisée dans le HTML */
 .member-photo-img {
-    width: 100%;
-    height: 100%;
+    width: 200px;
+    height: 200px;
     object-fit: cover;
     border-radius: 50%;
     transition: var(--transition);
-    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
 }
 
 .member-photo:hover .member-photo-img {
@@ -270,28 +270,7 @@ html {
     box-shadow: 0 8px 30px rgba(0,0,0,0.2);
 }
 
-.member-photo {
-    position: relative;
-    overflow: hidden;
-}
-
-.member-photo::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(135deg, rgba(34, 85, 205, 0.1), rgba(26, 95, 122, 0.1));
-    border-radius: 50%;
-    opacity: 0;
-    transition: var(--transition);
-    z-index: 1;
-}
-
-.member-photo:hover::before {
-    opacity: 1;
-}
+/* Styles pour les photos des membres - définis dans la section Team */
 
 body {
     font-family: 'Inter', sans-serif;
@@ -1422,14 +1401,23 @@ body {
     }
 
     .team-member {
-        grid-template-columns: 1fr;
-        text-align: center;
-        gap: 2rem;
+        padding: 2rem 1.5rem;
+        max-width: 100%;
+    }
+    
+    .member-photo {
+        width: 180px;
+        height: 180px;
+    }
+    
+    .member-photo img {
+        width: 180px;
+        height: 180px;
     }
     
     .photo-placeholder {
-        width: 200px;
-        height: 200px;
+        width: 180px;
+        height: 180px;
     }
     
     .photo-placeholder i {
@@ -1530,26 +1518,61 @@ html {
     gap: 4rem;
 }
 .team-member {
-    display: grid;
-    grid-template-columns: 300px 1fr;
-    gap: 3rem;
-    align-items: start;
-    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 3rem 2rem;
     background: #f8f9fa;
     border-radius: 15px;
     box-shadow: 0 5px 15px rgba(0,0,0,0.1);
     transition: transform 0.3s ease, box-shadow 0.3s ease;
+    max-width: 600px;
+    margin: 0 auto;
 }
 .team-member:hover {
     transform: translateY(-5px);
     box-shadow: 0 10px 25px rgba(0,0,0,0.15);
 }
 .member-photo {
+    position: relative;
     text-align: center;
+    margin-bottom: 2rem;
+    width: 200px;
+    height: 200px;
+    overflow: visible;
+}
+.member-photo img {
+    width: 200px;
+    height: 200px;
+    object-fit: cover;
+    border-radius: 50%;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    transition: var(--transition);
+}
+.member-photo::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(34, 85, 205, 0.1), rgba(26, 95, 122, 0.1));
+    border-radius: 50%;
+    opacity: 0;
+    transition: var(--transition);
+    z-index: 1;
+}
+.member-photo:hover::before {
+    opacity: 1;
+}
+.member-photo:hover img {
+    transform: scale(1.05);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.2);
 }
 .photo-placeholder {
-    width: 250px;
-    height: 250px;
+    width: 200px;
+    height: 200px;
     border-radius: 50%;
     background: linear-gradient(135deg, #2255cd, #4a90e2);
     display: flex;
@@ -1563,7 +1586,8 @@ html {
     color: white;
 }
 .member-info {
-    padding: 1rem 0;
+    padding: 0;
+    width: 100%;
 }
 .member-name {
     font-size: 2rem;
@@ -1578,6 +1602,10 @@ html {
     font-weight: 500;
     margin-bottom: 1.5rem;
     font-style: italic;
+}
+.member-description {
+    text-align: left;
+    max-width: 100%;
 }
 .member-description p {
     margin-bottom: 1rem;
