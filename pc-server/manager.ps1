@@ -8,6 +8,7 @@ Add-Type -AssemblyName System.Drawing
 
 # ---------- Config ----------
 $ScriptDir  = Split-Path -Parent $MyInvocation.MyCommand.Path
+$RepoRoot   = Split-Path -Parent $ScriptDir
 $ServerPort = 3000
 $TunnelMode = 'quick'     # 'quick' (trycloudflare) ou 'named'
 $TunnelName = 'gcbtp-files'   # utilisé uniquement si TunnelMode='named'
@@ -16,6 +17,23 @@ New-Item -ItemType Directory -Path $LogDir -Force | Out-Null
 $ServerLog  = Join-Path $LogDir 'server.log'
 $TunnelLog  = Join-Path $LogDir 'tunnel.log'
 $StateFile  = Join-Path $ScriptDir '.state.json'
+$EnvFile    = Join-Path $ScriptDir '.env'
+
+# Lecture du .env (simple)
+function Read-DotEnv($path) {
+  $dict = @{}
+  if (Test-Path $path) {
+    foreach ($line in Get-Content $path) {
+      if ($line -match '^\s*([A-Z_][A-Z0-9_]*)\s*=\s*(.*)\s*$') {
+        $dict[$Matches[1]] = $Matches[2].Trim('"').Trim("'")
+      }
+    }
+  }
+  return $dict
+}
+
+$script:lastPublishedUrl = $null
+$script:lastPublishStatus = ''
 
 # ---------- Helpers ----------
 function Test-PortOpen($port) {
@@ -53,13 +71,39 @@ function Save-State($serverPid, $tunnelPid) {
 }
 
 function Read-TunnelUrl {
+  if ($TunnelMode -eq 'named') {
+    return 'https://files.guindoconstruction.xyz'
+  }
   if (-not (Test-Path $TunnelLog)) { return $null }
   $content = Get-Content $TunnelLog -Raw -ErrorAction SilentlyContinue
   if (-not $content) { return $null }
-  # Recherche d'une URL https://*.trycloudflare.com ou https://files.guindoconstruction.xyz
   $m = [regex]::Match($content, 'https://[a-z0-9\-]+\.trycloudflare\.com')
   if ($m.Success) { return $m.Value }
   return $null
+}
+
+# Publie l'URL dans la table app_settings de Supabase (via la service_role key)
+function Publish-TunnelUrl($url) {
+  $envVars = Read-DotEnv $EnvFile
+  $supaUrl = $envVars['SUPABASE_URL']
+  $srKey   = $envVars['SUPABASE_SERVICE_ROLE_KEY']
+  if (-not $supaUrl -or -not $srKey) {
+    return 'skipped: SUPABASE_SERVICE_ROLE_KEY manquante dans .env'
+  }
+  $headers = @{
+    'apikey'        = $srKey
+    'Authorization' = "Bearer $srKey"
+    'Content-Type'  = 'application/json'
+    'Prefer'        = 'resolution=merge-duplicates'
+  }
+  $body = @{ key = 'file_server_url'; value = $url; updated_at = (Get-Date).ToUniversalTime().ToString('o') } | ConvertTo-Json
+  try {
+    Invoke-RestMethod -Uri "$supaUrl/rest/v1/app_settings" `
+      -Method Post -Headers $headers -Body $body -ErrorAction Stop | Out-Null
+    return 'ok'
+  } catch {
+    return "error: $($_.Exception.Message)"
+  }
 }
 
 # ---------- Actions ----------
@@ -115,7 +159,7 @@ function Stop-All  { Stop-Tunnel; Stop-Server }
 # ---------- UI ----------
 $form = New-Object Windows.Forms.Form
 $form.Text = 'GCBTP Manager'
-$form.Size = New-Object Drawing.Size(560, 460)
+$form.Size = New-Object Drawing.Size(560, 480)
 $form.StartPosition = 'CenterScreen'
 $form.BackColor = [Drawing.Color]::FromArgb(248, 249, 250)
 $form.FormBorderStyle = 'FixedSingle'
@@ -210,30 +254,29 @@ $form.Controls.Add($btnStop)
 
 # Actions secondaires
 $btnCopyUrl = New-Object Windows.Forms.Button
-$btnCopyUrl.Text = '📋 Copier l''URL du tunnel'
+$btnCopyUrl.Text = '📋 Copier l''URL'
 $btnCopyUrl.Location = New-Object Drawing.Point(20, 270)
-$btnCopyUrl.Size = New-Object Drawing.Size(250, 32)
+$btnCopyUrl.Size = New-Object Drawing.Size(163, 32)
 $btnCopyUrl.Font = New-Object Drawing.Font('Segoe UI', 9)
 $btnCopyUrl.Add_Click({
   if ($tunnelUrl.Text) {
     [Windows.Forms.Clipboard]::SetText($tunnelUrl.Text)
-    [Windows.Forms.MessageBox]::Show("URL copiée :`n$($tunnelUrl.Text)", 'OK') | Out-Null
   }
 })
 $form.Controls.Add($btnCopyUrl)
 
 $btnOpenSite = New-Object Windows.Forms.Button
-$btnOpenSite.Text = '🌐 Ouvrir le site équipe'
-$btnOpenSite.Location = New-Object Drawing.Point(280, 270)
-$btnOpenSite.Size = New-Object Drawing.Size(250, 32)
+$btnOpenSite.Text = '🌐 Site équipe'
+$btnOpenSite.Location = New-Object Drawing.Point(193, 270)
+$btnOpenSite.Size = New-Object Drawing.Size(163, 32)
 $btnOpenSite.Font = New-Object Drawing.Font('Segoe UI', 9)
 $btnOpenSite.Add_Click({ Start-Process 'https://www.guindoconstruction.xyz/equipe/' })
 $form.Controls.Add($btnOpenSite)
 
 $btnOpenFolder = New-Object Windows.Forms.Button
-$btnOpenFolder.Text = '📁 Ouvrir dossier fichiers'
-$btnOpenFolder.Location = New-Object Drawing.Point(20, 310)
-$btnOpenFolder.Size = New-Object Drawing.Size(250, 32)
+$btnOpenFolder.Text = '📁 Dossier fichiers'
+$btnOpenFolder.Location = New-Object Drawing.Point(366, 270)
+$btnOpenFolder.Size = New-Object Drawing.Size(164, 32)
 $btnOpenFolder.Font = New-Object Drawing.Font('Segoe UI', 9)
 $btnOpenFolder.Add_Click({
   $dir = 'C:\gcbtp-files'
@@ -241,20 +284,48 @@ $btnOpenFolder.Add_Click({
 })
 $form.Controls.Add($btnOpenFolder)
 
+$btnUpdate = New-Object Windows.Forms.Button
+$btnUpdate.Text = '🔄 Mettre à jour le code (git pull)'
+$btnUpdate.Location = New-Object Drawing.Point(20, 310)
+$btnUpdate.Size = New-Object Drawing.Size(336, 32)
+$btnUpdate.Font = New-Object Drawing.Font('Segoe UI', 9)
+$btnUpdate.Add_Click({
+  $btnUpdate.Enabled = $false
+  $btnUpdate.Text = 'Mise à jour…'
+  try {
+    $out = (& git -C $RepoRoot pull --ff-only 2>&1) | Out-String
+    [Windows.Forms.MessageBox]::Show($out.Trim(), 'git pull', 'OK', 'Information') | Out-Null
+  } catch {
+    [Windows.Forms.MessageBox]::Show($_.Exception.Message, 'Erreur', 'OK', 'Error') | Out-Null
+  }
+  $btnUpdate.Enabled = $true
+  $btnUpdate.Text = '🔄 Mettre à jour le code (git pull)'
+})
+$form.Controls.Add($btnUpdate)
+
 $btnOpenLogs = New-Object Windows.Forms.Button
-$btnOpenLogs.Text = '📄 Voir les logs'
-$btnOpenLogs.Location = New-Object Drawing.Point(280, 310)
-$btnOpenLogs.Size = New-Object Drawing.Size(250, 32)
+$btnOpenLogs.Text = '📄 Logs'
+$btnOpenLogs.Location = New-Object Drawing.Point(366, 310)
+$btnOpenLogs.Size = New-Object Drawing.Size(164, 32)
 $btnOpenLogs.Font = New-Object Drawing.Font('Segoe UI', 9)
 $btnOpenLogs.Add_Click({ Start-Process explorer.exe $LogDir })
 $form.Controls.Add($btnOpenLogs)
+
+# Label de statut de publication auto
+$pubStatus = New-Object Windows.Forms.Label
+$pubStatus.Text = ''
+$pubStatus.Font = New-Object Drawing.Font('Segoe UI', 8)
+$pubStatus.ForeColor = [Drawing.Color]::Gray
+$pubStatus.Location = New-Object Drawing.Point(20, 350)
+$pubStatus.Size = New-Object Drawing.Size(510, 18)
+$form.Controls.Add($pubStatus)
 
 # Footer
 $footer = New-Object Windows.Forms.Label
 $footer.Text = "Ferme cette fenêtre = tout continue de tourner en arrière-plan."
 $footer.Font = New-Object Drawing.Font('Segoe UI', 8)
 $footer.ForeColor = [Drawing.Color]::Gray
-$footer.Location = New-Object Drawing.Point(20, 360)
+$footer.Location = New-Object Drawing.Point(20, 380)
 $footer.Size = New-Object Drawing.Size(520, 20)
 $form.Controls.Add($footer)
 
@@ -281,6 +352,22 @@ function Update-UI {
       $tunnelStatus.Text = '🟢 En marche'
       $tunnelStatus.ForeColor = [Drawing.Color]::FromArgb(47, 158, 68)
       $tunnelUrl.Text = $url
+
+      # Auto-publish dans Supabase si l'URL a changé
+      if ($url -ne $script:lastPublishedUrl) {
+        $result = Publish-TunnelUrl $url
+        if ($result -eq 'ok') {
+          $script:lastPublishedUrl = $url
+          $pubStatus.Text = "✅ URL publiée auto dans Supabase à $(Get-Date -Format 'HH:mm:ss')"
+          $pubStatus.ForeColor = [Drawing.Color]::FromArgb(47, 158, 68)
+        } elseif ($result -like 'skipped:*') {
+          $pubStatus.Text = "⚠️  Auto-publish désactivé — ajoute SUPABASE_SERVICE_ROLE_KEY dans .env"
+          $pubStatus.ForeColor = [Drawing.Color]::FromArgb(245, 159, 0)
+        } else {
+          $pubStatus.Text = "❌ Erreur publish : $result"
+          $pubStatus.ForeColor = [Drawing.Color]::FromArgb(224, 49, 49)
+        }
+      }
     } else {
       $tunnelStatus.Text = '🟡 Démarrage…'
       $tunnelStatus.ForeColor = [Drawing.Color]::FromArgb(245, 159, 0)
@@ -290,6 +377,7 @@ function Update-UI {
     $tunnelStatus.Text = '🔴 Arrêté'
     $tunnelStatus.ForeColor = [Drawing.Color]::FromArgb(224, 49, 49)
     $tunnelUrl.Text = ''
+    $script:lastPublishedUrl = $null
   }
 }
 
