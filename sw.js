@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gcbtp-v1.0.0';
+const CACHE_NAME = 'gcbtp-v1.0.1';
 const urlsToCache = [
     './',
     './index.html',
@@ -16,7 +16,11 @@ const urlsToCache = [
     './Images/Hotel5.png',
     './Images/Hotel6.png',
     'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap',
-    'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css'
+    './vendor/fontawesome/css/all.min.css',
+    './vendor/fontawesome/webfonts/fa-solid-900.woff2',
+    './vendor/fontawesome/webfonts/fa-regular-400.woff2',
+    './vendor/fontawesome/webfonts/fa-brands-400.woff2',
+    './vendor/fontawesome/webfonts/fa-v4compatibility.woff2'
 ];
 
 // Installation du Service Worker

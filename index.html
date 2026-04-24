@@ -49,8 +49,7 @@
     <!-- Sitemap -->
     <link rel="sitemap" type="application/xml" href="https://guindoconstruction.xyz/mysites.xml">
     
-    <!-- Favicon -->
-    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <!-- Favicon (chemin relatif : /favicon.ico en file:// résout vers la racine du disque) -->
     <link rel="icon" type="image/jpeg" href="Images/LOGO.jpg">
     <link rel="shortcut icon" type="image/jpeg" href="Images/LOGO.jpg">
     <link rel="apple-touch-icon" href="Images/LOGO.jpg">
@@ -193,8 +192,17 @@ Rapport automatique quotidien GCBTP`);
         }, 3000);
     </script>
     
-    <!-- PWA Manifest -->
-    <link rel="manifest" href="manifest.json">
+    <!-- PWA Manifest : ignoré en file:// (origine null → CORS / fetch manifest bloqués) -->
+    <script>
+    (function () {
+        if (location.protocol === 'http:' || location.protocol === 'https:') {
+            var link = document.createElement('link');
+            link.rel = 'manifest';
+            link.href = 'manifest.json';
+            document.head.appendChild(link);
+        }
+    })();
+    </script>
     <meta name="theme-color" content="#2255cd">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -205,13 +213,12 @@ Rapport automatique quotidien GCBTP`);
     
     <!-- Preconnect for performance -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
     <link rel="dns-prefetch" href="https://api.web3forms.com">
     
     <!-- Stylesheets -->
     <link rel="stylesheet" href="styles.css?v=1.2">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="vendor/fontawesome/css/all.min.css">
     
     <!-- Schema.org structured data - Organization -->
     <script type="application/ld+json">
@@ -436,6 +443,23 @@ Rapport automatique quotidien GCBTP`);
     -->
 </head>
 <body>
+    <!-- Preloader -->
+    <div class="preloader" id="preloader">
+        <img src="Images/LOGO.jpg" alt="GCBTP" class="preloader-logo">
+        <div class="preloader-bar-container">
+            <div class="preloader-bar"></div>
+        </div>
+        <span class="preloader-text">Chargement...</span>
+    </div>
+
+    <!-- Scroll Progress Bar -->
+    <div class="scroll-progress" id="scrollProgress"></div>
+
+    <!-- Dark Mode Toggle -->
+    <button class="theme-toggle" id="themeToggle" aria-label="Changer le thème">
+        <i class="fas fa-moon"></i>
+    </button>
+
     <!-- Header -->
     <header class="header">
         <nav class="navbar">
@@ -475,6 +499,7 @@ Rapport automatique quotidien GCBTP`);
             <img src="Images/acceuil.png" alt="GUINDO CONSTRUCTION BTP Couverture">
             <div class="hero-overlay"></div>
         </div>
+        <div class="hero-particles" id="heroParticles"></div>
         <div class="hero-container">
             <div class="hero-content">
                 <h1>GUINDO CONSTRUCTION BTP</h1>
@@ -1066,15 +1091,15 @@ Rapport automatique quotidien GCBTP`);
         <div class="container">
             <div class="stats-grid">
                 <div class="stat-item">
-                    <h3>+15</h3>
+                    <h3><span class="stat-prefix">+</span><span class="counter" data-target="15">0</span></h3>
                     <p>Années d'expérience</p>
                 </div>
                 <div class="stat-item">
-                    <h3>+200</h3>
+                    <h3><span class="stat-prefix">+</span><span class="counter" data-target="200">0</span></h3>
                     <p>Projets Complets</p>
                 </div>
                 <div class="stat-item">
-                    <h3>+100</h3>
+                    <h3><span class="stat-prefix">+</span><span class="counter" data-target="100">0</span></h3>
                     <p>Clients Satisfaits</p>
                 </div>
             </div>
@@ -1113,6 +1138,165 @@ Rapport automatique quotidien GCBTP`);
             </div>
         </div>
     </section>
+
+    <!-- Témoignages Section -->
+    <section class="testimonials" id="testimonials">
+        <div class="container">
+            <h2 class="section-title">Ce Que Disent Nos Clients</h2>
+            <p class="section-subtitle">Des maîtres d'ouvrage qui nous font confiance depuis plus de 15 ans</p>
+            <div class="testimonials-grid">
+                <div class="testimonial-card">
+                    <div class="testimonial-stars" aria-label="Note : 5 sur 5">
+                        <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+                    </div>
+                    <p class="testimonial-text">"Une équipe sérieuse, des délais respectés et une qualité d'exécution irréprochable. GCBTP a piloté l'ensemble des lots techniques de notre hôtel à Cap Skirring du début à la livraison."</p>
+                    <div class="testimonial-author">
+                        <div class="testimonial-avatar"><i class="fas fa-user-tie"></i></div>
+                        <div>
+                            <strong>Moustapha Diop</strong>
+                            <span>Directeur, Hôtel Wassado — Cap Skirring</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="testimonial-card">
+                    <div class="testimonial-stars" aria-label="Note : 5 sur 5">
+                        <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+                    </div>
+                    <p class="testimonial-text">"Études techniques d'une grande rigueur et accompagnement sur tout le chantier. GCBTP nous a proposé des solutions béton armé optimisées qui nous ont fait économiser sur le budget global."</p>
+                    <div class="testimonial-author">
+                        <div class="testimonial-avatar"><i class="fas fa-user-tie"></i></div>
+                        <div>
+                            <strong>Aïssatou Ndiaye</strong>
+                            <span>Architecte DPLG, Dakar</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="testimonial-card">
+                    <div class="testimonial-stars" aria-label="Note : 5 sur 5">
+                        <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+                    </div>
+                    <p class="testimonial-text">"Rénovation complète de notre villa à Ouakam : plomberie, électricité, carrelage, peinture. Une seule équipe, un seul interlocuteur, aucun stress. Je recommande les yeux fermés."</p>
+                    <div class="testimonial-author">
+                        <div class="testimonial-avatar"><i class="fas fa-user-tie"></i></div>
+                        <div>
+                            <strong>Ibrahima Fall</strong>
+                            <span>Propriétaire, Ouakam</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ Section -->
+    <section class="faq" id="faq">
+        <div class="container">
+            <h2 class="section-title">Questions Fréquentes</h2>
+            <p class="section-subtitle">Tout ce que vous devez savoir avant de lancer votre projet</p>
+            <div class="faq-list">
+                <details class="faq-item">
+                    <summary>Combien de temps prend l'obtention d'un devis ?</summary>
+                    <p>Nous nous engageons à vous fournir un devis détaillé sous <strong>48 heures ouvrées</strong> après notre visite technique gratuite sur site. Pour les projets complexes, ce délai peut aller jusqu'à 5 jours.</p>
+                </details>
+                <details class="faq-item">
+                    <summary>Dans quelles zones intervenez-vous au Sénégal ?</summary>
+                    <p>Notre zone principale d'intervention couvre <strong>Dakar et toute sa banlieue</strong> (Rufisque, Guédiawaye, Pikine, Thiès). Pour les chantiers importants, nous intervenons également dans tout le Sénégal, notamment à Saint-Louis, Mbour, Ziguinchor et Cap Skirring.</p>
+                </details>
+                <details class="faq-item">
+                    <summary>Quels types de projets GCBTP réalise-t-elle ?</summary>
+                    <p>Nous couvrons l'ensemble de la chaîne BTP : <strong>études techniques</strong> (béton armé, structures métalliques), <strong>construction neuve</strong> (villas, immeubles, hôtels, bâtiments industriels), <strong>rénovation complète</strong>, <strong>VRD</strong>, ainsi que tous les <strong>lots techniques</strong> (électricité, plomberie, climatisation).</p>
+                </details>
+                <details class="faq-item">
+                    <summary>La visite technique est-elle vraiment gratuite ?</summary>
+                    <p>Oui, <strong>100% gratuite et sans engagement</strong>. Un de nos ingénieurs se déplace sur votre site, évalue vos besoins et vous conseille sur les meilleures options techniques avant même le devis.</p>
+                </details>
+                <details class="faq-item">
+                    <summary>Proposez-vous des facilités de paiement ?</summary>
+                    <p>Oui, nous proposons un <strong>échelonnement des paiements par phases de chantier</strong> (acompte, gros œuvre, second œuvre, livraison). Les modalités exactes sont définies dans le devis selon l'ampleur du projet.</p>
+                </details>
+                <details class="faq-item">
+                    <summary>Comment suivre l'avancement de mon chantier ?</summary>
+                    <p>Chaque client bénéficie d'un <strong>chef de projet dédié</strong> qui envoie un rapport hebdomadaire avec photos et vous reste joignable par WhatsApp. Vous pouvez également visiter le chantier à tout moment sur rendez-vous.</p>
+                </details>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Band -->
+    <section class="cta-band">
+        <div class="container">
+            <div class="cta-content">
+                <h2>Prêt à lancer votre projet ?</h2>
+                <p>Visite technique offerte · Devis sous 48h · Réponse garantie sous 24h</p>
+                <div class="cta-buttons">
+                    <a href="#devis" class="btn btn-primary cta-main-btn">
+                        <i class="fas fa-paper-plane"></i> Demander un devis gratuit
+                    </a>
+                    <a href="https://wa.me/221777935765?text=Bonjour%2C%20je%20souhaite%20obtenir%20un%20devis%20pour%20mon%20projet" target="_blank" rel="noopener" class="btn cta-wa-btn">
+                        <i class="fab fa-whatsapp"></i> WhatsApp direct
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Schema.org FAQPage structured data -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+            {
+                "@type": "Question",
+                "name": "Combien de temps prend l'obtention d'un devis ?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Nous nous engageons à vous fournir un devis détaillé sous 48 heures ouvrées après notre visite technique gratuite sur site. Pour les projets complexes, ce délai peut aller jusqu'à 5 jours."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "Dans quelles zones intervenez-vous au Sénégal ?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Notre zone principale d'intervention couvre Dakar et toute sa banlieue (Rufisque, Guédiawaye, Pikine, Thiès). Pour les chantiers importants, nous intervenons également dans tout le Sénégal, notamment à Saint-Louis, Mbour, Ziguinchor et Cap Skirring."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "Quels types de projets GCBTP réalise-t-elle ?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Nous couvrons l'ensemble de la chaîne BTP : études techniques (béton armé, structures métalliques), construction neuve (villas, immeubles, hôtels, bâtiments industriels), rénovation complète, VRD, ainsi que tous les lots techniques (électricité, plomberie, climatisation)."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "La visite technique est-elle vraiment gratuite ?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Oui, 100% gratuite et sans engagement. Un de nos ingénieurs se déplace sur votre site, évalue vos besoins et vous conseille sur les meilleures options techniques avant même le devis."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "Proposez-vous des facilités de paiement ?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Oui, nous proposons un échelonnement des paiements par phases de chantier (acompte, gros œuvre, second œuvre, livraison). Les modalités exactes sont définies dans le devis selon l'ampleur du projet."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "Comment suivre l'avancement de mon chantier ?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Chaque client bénéficie d'un chef de projet dédié qui envoie un rapport hebdomadaire avec photos et vous reste joignable par WhatsApp. Vous pouvez également visiter le chantier à tout moment sur rendez-vous."
+                }
+            }
+        ]
+    }
+    </script>
 
     <!-- Footer -->
     <footer class="footer">
@@ -1209,12 +1393,11 @@ Rapport automatique quotidien GCBTP`);
         </div>
     </div>
 
-    <script src="script.js"></script>
+    <script src="script.js?v=20260416b"></script>
     <script>
-        // Service Worker Registration
-        if ('serviceWorker' in navigator) {
+        // Service Worker : non supporté pour file:// (nécessite http/https, ex. serveur local)
+        if ('serviceWorker' in navigator && (location.protocol === 'http:' || location.protocol === 'https:')) {
             window.addEventListener('load', function() {
-                // Utiliser un chemin relatif pour éviter les erreurs 404
                 navigator.serviceWorker.register('./sw.js')
                     .then(function(registration) {
                         console.log('ServiceWorker registration successful');
@@ -2461,58 +2644,57 @@ ${nom}
     <style>
         .whatsapp-float {
             position: fixed;
-            bottom: 120px;
-            right: 20px;
-            z-index: 1000;
+            bottom: 95px;
+            right: 25px;
+            z-index: 999;
         }
-        
+
         .whatsapp-btn {
             display: flex;
             align-items: center;
+            justify-content: center;
+            width: 56px;
+            height: 56px;
             background: #25D366;
             color: white;
-            padding: 12px 16px;
-            border-radius: 50px;
+            border-radius: 50%;
             text-decoration: none;
-            box-shadow: 0 4px 12px rgba(37, 211, 102, 0.4);
+            box-shadow: 0 6px 22px rgba(0, 0, 0, 0.18);
             transition: all 0.3s ease;
-            animation: pulse 2s infinite;
         }
-        
+
+        .whatsapp-btn::before {
+            content: '';
+            position: absolute;
+            inset: -4px;
+            border-radius: 50%;
+            border: 2px solid rgba(37, 211, 102, 0.4);
+            animation: waPulse 2s ease-out infinite;
+        }
+
         .whatsapp-btn:hover {
             background: #128C7E;
-            transform: scale(1.05);
-            box-shadow: 0 6px 20px rgba(37, 211, 102, 0.6);
+            transform: scale(1.08);
+            box-shadow: 0 10px 28px rgba(0, 0, 0, 0.25);
         }
-        
+
         .whatsapp-btn i {
-            font-size: 24px;
-            margin-right: 8px;
+            font-size: 26px;
         }
-        
+
         .whatsapp-text {
-            font-weight: 600;
-            font-size: 14px;
+            display: none;
         }
-        
-        @keyframes pulse {
-            0% { box-shadow: 0 4px 12px rgba(37, 211, 102, 0.4); }
-            50% { box-shadow: 0 4px 20px rgba(37, 211, 102, 0.8); }
-            100% { box-shadow: 0 4px 12px rgba(37, 211, 102, 0.4); }
+
+        @keyframes waPulse {
+            0%   { transform: scale(1);   opacity: 0.7; }
+            100% { transform: scale(1.4); opacity: 0;   }
         }
-        
+
         @media (max-width: 768px) {
             .whatsapp-float {
-                bottom: 115px;
-                right: 15px;
-            }
-            
-            .whatsapp-btn {
-                padding: 10px 12px;
-            }
-            
-            .whatsapp-text {
-                display: none;
+                bottom: 90px;
+                right: 18px;
             }
         }
     </style>
