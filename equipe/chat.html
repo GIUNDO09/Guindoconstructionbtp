@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chat équipe — GCBTP</title>
+<link rel="icon" href="../favicon.ico">
+<link rel="stylesheet" href="css/equipe.css?v=4">
+</head>
+<body class="app-body">
+
+<header class="app-header">
+  <a href="../index.html" class="brand">
+    <img src="../Images/LOGO-1.png" alt="GCBTP">
+    <span>Espace équipe</span>
+  </a>
+  <nav class="app-nav">
+    <a href="dashboard.html" class="nav-pill">Tâches</a>
+    <a href="chat.html" class="nav-pill nav-pill-active">Chat</a>
+  </nav>
+  <div class="app-user">
+    <span id="userName">…</span>
+    <button id="logoutBtn" class="btn-ghost">Déconnexion</button>
+  </div>
+</header>
+
+<main class="chat-main">
+
+  <section class="chat-panel">
+    <div class="chat-header">
+      <h2>💬 Canal général</h2>
+      <p class="chat-sub">Discussion en temps réel avec toute l'équipe</p>
+    </div>
+
+    <div id="messagesList" class="messages-list"></div>
+
+    <form id="chatForm" class="chat-form" action="javascript:void(0);">
+      <textarea id="chatInput" placeholder="Écris un message… (Entrée pour envoyer, Maj+Entrée pour une nouvelle ligne)" rows="1" maxlength="2000" required></textarea>
+      <button type="submit" class="btn-primary">Envoyer</button>
+    </form>
+  </section>
+
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabase.js?v=4"></script>
+<script src="js/auth.js?v=4"></script>
+<script src="js/chat.js?v=4"></script>
+</body>
+</html>

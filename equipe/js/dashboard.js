@@ -15,8 +15,11 @@ const PRIORITY_LABEL = {
 let state = {
   me: null,
   profiles: [],
+  profilesById: {},
   tasks: [],
-  filters: { assignee: 'all', status: 'all' }
+  filters: { assignee: 'all', status: 'all' },
+  openTaskId: null,
+  commentsChannel: null
 };
 
 // ---------- Init ----------
@@ -49,6 +52,7 @@ async function loadProfiles() {
   const { data, error } = await sb.from('profiles').select('*').order('full_name');
   if (error) { console.error(error); return; }
   state.profiles = data || [];
+  state.profilesById = Object.fromEntries(state.profiles.map(p => [p.id, p]));
 }
 async function loadTasks() {
   const { data, error } = await sb
@@ -129,7 +133,7 @@ function renderTasks() {
     return `
       <article class="task-card" data-id="${t.id}">
         <div class="task-head">
-          <h3 class="task-title">${escapeHtml(t.title)}</h3>
+          <h3 class="task-title task-open" data-id="${t.id}">${escapeHtml(t.title)}</h3>
           <span class="badge ${pr.cls}">${pr.label}</span>
         </div>
         ${t.description ? `<p class="task-desc">${escapeHtml(t.description)}</p>` : ''}
@@ -144,6 +148,7 @@ function renderTasks() {
             <option value="in_progress" ${t.status==='in_progress'?'selected':''}>En cours</option>
             <option value="done" ${t.status==='done'?'selected':''}>Terminée</option>
           </select>
+          <button class="btn-ghost btn-comment" data-id="${t.id}">💬 Discussion</button>
           <button class="btn-ghost btn-edit" data-id="${t.id}">Modifier</button>
           ${state.me?.role === 'admin' ? `<button class="btn-ghost btn-danger btn-delete" data-id="${t.id}">Supprimer</button>` : ''}
         </div>
@@ -173,18 +178,26 @@ function bindUI() {
     if (error) alert('Erreur: ' + error.message);
   });
 
-  // Modifier / supprimer
+  // Modifier / supprimer / ouvrir détail
   document.getElementById('tasksList').addEventListener('click', async (e) => {
-    const editBtn = e.target.closest('.btn-edit');
-    const delBtn  = e.target.closest('.btn-delete');
+    const editBtn    = e.target.closest('.btn-edit');
+    const delBtn     = e.target.closest('.btn-delete');
+    const commentBtn = e.target.closest('.btn-comment');
+    const titleBtn   = e.target.closest('.task-open');
     if (editBtn) {
       const task = state.tasks.find(t => t.id === editBtn.dataset.id);
       openTaskModal(task);
+      return;
     }
     if (delBtn) {
       if (!confirm('Supprimer cette tâche ?')) return;
       const { error } = await sb.from('tasks').delete().eq('id', delBtn.dataset.id);
       if (error) alert('Erreur: ' + error.message);
+      return;
+    }
+    if (commentBtn || titleBtn) {
+      const id = (commentBtn || titleBtn).dataset.id;
+      openTaskDetail(id);
     }
   });
 
@@ -192,14 +205,147 @@ function bindUI() {
   document.getElementById('modalCancel').addEventListener('click', closeTaskModal);
   document.getElementById('taskForm').addEventListener('submit', onTaskSubmit);
 
+  // Modal détail tâche
+  document.getElementById('detailClose').addEventListener('click', closeTaskDetail);
+  document.getElementById('taskDetailModal').addEventListener('click', (e) => {
+    if (e.target.id === 'taskDetailModal') closeTaskDetail();
+  });
+  document.getElementById('commentForm').addEventListener('submit', onCommentSubmit);
+  document.getElementById('commentInput').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      document.getElementById('commentForm').requestSubmit();
+    }
+  });
+  document.getElementById('commentsList').addEventListener('click', async (e) => {
+    const btn = e.target.closest('.comment-delete');
+    if (!btn) return;
+    if (!confirm('Supprimer ce commentaire ?')) return;
+    const { error } = await sb.from('task_comments').delete().eq('id', btn.dataset.id);
+    if (error) alert('Erreur: ' + error.message);
+  });
+
   // Clic sur l'overlay (hors du contenu) ferme la modal
   document.getElementById('taskModal').addEventListener('click', (e) => {
     if (e.target.id === 'taskModal') closeTaskModal();
   });
-  // Touche Échap ferme la modal
+  // Touche Échap ferme toute modal ouverte
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') closeTaskModal();
+    if (e.key === 'Escape') {
+      closeTaskModal();
+      closeTaskDetail();
+    }
   });
+}
+
+// ---------- Détail tâche + commentaires ----------
+async function openTaskDetail(taskId) {
+  const task = state.tasks.find(t => t.id === taskId);
+  if (!task) return;
+  state.openTaskId = taskId;
+
+  const assignee = state.profilesById[task.assignee_id];
+  const due = task.due_date ? new Date(task.due_date).toLocaleDateString('fr-FR') : '—';
+  const st = STATUS_LABEL[task.status];
+  const pr = PRIORITY_LABEL[task.priority];
+
+  document.getElementById('taskDetailHead').innerHTML = `
+    <div class="detail-head">
+      <h3>${escapeHtml(task.title)}</h3>
+      <div class="detail-chips">
+        <span class="badge ${pr.cls}">${pr.label}</span>
+        <span class="chip ${st.cls}">${st.label}</span>
+        ${task.project ? `<span class="chip">🏗️ ${escapeHtml(task.project)}</span>` : ''}
+        <span class="chip">👤 ${escapeHtml(assignee?.full_name || 'Non assignée')}</span>
+        <span class="chip">📅 ${due}</span>
+      </div>
+      ${task.description ? `<p class="detail-desc">${escapeHtml(task.description)}</p>` : ''}
+    </div>`;
+
+  const modal = document.getElementById('taskDetailModal');
+  modal.removeAttribute('hidden');
+  modal.style.display = 'flex';
+
+  await loadComments(taskId);
+
+  // Realtime sur task_comments pour cette tâche
+  if (state.commentsChannel) await state.commentsChannel.unsubscribe();
+  state.commentsChannel = sb.channel(`comments-${taskId}`)
+    .on('postgres_changes',
+      { event: 'INSERT', schema: 'public', table: 'task_comments', filter: `task_id=eq.${taskId}` },
+      (payload) => appendComment(payload.new, true)
+    )
+    .on('postgres_changes',
+      { event: 'DELETE', schema: 'public', table: 'task_comments', filter: `task_id=eq.${taskId}` },
+      (payload) => {
+        const el = document.querySelector(`[data-comment-id="${payload.old.id}"]`);
+        if (el) el.remove();
+      }
+    )
+    .subscribe();
+}
+
+async function closeTaskDetail() {
+  const modal = document.getElementById('taskDetailModal');
+  modal.style.display = 'none';
+  modal.setAttribute('hidden', '');
+  state.openTaskId = null;
+  if (state.commentsChannel) { await state.commentsChannel.unsubscribe(); state.commentsChannel = null; }
+}
+
+async function loadComments(taskId) {
+  const list = document.getElementById('commentsList');
+  list.innerHTML = '<p class="empty">Chargement…</p>';
+  const { data, error } = await sb
+    .from('task_comments')
+    .select('*')
+    .eq('task_id', taskId)
+    .order('created_at', { ascending: true });
+  if (error) { list.innerHTML = '<p class="empty">Erreur de chargement.</p>'; return; }
+  list.innerHTML = '';
+  if (!data || data.length === 0) {
+    list.innerHTML = '<p class="empty">Aucun commentaire pour le moment. Sois le premier à en ajouter.</p>';
+    return;
+  }
+  data.forEach(c => appendComment(c, false));
+}
+
+function appendComment(c, animate) {
+  const list = document.getElementById('commentsList');
+  // Retirer l'éventuel message vide
+  const empty = list.querySelector('.empty');
+  if (empty) empty.remove();
+  // Éviter les doublons
+  if (list.querySelector(`[data-comment-id="${c.id}"]`)) return;
+  const author = state.profilesById[c.user_id]?.full_name || 'Inconnu';
+  const mine = c.user_id === state.me?.id;
+  const when = new Date(c.created_at).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+  const div = document.createElement('div');
+  div.className = `comment ${mine ? 'comment-mine' : ''} ${animate ? 'comment-new' : ''}`;
+  div.dataset.commentId = c.id;
+  div.innerHTML = `
+    <div class="comment-head">
+      <span class="comment-author">${escapeHtml(author)}</span>
+      <span class="comment-time">${when}</span>
+      ${mine ? `<button class="comment-delete" data-id="${c.id}" title="Supprimer">×</button>` : ''}
+    </div>
+    <div class="comment-content">${escapeHtml(c.content).replace(/\n/g, '<br>')}</div>`;
+  list.appendChild(div);
+  list.scrollTop = list.scrollHeight;
+}
+
+async function onCommentSubmit(e) {
+  e.preventDefault();
+  const input = document.getElementById('commentInput');
+  const content = input.value.trim();
+  if (!content || !state.openTaskId || !state.me) return;
+  input.value = '';
+  const { error } = await sb.from('task_comments').insert({
+    task_id: state.openTaskId,
+    user_id: state.me.id,
+    content
+  });
+  if (error) alert('Erreur: ' + error.message);
 }
 
 // ---------- Modal tâche ----------
