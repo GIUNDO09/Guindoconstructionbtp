@@ -1,3 +1,4 @@
+(() => {
 const { sb, requireAuth, logout, currentProfile } = window.gcbtp;
 
 const STATUS_LABEL = {
@@ -239,3 +240,4 @@ function escapeHtml(s) {
   return String(s ?? '').replace(/[&<>"']/g, c =>
     ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
 }
+})();
