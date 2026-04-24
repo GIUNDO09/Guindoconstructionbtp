@@ -24,6 +24,10 @@ let state = {
   const session = await requireAuth();
   if (!session) return;
 
+  // Attacher les handlers UI IMMÉDIATEMENT pour éviter les submits en GET
+  // si l'utilisateur est plus rapide que les requêtes réseau
+  bindUI();
+
   state.me = await currentProfile();
   document.getElementById('userName').textContent = state.me?.full_name || session.user.email;
   if (state.me?.role === 'admin') document.getElementById('newTaskBtn').hidden = false;
@@ -38,8 +42,6 @@ let state = {
       renderAll();
     })
     .subscribe();
-
-  bindUI();
 })();
 
 // ---------- Data ----------
