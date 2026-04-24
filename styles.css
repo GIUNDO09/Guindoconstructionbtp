@@ -3695,3 +3695,30 @@ footer a:hover {
         max-height: calc(100vh - 200px);
     }
 } 
+/* =============================================
+   Bouton Espace équipe (nav)
+   ============================================= */
+.btn-espace-equipe {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 18px;
+    background: linear-gradient(135deg, #e87722 0%, #c05e15 100%);
+    color: #fff !important;
+    font-weight: 600;
+    font-size: 14px;
+    text-decoration: none;
+    border-radius: 6px;
+    transition: transform .15s, box-shadow .15s;
+    box-shadow: 0 2px 6px rgba(232, 119, 34, .35);
+    white-space: nowrap;
+}
+.btn-espace-equipe:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(232, 119, 34, .5);
+}
+.btn-espace-equipe i { font-size: 13px; }
+@media (max-width: 900px) {
+    .btn-espace-equipe span { display: none; }
+    .btn-espace-equipe { padding: 9px 12px; }
+}

@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard — Espace équipe GCBTP</title>
+<link rel="icon" href="../favicon.ico">
+<link rel="stylesheet" href="css/equipe.css">
+</head>
+<body class="app-body">
+
+<header class="app-header">
+  <a href="../index.html" class="brand">
+    <img src="../Images/LOGO-1.png" alt="GCBTP">
+    <span>Espace équipe</span>
+  </a>
+  <div class="app-user">
+    <span id="userName">…</span>
+    <button id="logoutBtn" class="btn-ghost">Déconnexion</button>
+  </div>
+</header>
+
+<main class="app-main">
+
+  <section class="stats">
+    <div class="stat-card">
+      <span class="stat-label">Total</span>
+      <span class="stat-value" id="statTotal">0</span>
+    </div>
+    <div class="stat-card stat-todo">
+      <span class="stat-label">À faire</span>
+      <span class="stat-value" id="statTodo">0</span>
+    </div>
+    <div class="stat-card stat-progress">
+      <span class="stat-label">En cours</span>
+      <span class="stat-value" id="statProg">0</span>
+    </div>
+    <div class="stat-card stat-done">
+      <span class="stat-label">Terminées</span>
+      <span class="stat-value" id="statDone">0</span>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>Progression de l'équipe</h2>
+    <div id="teamProgress" class="team-progress"></div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head">
+      <h2>Tâches</h2>
+      <div class="toolbar">
+        <select id="filterAssignee" class="select">
+          <option value="all">Tous les membres</option>
+        </select>
+        <select id="filterStatus" class="select">
+          <option value="all">Tous les statuts</option>
+          <option value="todo">À faire</option>
+          <option value="in_progress">En cours</option>
+          <option value="done">Terminées</option>
+        </select>
+        <button id="newTaskBtn" class="btn-primary" hidden>+ Nouvelle tâche</button>
+      </div>
+    </div>
+    <div id="tasksList" class="tasks-list"></div>
+  </section>
+
+</main>
+
+<!-- Modal nouvelle/édition tâche -->
+<div id="taskModal" class="modal" hidden>
+  <div class="modal-content">
+    <h3 id="modalTitle">Nouvelle tâche</h3>
+    <form id="taskForm" class="task-form">
+      <label>
+        <span>Titre *</span>
+        <input name="title" type="text" required maxlength="200">
+      </label>
+      <label>
+        <span>Description</span>
+        <textarea name="description" rows="3"></textarea>
+      </label>
+      <div class="form-row">
+        <label>
+          <span>Chantier / Projet</span>
+          <input name="project" type="text" placeholder="Ex: Hôtel Wassado">
+        </label>
+        <label>
+          <span>Échéance</span>
+          <input name="due_date" type="date">
+        </label>
+      </div>
+      <div class="form-row">
+        <label>
+          <span>Assignée à</span>
+          <select name="assignee_id"></select>
+        </label>
+        <label>
+          <span>Priorité</span>
+          <select name="priority">
+            <option value="low">Basse</option>
+            <option value="medium" selected>Moyenne</option>
+            <option value="high">Haute</option>
+          </select>
+        </label>
+        <label>
+          <span>Statut</span>
+          <select name="status">
+            <option value="todo">À faire</option>
+            <option value="in_progress">En cours</option>
+            <option value="done">Terminée</option>
+          </select>
+        </label>
+      </div>
+      <div class="modal-actions">
+        <button type="button" id="modalCancel" class="btn-ghost">Annuler</button>
+        <button type="submit" class="btn-primary">Enregistrer</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabase.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/dashboard.js"></script>
+</body>
+</html>

@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Espace équipe — GCBTP</title>
+<link rel="icon" href="../favicon.ico">
+<link rel="stylesheet" href="css/equipe.css">
+</head>
+<body class="auth-body">
+  <main class="auth-card">
+    <a href="../index.html" class="auth-back">← Retour au site</a>
+    <img src="../Images/LOGO-1.png" alt="GCBTP" class="auth-logo">
+    <h1>Espace équipe</h1>
+    <p class="auth-sub">Connectez-vous pour accéder à vos tâches</p>
+
+    <form id="loginForm" class="auth-form" novalidate>
+      <label>
+        <span>Email</span>
+        <input type="email" id="email" required autocomplete="email" placeholder="prenom@gcbtp.com">
+      </label>
+      <label>
+        <span>Mot de passe</span>
+        <input type="password" id="password" required autocomplete="current-password" minlength="6">
+      </label>
+      <button type="submit" id="loginBtn">Se connecter</button>
+      <p id="loginError" class="auth-error" hidden></p>
+    </form>
+
+    <p class="auth-hint">Pas encore de compte ? Contactez votre administrateur.</p>
+  </main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabase.js"></script>
+<script>
+(async () => {
+  const { sb } = window.gcbtp;
+  // Si déjà connecté, rediriger direct au dashboard
+  const { data: { session } } = await sb.auth.getSession();
+  if (session) { window.location.href = 'dashboard.html'; return; }
+
+  const form = document.getElementById('loginForm');
+  const btn  = document.getElementById('loginBtn');
+  const err  = document.getElementById('loginError');
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    err.hidden = true;
+    btn.disabled = true;
+    btn.textContent = 'Connexion…';
+    const email    = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value;
+    const { error } = await sb.auth.signInWithPassword({ email, password });
+    if (error) {
+      err.textContent = error.message === 'Invalid login credentials'
+        ? 'Email ou mot de passe incorrect.'
+        : error.message;
+      err.hidden = false;
+      btn.disabled = false;
+      btn.textContent = 'Se connecter';
+      return;
+    }
+    window.location.href = 'dashboard.html';
+  });
+})();
+</script>
+</body>
+</html>
