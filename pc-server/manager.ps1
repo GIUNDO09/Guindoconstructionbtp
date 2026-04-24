@@ -74,17 +74,13 @@ function Start-Server {
 
 function Stop-Server {
   $spid = Get-ServerPid
-  if (-not $spid) {
-    # Aussi essayer de tuer tout node écoutant sur notre port
-    Get-Process -Name node -ErrorAction SilentlyContinue | ForEach-Object {
-      try { Stop-Process -Id $_.Id -Force } catch {}
-    }
-    return
+  if ($spid) {
+    try { taskkill /PID $spid /T /F 2>&1 | Out-Null } catch {}
   }
-  try {
-    # Tuer le process et ses enfants
-    taskkill /PID $spid /T /F | Out-Null
-  } catch {}
+  # Filet de sécurité : tuer aussi tout node.exe orphelin
+  Get-Process -Name node -ErrorAction SilentlyContinue | ForEach-Object {
+    try { Stop-Process -Id $_.Id -Force } catch {}
+  }
   Save-State $null (Get-TunnelPid)
 }
 
@@ -103,13 +99,13 @@ function Start-Tunnel {
 
 function Stop-Tunnel {
   $tpid = Get-TunnelPid
-  if (-not $tpid) {
-    Get-Process -Name cloudflared -ErrorAction SilentlyContinue | ForEach-Object {
-      try { Stop-Process -Id $_.Id -Force } catch {}
-    }
-    return
+  if ($tpid) {
+    try { taskkill /PID $tpid /T /F 2>&1 | Out-Null } catch {}
   }
-  try { taskkill /PID $tpid /T /F | Out-Null } catch {}
+  # Filet de sécurité : tuer tout cloudflared orphelin
+  Get-Process -Name cloudflared -ErrorAction SilentlyContinue | ForEach-Object {
+    try { Stop-Process -Id $_.Id -Force } catch {}
+  }
   Save-State (Get-ServerPid) $null
 }
 
