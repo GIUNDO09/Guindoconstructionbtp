@@ -191,6 +191,15 @@ function bindUI() {
   document.getElementById('newTaskBtn').addEventListener('click', () => openTaskModal());
   document.getElementById('modalCancel').addEventListener('click', closeTaskModal);
   document.getElementById('taskForm').addEventListener('submit', onTaskSubmit);
+
+  // Clic sur l'overlay (hors du contenu) ferme la modal
+  document.getElementById('taskModal').addEventListener('click', (e) => {
+    if (e.target.id === 'taskModal') closeTaskModal();
+  });
+  // Touche Échap ferme la modal
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeTaskModal();
+  });
 }
 
 // ---------- Modal tâche ----------
@@ -207,10 +216,14 @@ function openTaskModal(task = null) {
   f.assignee_id.innerHTML =
     '<option value="">— Non assignée —</option>' +
     state.profiles.map(p => `<option value="${p.id}" ${task?.assignee_id===p.id?'selected':''}>${escapeHtml(p.full_name)}</option>`).join('');
-  document.getElementById('taskModal').hidden = false;
+  const modal = document.getElementById('taskModal');
+  modal.removeAttribute('hidden');
+  modal.style.display = 'flex';
 }
 function closeTaskModal() {
-  document.getElementById('taskModal').hidden = true;
+  const modal = document.getElementById('taskModal');
+  modal.style.display = 'none';
+  modal.setAttribute('hidden', '');
 }
 async function onTaskSubmit(e) {
   e.preventDefault();
