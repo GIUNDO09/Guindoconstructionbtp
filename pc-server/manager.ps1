@@ -65,11 +65,10 @@ function Read-TunnelUrl {
 # ---------- Actions ----------
 function Start-Server {
   if (Get-ServerPid) { return }
-  Clear-Content -Path $ServerLog -ErrorAction SilentlyContinue
-  $p = Start-Process -FilePath 'npm' -ArgumentList 'start' `
-    -WorkingDirectory $ScriptDir -WindowStyle Hidden `
-    -RedirectStandardOutput $ServerLog -RedirectStandardError "$ServerLog.err" `
-    -PassThru
+  if (Test-Path $ServerLog) { Clear-Content -Path $ServerLog -ErrorAction SilentlyContinue }
+  $bat = Join-Path $ScriptDir '_start-server.bat'
+  $p = Start-Process -FilePath $bat `
+    -WorkingDirectory $ScriptDir -WindowStyle Hidden -PassThru
   Save-State $p.Id (Get-TunnelPid)
 }
 
@@ -91,16 +90,14 @@ function Stop-Server {
 
 function Start-Tunnel {
   if (Get-TunnelPid) { return }
-  Clear-Content -Path $TunnelLog -ErrorAction SilentlyContinue
-  $args = if ($TunnelMode -eq 'named') {
-    @('tunnel', 'run', $TunnelName)
+  if (Test-Path $TunnelLog) { Clear-Content -Path $TunnelLog -ErrorAction SilentlyContinue }
+  $bat = if ($TunnelMode -eq 'named') {
+    Join-Path $ScriptDir '_start-tunnel-named.bat'
   } else {
-    @('tunnel', '--url', "http://localhost:$ServerPort")
+    Join-Path $ScriptDir '_start-tunnel-quick.bat'
   }
-  $p = Start-Process -FilePath 'cloudflared' -ArgumentList $args `
-    -WindowStyle Hidden `
-    -RedirectStandardOutput $TunnelLog -RedirectStandardError "$TunnelLog.err" `
-    -PassThru
+  $p = Start-Process -FilePath $bat `
+    -WorkingDirectory $ScriptDir -WindowStyle Hidden -PassThru
   Save-State (Get-ServerPid) $p.Id
 }
 
