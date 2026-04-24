@@ -632,3 +632,152 @@ input, select, textarea { font-family: inherit; }
   .app-nav { order: 3; width: 100%; justify-content: center; margin-top: 8px; }
   .app-header { flex-wrap: wrap; }
 }
+
+/* =========================================================
+   FILES (phase 3)
+   ========================================================= */
+.files-main { max-width: 1400px; margin: 0 auto; padding: 20px; }
+
+.files-toolbar {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+.server-status {
+  padding: 6px 12px;
+  background: #fff;
+  border-radius: 20px;
+  font-size: 13px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  box-shadow: var(--shadow);
+  max-width: 520px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.files-layout {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 16px;
+}
+.files-sidebar {
+  background: #fff;
+  border-radius: var(--radius);
+  padding: 16px;
+  box-shadow: var(--shadow);
+  max-height: calc(100vh - 160px);
+  overflow-y: auto;
+}
+.files-sidebar h3 { margin: 0 0 12px; font-size: 14px; color: var(--blue-dark); text-transform: uppercase; letter-spacing: .5px; }
+.folder-tree ul { list-style: none; padding-left: 14px; margin: 0; }
+.folder-tree > ul { padding-left: 0; }
+.tree-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background .1s;
+}
+.tree-item:hover { background: var(--gray-100); }
+.tree-active { background: #fff4e6; color: var(--orange-dark); }
+.tree-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.files-content {
+  background: #fff;
+  border-radius: var(--radius);
+  padding: 20px;
+  box-shadow: var(--shadow);
+  min-height: 400px;
+}
+.folder-head { margin-bottom: 16px; }
+.breadcrumb { font-size: 13px; margin-bottom: 8px; }
+.breadcrumb a { color: var(--gray-700); text-decoration: none; }
+.breadcrumb a:hover { color: var(--orange); }
+.folder-head h2 { margin: 0 0 10px; color: var(--blue-dark); }
+.folder-actions { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+.folder-actions label { display: flex; gap: 6px; align-items: center; font-size: 14px; color: var(--gray-700); }
+
+.dropzone {
+  border: 2px dashed var(--gray-300);
+  border-radius: var(--radius);
+  padding: 24px;
+  text-align: center;
+  background: var(--gray-50);
+  cursor: pointer;
+  margin-bottom: 16px;
+  transition: all .15s;
+}
+.dropzone:hover, .dropzone-active {
+  border-color: var(--orange);
+  background: #fff4e6;
+}
+.dropzone-icon { font-size: 32px; margin-bottom: 4px; }
+.dropzone p { margin: 0; color: var(--gray-700); font-size: 14px; }
+
+.upload-progress {
+  margin-bottom: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.upload-line {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  padding: 8px 12px;
+  background: var(--gray-50);
+  border-radius: 6px;
+}
+.upload-status.ok { color: var(--green); }
+.upload-status.err { color: var(--red); }
+
+.folder-content {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 10px;
+}
+.item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: var(--gray-50);
+  border-radius: 8px;
+  border: 1px solid transparent;
+  transition: all .15s;
+}
+.item:hover { border-color: var(--gray-300); background: #fff; }
+.item-folder { cursor: pointer; }
+.item-icon { font-size: 22px; flex-shrink: 0; }
+.item-body { flex: 1; min-width: 0; }
+.item-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--gray-900);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.item-meta { font-size: 12px; color: var(--gray-500); margin-top: 2px; }
+.item-download, .item-delete {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 16px;
+  color: var(--gray-500);
+}
+.item-download:hover { background: var(--gray-100); color: var(--orange); }
+.item-delete:hover { background: #fff5f5; color: var(--red); }
+
+@media (max-width: 900px) {
+  .files-layout { grid-template-columns: 1fr; }
+  .files-sidebar { max-height: 240px; }
+}

@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>Fichiers — Espace équipe GCBTP</title>
+<link rel="icon" href="../favicon.ico">
+<link rel="stylesheet" href="css/equipe.css?v=5">
+</head>
+<body class="app-body">
+
+<header class="app-header">
+  <a href="../index.html" class="brand">
+    <img src="../Images/LOGO-1.png" alt="GCBTP">
+    <span>Espace équipe</span>
+  </a>
+  <nav class="app-nav">
+    <a href="dashboard.html" class="nav-pill">Tâches</a>
+    <a href="chat.html" class="nav-pill">Chat</a>
+    <a href="files.html" class="nav-pill nav-pill-active">Fichiers</a>
+  </nav>
+  <div class="app-user">
+    <span id="userName">…</span>
+    <button id="logoutBtn" class="btn-ghost">Déconnexion</button>
+  </div>
+</header>
+
+<main class="files-main">
+
+  <div class="files-toolbar">
+    <span id="serverStatus" class="server-status">🔴 Serveur non configuré</span>
+    <div style="flex:1"></div>
+    <button id="configServerBtn" class="btn-ghost" hidden>⚙️ Config serveur</button>
+    <button id="newRootFolderBtn" class="btn-primary" hidden>+ Nouveau dossier</button>
+  </div>
+
+  <div class="files-layout">
+
+    <aside class="files-sidebar">
+      <h3>Arborescence</h3>
+      <div id="folderTree" class="folder-tree"></div>
+    </aside>
+
+    <section class="files-content">
+      <div class="folder-head">
+        <nav id="breadcrumb" class="breadcrumb"></nav>
+        <h2 id="currentFolderTitle">Racine</h2>
+        <div id="folderActions" class="folder-actions" hidden>
+          <label>
+            Statut :
+            <select id="folderStatus" class="select">
+              <option value="todo">À faire</option>
+              <option value="in_progress">En cours</option>
+              <option value="done">Terminé</option>
+            </select>
+          </label>
+          <button id="newSubFolderBtn" class="btn-ghost">+ Sous-dossier</button>
+        </div>
+      </div>
+
+      <div id="dropzone" class="dropzone">
+        <div class="dropzone-inner">
+          <div class="dropzone-icon">📤</div>
+          <p>Clique ou glisse des fichiers ici pour les déposer dans ce dossier</p>
+        </div>
+        <input type="file" id="fileInput" multiple hidden>
+      </div>
+
+      <div id="uploadProgress" class="upload-progress" hidden></div>
+
+      <div id="folderContent" class="folder-content"></div>
+    </section>
+
+  </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabase.js?v=5"></script>
+<script src="js/auth.js?v=5"></script>
+<script src="js/files.js?v=5"></script>
+</body>
+</html>
