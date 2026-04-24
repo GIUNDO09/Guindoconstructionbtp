@@ -3,11 +3,24 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <title>Dashboard — Espace équipe GCBTP</title>
 <link rel="icon" href="../favicon.ico">
 <link rel="stylesheet" href="css/equipe.css?v=4">
 </head>
 <body class="app-body">
+
+<script>
+/* Tripwire anti-cache : ferme les modales coûte que coûte, même si le reste du JS ne s'est pas chargé */
+window.__hideModal = function(id) {
+  var m = document.getElementById(id);
+  if (!m) return;
+  m.style.display = 'none';
+  m.setAttribute('hidden', '');
+};
+</script>
 
 <header class="app-header">
   <a href="../index.html" class="brand">
@@ -74,7 +87,7 @@
 <!-- Modal détail tâche + commentaires -->
 <div id="taskDetailModal" class="modal" hidden>
   <div class="modal-content modal-wide">
-    <button class="modal-close" id="detailClose" aria-label="Fermer">×</button>
+    <button class="modal-close" id="detailClose" aria-label="Fermer" onclick="window.__hideModal('taskDetailModal')">×</button>
     <div id="taskDetailHead"></div>
     <section class="comments-section">
       <h4>💬 Discussion</h4>
@@ -133,7 +146,7 @@
         </label>
       </div>
       <div class="modal-actions">
-        <button type="button" id="modalCancel" class="btn-ghost">Annuler</button>
+        <button type="button" id="modalCancel" class="btn-ghost" onclick="window.__hideModal('taskModal')">Annuler</button>
         <button type="submit" class="btn-primary">Enregistrer</button>
       </div>
     </form>
