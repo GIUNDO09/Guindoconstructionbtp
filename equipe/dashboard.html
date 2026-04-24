@@ -8,7 +8,7 @@
 <meta http-equiv="Expires" content="0">
 <title>Dashboard — Espace équipe GCBTP</title>
 <link rel="icon" href="../favicon.ico">
-<link rel="stylesheet" href="css/equipe.css?v=4">
+<link rel="stylesheet" href="css/equipe.css?v=6">
 </head>
 <body class="app-body">
 
@@ -124,11 +124,22 @@ window.__hideModal = function(id) {
           <input name="due_date" type="date">
         </label>
       </div>
+      <label>
+        <span>Dossier du projet (fichiers liés)</span>
+        <select name="folder_id">
+          <option value="">— Aucun —</option>
+        </select>
+      </label>
+      <label>
+        <span>Image de couverture</span>
+        <input name="cover_file" type="file" accept="image/*">
+        <small class="form-hint" id="coverHint"></small>
+      </label>
+      <label>
+        <span>Assignées à (plusieurs possibles)</span>
+        <div id="assigneeList" class="checkbox-list"></div>
+      </label>
       <div class="form-row">
-        <label>
-          <span>Assignée à</span>
-          <select name="assignee_id"></select>
-        </label>
         <label>
           <span>Priorité</span>
           <select name="priority">
@@ -155,8 +166,8 @@ window.__hideModal = function(id) {
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/supabase.js?v=4"></script>
-<script src="js/auth.js?v=4"></script>
-<script src="js/dashboard.js?v=4"></script>
+<script src="js/supabase.js?v=6"></script>
+<script src="js/auth.js?v=6"></script>
+<script src="js/dashboard.js?v=6"></script>
 </body>
 </html>

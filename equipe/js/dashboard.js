@@ -17,6 +17,9 @@ let state = {
   profiles: [],
   profilesById: {},
   tasks: [],
+  assigneesByTask: {},  // { taskId: [userId, userId, ...] }
+  folders: [],
+  serverUrl: null,
   filters: { assignee: 'all', status: 'all' },
   openTaskId: null,
   commentsChannel: null
@@ -35,17 +38,60 @@ let state = {
   document.getElementById('userName').textContent = state.me?.full_name || session.user.email;
   if (state.me?.role === 'admin') document.getElementById('newTaskBtn').hidden = false;
 
-  await Promise.all([loadProfiles(), loadTasks()]);
+  await Promise.all([loadProfiles(), loadTasks(), loadAssignees(), loadFolders(), loadServerUrl()]);
   renderAll();
 
-  // Realtime : rafraîchir à chaque changement de la table tasks
+  // Realtime : rafraîchir à chaque changement
   sb.channel('tasks-realtime')
     .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks' }, async () => {
       await loadTasks();
       renderAll();
     })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'task_assignees' }, async () => {
+      await loadAssignees();
+      renderAll();
+    })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'folders' }, async () => {
+      await loadFolders();
+      renderAll();
+    })
     .subscribe();
 })();
+
+async function loadAssignees() {
+  const { data, error } = await sb.from('task_assignees').select('*');
+  if (error) { console.error(error); return; }
+  state.assigneesByTask = {};
+  (data || []).forEach(r => {
+    (state.assigneesByTask[r.task_id] ||= []).push(r.user_id);
+  });
+}
+
+async function loadFolders() {
+  const { data, error } = await sb.from('folders').select('id, name, parent_id').order('name');
+  if (error) { console.error(error); return; }
+  state.folders = data || [];
+}
+
+async function loadServerUrl() {
+  const { data } = await sb.from('app_settings').select('value').eq('key', 'file_server_url').maybeSingle();
+  state.serverUrl = data?.value || null;
+}
+
+// Construit le chemin complet d'un dossier (pour affichage dans le select)
+function folderBreadcrumb(folderId) {
+  const parts = [];
+  let id = folderId;
+  const seen = new Set();
+  while (id && !seen.has(id)) {
+    seen.add(id);
+    const f = state.folders.find(x => x.id === id);
+    if (!f) break;
+    parts.unshift(f.name);
+    id = f.parent_id;
+  }
+  return parts.join(' / ');
+}
 
 // ---------- Data ----------
 async function loadProfiles() {
@@ -82,6 +128,12 @@ function renderAssigneeFilter() {
   sel.value = current;
 }
 
+function assigneesOf(taskId) {
+  return (state.assigneesByTask[taskId] || [])
+    .map(uid => state.profilesById[uid])
+    .filter(Boolean);
+}
+
 function renderStats() {
   const total = state.tasks.length;
   const done  = state.tasks.filter(t => t.status === 'done').length;
@@ -96,7 +148,7 @@ function renderStats() {
 function renderTeamProgress() {
   const box = document.getElementById('teamProgress');
   box.innerHTML = state.profiles.map(p => {
-    const mine = state.tasks.filter(t => t.assignee_id === p.id);
+    const mine = state.tasks.filter(t => (state.assigneesByTask[t.id] || []).includes(p.id));
     const total = mine.length;
     const done  = mine.filter(t => t.status === 'done').length;
     const pct = total === 0 ? 0 : Math.round((done/total)*100);
@@ -115,8 +167,8 @@ function renderTasks() {
   const container = document.getElementById('tasksList');
   const { assignee, status } = state.filters;
   let tasks = state.tasks;
-  if (assignee === 'me')        tasks = tasks.filter(t => t.assignee_id === state.me.id);
-  else if (assignee !== 'all')  tasks = tasks.filter(t => t.assignee_id === assignee);
+  if (assignee === 'me')        tasks = tasks.filter(t => (state.assigneesByTask[t.id] || []).includes(state.me.id));
+  else if (assignee !== 'all')  tasks = tasks.filter(t => (state.assigneesByTask[t.id] || []).includes(assignee));
   if (status !== 'all')          tasks = tasks.filter(t => t.status === status);
 
   if (tasks.length === 0) {
@@ -127,11 +179,21 @@ function renderTasks() {
   container.innerHTML = tasks.map(t => {
     const st = STATUS_LABEL[t.status];
     const pr = PRIORITY_LABEL[t.priority];
-    const assignee = state.profiles.find(p => p.id === t.assignee_id);
+    const taskAssignees = assigneesOf(t.id);
     const due = t.due_date ? new Date(t.due_date).toLocaleDateString('fr-FR') : '';
     const overdue = t.due_date && t.status !== 'done' && new Date(t.due_date) < new Date(new Date().toDateString());
+    const coverUrl = (t.cover_file_id && state.serverUrl) ? `${state.serverUrl}/stream/${t.cover_file_id}` : null;
+    const folder = t.folder_id ? state.folders.find(f => f.id === t.folder_id) : null;
+
+    const assigneesHtml = taskAssignees.length === 0
+      ? '<span class="chip chip-muted">Non assignée</span>'
+      : `<div class="assignees-chips">${taskAssignees.map(p =>
+          `<span class="chip chip-assignee" title="${escapeHtml(p.full_name)}">${escapeHtml(firstName(p.full_name))}</span>`
+        ).join('')}</div>`;
+
     return `
       <article class="task-card" data-id="${t.id}">
+        ${coverUrl ? `<div class="task-cover"><img src="${coverUrl}" alt="" loading="lazy" onerror="this.parentElement.style.display='none'"></div>` : ''}
         <div class="task-head">
           <h3 class="task-title task-open" data-id="${t.id}">${escapeHtml(t.title)}</h3>
           <span class="badge ${pr.cls}">${pr.label}</span>
@@ -139,9 +201,10 @@ function renderTasks() {
         ${t.description ? `<p class="task-desc">${escapeHtml(t.description)}</p>` : ''}
         <div class="task-meta">
           ${t.project ? `<span class="chip">🏗️ ${escapeHtml(t.project)}</span>` : ''}
-          ${assignee ? `<span class="chip">👤 ${escapeHtml(assignee.full_name)}</span>` : '<span class="chip chip-muted">Non assignée</span>'}
+          ${folder ? `<a class="chip chip-folder" href="files.html" title="Voir le dossier">📁 ${escapeHtml(folder.name)}</a>` : ''}
           ${due ? `<span class="chip ${overdue ? 'chip-danger' : ''}">📅 ${due}</span>` : ''}
         </div>
+        <div class="task-meta">${assigneesHtml}</div>
         <div class="task-actions">
           <select class="task-status ${st.cls}" data-id="${t.id}">
             <option value="todo" ${t.status==='todo'?'selected':''}>À faire</option>
@@ -154,6 +217,10 @@ function renderTasks() {
         </div>
       </article>`;
   }).join('');
+}
+
+function firstName(full) {
+  return String(full || '').split(/\s+/)[0];
 }
 
 // ---------- UI bindings ----------
@@ -244,21 +311,29 @@ async function openTaskDetail(taskId) {
   if (!task) return;
   state.openTaskId = taskId;
 
-  const assignee = state.profilesById[task.assignee_id];
+  const taskAssignees = assigneesOf(task.id);
   const due = task.due_date ? new Date(task.due_date).toLocaleDateString('fr-FR') : '—';
   const st = STATUS_LABEL[task.status];
   const pr = PRIORITY_LABEL[task.priority];
+  const coverUrl = (task.cover_file_id && state.serverUrl) ? `${state.serverUrl}/stream/${task.cover_file_id}` : null;
+  const folder = task.folder_id ? state.folders.find(f => f.id === task.folder_id) : null;
+
+  const assigneesChips = taskAssignees.length === 0
+    ? '<span class="chip chip-muted">Non assignée</span>'
+    : taskAssignees.map(p => `<span class="chip">👤 ${escapeHtml(p.full_name)}</span>`).join('');
 
   document.getElementById('taskDetailHead').innerHTML = `
+    ${coverUrl ? `<div class="detail-cover"><img src="${coverUrl}" alt="Image de couverture" onerror="this.parentElement.style.display='none'"></div>` : ''}
     <div class="detail-head">
       <h3>${escapeHtml(task.title)}</h3>
       <div class="detail-chips">
         <span class="badge ${pr.cls}">${pr.label}</span>
         <span class="chip ${st.cls}">${st.label}</span>
         ${task.project ? `<span class="chip">🏗️ ${escapeHtml(task.project)}</span>` : ''}
-        <span class="chip">👤 ${escapeHtml(assignee?.full_name || 'Non assignée')}</span>
+        ${folder ? `<a class="chip chip-folder" href="files.html">📁 ${escapeHtml(folder.name)}</a>` : ''}
         <span class="chip">📅 ${due}</span>
       </div>
+      <div class="detail-chips">${assigneesChips}</div>
       ${task.description ? `<p class="detail-desc">${escapeHtml(task.description)}</p>` : ''}
     </div>`;
 
@@ -359,9 +434,32 @@ function openTaskModal(task = null) {
   f.priority.value    = task?.priority || 'medium';
   f.status.value      = task?.status || 'todo';
   f.due_date.value    = task?.due_date || '';
-  f.assignee_id.innerHTML =
-    '<option value="">— Non assignée —</option>' +
-    state.profiles.map(p => `<option value="${p.id}" ${task?.assignee_id===p.id?'selected':''}>${escapeHtml(p.full_name)}</option>`).join('');
+  f.cover_file.value  = '';
+
+  // Dossier lié
+  f.folder_id.innerHTML = '<option value="">— Aucun —</option>' +
+    state.folders.map(fo => `<option value="${fo.id}" ${task?.folder_id===fo.id?'selected':''}>${escapeHtml(folderBreadcrumb(fo.id))}</option>`).join('');
+
+  // Liste de checkboxes pour multi-assignés
+  const currentAssignees = task ? (state.assigneesByTask[task.id] || []) : [];
+  document.getElementById('assigneeList').innerHTML = state.profiles.map(p => `
+    <label class="cb-item">
+      <input type="checkbox" name="assignees" value="${p.id}" ${currentAssignees.includes(p.id) ? 'checked' : ''}>
+      <span>${escapeHtml(p.full_name)}</span>
+    </label>`).join('');
+
+  // Hint cover
+  const hint = document.getElementById('coverHint');
+  if (!state.serverUrl) {
+    hint.textContent = '⚠️ Serveur PC non configuré — l\'image de couverture sera ignorée.';
+    hint.className = 'form-hint form-hint-warn';
+  } else if (task?.cover_file_id) {
+    hint.textContent = 'Une image est déjà définie. Sélectionne un nouveau fichier pour la remplacer.';
+    hint.className = 'form-hint';
+  } else {
+    hint.textContent = '';
+  }
+
   const modal = document.getElementById('taskModal');
   modal.removeAttribute('hidden');
   modal.style.display = 'flex';
@@ -381,18 +479,59 @@ async function onTaskSubmit(e) {
     priority:    f.priority.value,
     status:      f.status.value,
     due_date:    f.due_date.value || null,
-    assignee_id: f.assignee_id.value || null
+    folder_id:   f.folder_id.value || null
   };
   if (!payload.title) { alert('Titre requis'); return; }
 
+  // Récupérer les assignés cochés
+  const selectedAssignees = [...f.querySelectorAll('input[name="assignees"]:checked')].map(c => c.value);
+
+  // 1) Upload de la cover si fournie et serveur disponible
+  const coverFile = f.cover_file.files[0];
+  if (coverFile && state.serverUrl) {
+    try {
+      const token = (await sb.auth.getSession()).data.session.access_token;
+      const fd = new FormData();
+      fd.append('file', coverFile);
+      const r = await fetch(`${state.serverUrl}/upload`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` },
+        body: fd
+      });
+      if (r.ok) {
+        const { file } = await r.json();
+        payload.cover_file_id = file.id;
+      } else {
+        console.warn('Cover upload failed, task will be created without cover');
+      }
+    } catch (err) {
+      console.warn('Cover upload error:', err);
+    }
+  }
+
+  // 2) Insert ou update de la tâche
+  let taskId = f.dataset.id;
   let error;
-  if (f.dataset.id) {
-    ({ error } = await sb.from('tasks').update(payload).eq('id', f.dataset.id));
+  if (taskId) {
+    ({ error } = await sb.from('tasks').update(payload).eq('id', taskId));
   } else {
     payload.created_by = state.me.id;
-    ({ error } = await sb.from('tasks').insert(payload));
+    const { data, error: insErr } = await sb.from('tasks').insert(payload).select().single();
+    error = insErr;
+    if (data) taskId = data.id;
   }
   if (error) { alert('Erreur: ' + error.message); return; }
+
+  // 3) Synchroniser les assignés (delete all + insert all)
+  if (taskId) {
+    await sb.from('task_assignees').delete().eq('task_id', taskId);
+    if (selectedAssignees.length > 0) {
+      const rows = selectedAssignees.map(uid => ({ task_id: taskId, user_id: uid }));
+      const { error: aErr } = await sb.from('task_assignees').insert(rows);
+      if (aErr) console.error('Assignees error:', aErr);
+    }
+  }
+
   closeTaskModal();
 }
 
