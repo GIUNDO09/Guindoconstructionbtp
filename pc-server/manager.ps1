@@ -1,4 +1,4 @@
-# =========================================================
+﻿# =========================================================
 # GCBTP Manager — App Windows pour piloter le serveur + tunnel
 # Double-clique "GCBTP Manager.bat" pour lancer cette fenêtre
 # =========================================================
