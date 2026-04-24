@@ -96,7 +96,7 @@ create policy app_settings_upsert_admin on public.app_settings
     exists (select 1 from public.profiles where id = auth.uid() and role = 'admin')
   );
 
--- Realtime
-alter publication supabase_realtime add table public.folders;
-alter publication supabase_realtime add table public.files;
-alter publication supabase_realtime add table public.app_settings;
+-- Realtime (idempotent)
+do $$ begin alter publication supabase_realtime add table public.folders;      exception when duplicate_object then null; end $$;
+do $$ begin alter publication supabase_realtime add table public.files;        exception when duplicate_object then null; end $$;
+do $$ begin alter publication supabase_realtime add table public.app_settings; exception when duplicate_object then null; end $$;
