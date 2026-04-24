@@ -331,22 +331,23 @@ $form.Controls.Add($footer)
 
 # ---------- Timer qui met à jour l'UI ----------
 function Update-UI {
-  # Serveur
-  if (Get-ServerPid) {
-    if (Test-PortOpen $ServerPort) {
-      $serverStatus.Text = '🟢 En marche'
-      $serverStatus.ForeColor = [Drawing.Color]::FromArgb(47, 158, 68)
-    } else {
-      $serverStatus.Text = '🟡 Démarrage…'
-      $serverStatus.ForeColor = [Drawing.Color]::FromArgb(245, 159, 0)
-    }
+  # Serveur : détecter via le port (le plus fiable)
+  $serverRunning = Test-PortOpen $ServerPort
+  $nodeAlive = [bool](Get-Process -Name node -ErrorAction SilentlyContinue)
+  if ($serverRunning) {
+    $serverStatus.Text = '🟢 En marche'
+    $serverStatus.ForeColor = [Drawing.Color]::FromArgb(47, 158, 68)
+  } elseif ($nodeAlive) {
+    $serverStatus.Text = '🟡 Démarrage…'
+    $serverStatus.ForeColor = [Drawing.Color]::FromArgb(245, 159, 0)
   } else {
     $serverStatus.Text = '🔴 Arrêté'
     $serverStatus.ForeColor = [Drawing.Color]::FromArgb(224, 49, 49)
   }
 
-  # Tunnel
-  if (Get-TunnelPid) {
+  # Tunnel : détecter via la présence du process cloudflared
+  $tunnelAlive = [bool](Get-Process -Name cloudflared -ErrorAction SilentlyContinue)
+  if ($tunnelAlive) {
     $url = Read-TunnelUrl
     if ($url) {
       $tunnelStatus.Text = '🟢 En marche'
@@ -378,6 +379,7 @@ function Update-UI {
     $tunnelStatus.ForeColor = [Drawing.Color]::FromArgb(224, 49, 49)
     $tunnelUrl.Text = ''
     $script:lastPublishedUrl = $null
+    $pubStatus.Text = ''
   }
 }
 
