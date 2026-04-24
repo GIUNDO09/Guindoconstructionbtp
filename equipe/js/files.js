@@ -265,19 +265,23 @@ async function configServer() {
 }
 
 async function handleDelete(btn) {
-  if (!confirm('Supprimer cet élément ?')) return;
+  if (!confirm('Supprimer cet élément ?\n(Les fichiers seront aussi supprimés du PC)')) return;
+  if (!state.serverUrl) { alert('Serveur PC non configuré'); return; }
+  const token = (await sb.auth.getSession()).data.session.access_token;
+
   if (btn.dataset.folderId) {
-    const { error } = await sb.from('folders').delete().eq('id', btn.dataset.folderId);
-    if (error) alert('Erreur : ' + error.message);
+    // Suppression de dossier : passe par le serveur pour nettoyer le disque
+    const r = await fetch(`${state.serverUrl}/folder/${btn.dataset.folderId}`, {
+      method: 'DELETE',
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    if (!r.ok) alert('Erreur de suppression : ' + (await r.text()));
   } else if (btn.dataset.fileId) {
-    // Supprimer via le serveur PC (qui supprime disque + DB)
-    if (!state.serverUrl) { alert('Serveur non configuré'); return; }
-    const token = (await sb.auth.getSession()).data.session.access_token;
     const r = await fetch(`${state.serverUrl}/file/${btn.dataset.fileId}`, {
       method: 'DELETE',
       headers: { 'Authorization': `Bearer ${token}` }
     });
-    if (!r.ok) { alert('Erreur de suppression : ' + (await r.text())); }
+    if (!r.ok) alert('Erreur de suppression : ' + (await r.text()));
   }
 }
 

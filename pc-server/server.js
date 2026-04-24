@@ -215,6 +215,59 @@ app.delete('/file/:fileId', requireAuth, async (req, res) => {
   res.json({ ok: true });
 });
 
+// Récupère récursivement tous les IDs descendants d'un dossier (incluant lui-même)
+async function getFolderDescendants(sbClient, rootId) {
+  const all = [rootId];
+  let queue = [rootId];
+  const seen = new Set([rootId]);
+  while (queue.length) {
+    const { data, error } = await sbClient
+      .from('folders').select('id').in('parent_id', queue);
+    if (error) throw error;
+    queue = (data || []).map(r => r.id).filter(id => !seen.has(id));
+    queue.forEach(id => seen.add(id));
+    all.push(...queue);
+  }
+  return all;
+}
+
+// Suppression d'un dossier : nettoie aussi les fichiers physiques et le dossier sur disque
+app.delete('/folder/:folderId', requireAuth, async (req, res) => {
+  try {
+    const folderId = req.params.folderId;
+
+    // 1) Calculer le chemin physique du dossier AVANT de le supprimer en DB
+    const subPath = await folderRelPath(req.sb, folderId);
+
+    // 2) Récupérer tous les fichiers du dossier et sous-dossiers (pour supprimer les fichiers anciens "à plat" qui ne sont pas dans subPath)
+    const allFolderIds = await getFolderDescendants(req.sb, folderId);
+    const { data: files } = await req.sb
+      .from('files').select('disk_filename').in('folder_id', allFolderIds);
+
+    // 3) Supprimer en DB (cascade supprime sous-dossiers et files automatiquement)
+    const { error: delErr } = await req.sb.from('folders').delete().eq('id', folderId);
+    if (delErr) return res.status(403).json({ error: delErr.message });
+
+    // 4) Supprimer les fichiers physiques (chacun)
+    for (const f of (files || [])) {
+      try { fs.unlinkSync(resolveFilePath(f.disk_filename)); } catch {}
+    }
+
+    // 5) Supprimer le dossier physique si vide ou avec contenu résiduel
+    if (subPath) {
+      const fullPath = path.join(FILES_DIR, subPath);
+      try { fs.rmSync(fullPath, { recursive: true, force: true }); } catch (e) {
+        console.warn('Impossible de supprimer le dossier physique:', fullPath, e.message);
+      }
+    }
+
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('Folder delete error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // -----------------------------------------------------------
 // Démarrage
 // -----------------------------------------------------------
