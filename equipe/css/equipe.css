@@ -1195,3 +1195,17 @@ input, select, textarea { font-family: inherit; }
   .avatar-preview { width: 140px; height: 140px; }
   .avatar-initials-lg { font-size: 50px; }
 }
+
+/* Bouton "Installer l'app" */
+.btn-install {
+  background: linear-gradient(135deg, #e87722 0%, #c05e15 100%) !important;
+  color: #fff !important;
+  border-color: transparent !important;
+  font-weight: 600;
+}
+.btn-install:hover {
+  background: linear-gradient(135deg, #c05e15 0%, #a04e10 100%) !important;
+}
+@media (max-width: 720px) {
+  .btn-install { padding: 6px 10px; font-size: 12px; }
+}

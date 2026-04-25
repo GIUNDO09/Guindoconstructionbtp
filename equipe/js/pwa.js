@@ -7,6 +7,48 @@
     });
   }
 
+  // Bouton "Installer l'app" — capture l'événement beforeinstallprompt
+  // (Chrome/Edge desktop & Android). Sur iOS, on doit afficher des instructions.
+  let deferredPrompt = null;
+
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    document.querySelectorAll('[data-install-app]').forEach(btn => {
+      btn.hidden = false;
+      btn.onclick = async () => {
+        if (!deferredPrompt) return;
+        deferredPrompt.prompt();
+        await deferredPrompt.userChoice;
+        deferredPrompt = null;
+        btn.hidden = true;
+      };
+    });
+  });
+
+  // Quand l'app est installée, masquer les boutons
+  window.addEventListener('appinstalled', () => {
+    document.querySelectorAll('[data-install-app]').forEach(b => b.hidden = true);
+  });
+
+  // Détection iOS Safari (pas de beforeinstallprompt) → on garde le bouton
+  // pour afficher des instructions
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+  if (isIOS && !isStandalone) {
+    document.addEventListener('DOMContentLoaded', () => {
+      document.querySelectorAll('[data-install-app]').forEach(btn => {
+        btn.hidden = false;
+        btn.onclick = () => alert(
+          'Pour installer l\'app sur iPhone :\n\n' +
+          '1. Touche le bouton Partager (carré avec flèche vers le haut)\n' +
+          '2. Fais défiler et choisis « Sur l\'écran d\'accueil »\n' +
+          '3. Touche « Ajouter »'
+        );
+      });
+    });
+  }
+
   // Helpers Notification + son partagés
   window.gcbtp = window.gcbtp || {};
 
