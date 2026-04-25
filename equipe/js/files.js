@@ -451,21 +451,52 @@ async function handleDownload(fileId) {
   URL.revokeObjectURL(a.href);
 }
 
+// Limites côté client (alignées sur le pc-server : 100 Mo par fichier)
+const MAX_FILE_SIZE = 100 * 1024 * 1024;       // 100 Mo
+const UPLOAD_TIMEOUT_MS = 5 * 60 * 1000;       // 5 minutes par fichier
+const PARALLEL_UPLOADS = 3;                    // 3 uploads simultanés max
+
 async function handleUpload(items) {
-  // items : [{ file, relativePath }] — relativePath inclut éventuellement des "dossier/sous-dossier/fichier.ext"
   if (!state.serverUrl) { alert('Serveur non configuré — contacte l\'admin'); return; }
   if (!items || items.length === 0) return;
 
-  const token = (await sb.auth.getSession()).data.session.access_token;
+  // Pré-filtrage : retirer les fichiers trop gros
+  const tooBig = items.filter(it => it.file.size > MAX_FILE_SIZE);
+  if (tooBig.length > 0) {
+    const names = tooBig.map(it => `• ${it.relativePath || it.file.name} (${formatBytes(it.file.size)})`).join('\n');
+    const cont = confirm(
+      `${tooBig.length} fichier(s) dépassent la limite de 100 Mo et seront ignorés :\n\n${names}\n\nContinuer avec les autres fichiers ?`
+    );
+    if (!cont) return;
+    items = items.filter(it => it.file.size <= MAX_FILE_SIZE);
+    if (items.length === 0) return;
+  }
+
+  const token = (await sb.auth.getSession()).data.session?.access_token;
+  if (!token) { alert('Session expirée — reconnecte-toi'); return; }
+
   const progress = document.getElementById('uploadProgress');
   progress.hidden = false;
   progress.innerHTML = '';
+
+  // Bandeau de progression global toujours visible en haut
+  const banner = document.createElement('div');
+  banner.className = 'upload-banner';
+  banner.innerHTML = `
+    <div class="upload-banner-text">📤 Préparation…</div>
+    <div class="upload-banner-bar"><div class="upload-banner-fill"></div></div>
+  `;
+  progress.appendChild(banner);
+  const setBanner = (text, pct) => {
+    banner.querySelector('.upload-banner-text').textContent = text;
+    if (typeof pct === 'number') banner.querySelector('.upload-banner-fill').style.width = `${pct}%`;
+  };
 
   // 1. Construire l'arbre des dossiers à créer (uniques)
   const folderPaths = new Set();
   for (const it of items) {
     const parts = (it.relativePath || it.file.name).split('/');
-    parts.pop(); // enlever le nom de fichier
+    parts.pop();
     let acc = '';
     for (const p of parts) {
       if (!p) continue;
@@ -474,76 +505,120 @@ async function handleUpload(items) {
     }
   }
 
-  // 2. Créer les dossiers en DB, parents d'abord (tri par profondeur)
+  // 2. Créer les dossiers en DB, parents d'abord
   const sortedPaths = [...folderPaths].sort((a, b) => a.split('/').length - b.split('/').length);
   const folderIdByPath = {};
   if (sortedPaths.length > 0) {
     const headLine = document.createElement('div');
     headLine.className = 'upload-line';
-    headLine.innerHTML = `<span>📂 Création de ${sortedPaths.length} dossier(s)…</span><span class="upload-status">⏳</span>`;
+    headLine.innerHTML = `<span>📂 ${sortedPaths.length} dossier(s) à créer</span><span class="upload-status">⏳ 0/${sortedPaths.length}</span>`;
     progress.appendChild(headLine);
+    const headStatus = headLine.querySelector('.upload-status');
 
-    for (const path of sortedPaths) {
+    for (let i = 0; i < sortedPaths.length; i++) {
+      const path = sortedPaths[i];
       const parts = path.split('/');
       const name = parts[parts.length - 1];
       const parentPath = parts.slice(0, -1).join('/');
       const parentId = parentPath ? folderIdByPath[parentPath] : (state.currentFolderId || null);
+      setBanner(`📂 Création de l'arborescence : ${i + 1}/${sortedPaths.length}`, ((i + 1) / sortedPaths.length) * 30);
+      headStatus.textContent = `⏳ ${i + 1}/${sortedPaths.length}`;
       try {
-        const { data, error } = await sb.from('folders').insert({
+        // Timeout de 15s par insert pour éviter de bloquer la chaîne
+        const insertPromise = sb.from('folders').insert({
           name,
           parent_id: parentId,
           created_by: state.me.id,
           status: 'todo'
         }).select('id').single();
+        const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout création dossier')), 15000));
+        const { data, error } = await Promise.race([insertPromise, timeoutPromise]);
         if (error) throw error;
         folderIdByPath[path] = data.id;
       } catch (err) {
-        console.error('Folder create error for', path, err);
+        console.warn('Folder create error for', path, err.message);
+        // On continue avec les autres dossiers — les fichiers atterriront à la racine
       }
     }
-    headLine.querySelector('.upload-status').textContent = '✅';
-    headLine.querySelector('.upload-status').className = 'upload-status ok';
+    headStatus.textContent = '✅';
+    headStatus.className = 'upload-status ok';
   }
 
-  // 3. Uploader chaque fichier dans son dossier de destination
-  for (const it of items) {
-    const path = it.relativePath || it.file.name;
-    const parts = path.split('/');
-    const folderPath = parts.slice(0, -1).join('/');
-    const folderId = folderPath
-      ? folderIdByPath[folderPath]
-      : (state.currentFolderId || null);
+  // 3. Uploader avec parallélisme limité (PARALLEL_UPLOADS à la fois)
+  let done = 0;
+  const total = items.length;
+  const queue = items.slice();
+  setBanner(`📤 Upload : 0/${total}`, 30);
+  const workers = Array.from({ length: Math.min(PARALLEL_UPLOADS, queue.length) }, async () => {
+    while (queue.length > 0) {
+      const it = queue.shift();
+      if (!it) break;
 
-    const line = document.createElement('div');
-    line.className = 'upload-line';
-    line.innerHTML = `<span>${escapeHtml(path)}</span><span class="upload-status">⏳ En cours…</span>`;
-    progress.appendChild(line);
+      const path = it.relativePath || it.file.name;
+      const parts = path.split('/');
+      const folderPath = parts.slice(0, -1).join('/');
+      const folderId = folderPath ? folderIdByPath[folderPath] : (state.currentFolderId || null);
 
-    const fd = new FormData();
-    fd.append('file', it.file);
-    if (folderId) fd.append('folder_id', folderId);
+      const line = document.createElement('div');
+      line.className = 'upload-line';
+      const sizeLabel = formatBytes(it.file.size);
+      line.innerHTML = `<span>${escapeHtml(path)} <em class="upload-size">${sizeLabel}</em></span><span class="upload-status">⏳ En cours…</span>`;
+      progress.appendChild(line);
 
-    try {
-      const r = await fetch(`${state.serverUrl}/upload`, {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` },
-        body: fd
-      });
-      if (r.ok) {
-        line.querySelector('.upload-status').textContent = '✅ OK';
-        line.querySelector('.upload-status').className = 'upload-status ok';
-      } else {
-        const txt = await r.text();
-        line.querySelector('.upload-status').textContent = '❌ ' + txt.slice(0, 60);
+      const fd = new FormData();
+      fd.append('file', it.file);
+      if (folderId) fd.append('folder_id', folderId);
+
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), UPLOAD_TIMEOUT_MS);
+
+      try {
+        const r = await fetch(`${state.serverUrl}/upload`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${token}` },
+          body: fd,
+          signal: ctrl.signal
+        });
+        if (r.ok) {
+          line.querySelector('.upload-status').textContent = '✅ OK';
+          line.querySelector('.upload-status').className = 'upload-status ok';
+        } else {
+          let txt = await r.text().catch(() => '');
+          if (r.status === 413) txt = 'Fichier trop volumineux (>100 Mo)';
+          else if (r.status === 401) txt = 'Session expirée';
+          else if (r.status === 502 || r.status === 503 || r.status === 504) txt = 'Serveur PC injoignable (tunnel ?)';
+          line.querySelector('.upload-status').textContent = '❌ ' + (txt.slice(0, 80) || `HTTP ${r.status}`);
+          line.querySelector('.upload-status').className = 'upload-status err';
+        }
+      } catch (err) {
+        const msg = err.name === 'AbortError'
+          ? 'Délai dépassé (timeout)'
+          : err.message?.includes('Failed to fetch')
+            ? 'Connexion serveur perdue'
+            : err.message || 'Erreur inconnue';
+        line.querySelector('.upload-status').textContent = '❌ ' + msg;
         line.querySelector('.upload-status').className = 'upload-status err';
+      } finally {
+        clearTimeout(timer);
+        done++;
+        const pct = 30 + Math.round((done / total) * 70);
+        setBanner(`📤 Upload : ${done}/${total}`, pct);
       }
-    } catch (err) {
-      line.querySelector('.upload-status').textContent = '❌ ' + err.message;
-      line.querySelector('.upload-status').className = 'upload-status err';
     }
-  }
+  });
+  await Promise.all(workers);
+  setBanner(`✅ Terminé : ${done}/${total}`, 100);
 
-  setTimeout(() => { progress.hidden = true; }, 6000);
+  // Récap
+  const recap = document.createElement('div');
+  recap.className = 'upload-line upload-recap';
+  const errors = progress.querySelectorAll('.upload-status.err').length;
+  recap.innerHTML = errors === 0
+    ? `<span>🎉 ${total} fichier(s) uploadé(s) avec succès</span>`
+    : `<span>⚠️ ${total - errors}/${total} OK — ${errors} en erreur</span>`;
+  progress.appendChild(recap);
+
+  setTimeout(() => { progress.hidden = true; }, 8000);
 }
 
 function escapeHtml(s) {
