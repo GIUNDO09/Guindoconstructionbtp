@@ -137,7 +137,7 @@ async function onNewMessage(ctx, payload) {
   const author = await getProfile(ctx, msg.user_id);
   if (!author) return;
 
-  // Push notifications (instantanées) — à tous les autres membres abonnés
+  // 1. Push instantanées — à tous les autres membres abonnés
   await sendPushToAllExcept(ctx, msg.user_id, {
     title: `💬 ${author.full_name}`,
     body: previewMessage(msg),
@@ -145,17 +145,42 @@ async function onNewMessage(ctx, payload) {
     tag: 'gcbtp-chat'
   });
 
-  // Notifier tous les autres membres ayant un notification_email
-  const { data: profiles } = await ctx.sb
-    .from('profiles').select('id, full_name, notification_email').neq('id', msg.user_id);
+  // 2. Emails seulement aux users "offline" : pas de push subscription OU inactifs > 5 min
+  //    (on évite ainsi de spammer ceux qui ont l'app ouverte ou les notifs push)
+  const fiveMinAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
 
-  for (const p of (profiles || [])) {
-    if (!p.notification_email) continue;
-    const preview = msg.content.length > 100 ? msg.content.slice(0, 100) + '…' : msg.content;
+  const { data: profiles } = await ctx.sb
+    .from('profiles')
+    .select('id, full_name, notification_email')
+    .neq('id', msg.user_id)
+    .not('notification_email', 'is', null);
+  if (!profiles?.length) return;
+
+  const userIds = profiles.map(p => p.id);
+
+  // Qui a une subscription push valide ?
+  const { data: subs } = await ctx.sb
+    .from('push_subscriptions').select('user_id').in('user_id', userIds);
+  const subscribed = new Set((subs || []).map(s => s.user_id));
+
+  // Qui est "actif" (lecture ou envoi de message dans les 5 dernières minutes) ?
+  const [{ data: reads }, { data: msgs }] = await Promise.all([
+    ctx.sb.from('message_reads').select('user_id').in('user_id', userIds).gt('read_at', fiveMinAgo),
+    ctx.sb.from('messages').select('user_id').in('user_id', userIds).gt('created_at', fiveMinAgo)
+  ]);
+  const active = new Set([...(reads || []).map(r => r.user_id), ...(msgs || []).map(m => m.user_id)]);
+
+  // Emailer si : pas de push OU pas actif récemment
+  const recipients = profiles.filter(p => !subscribed.has(p.id) || !active.has(p.id));
+
+  for (const p of recipients) {
+    const raw = msg.content || '';
+    const preview = previewMessage(msg);
+    const shortSubject = (raw || previewMessage(msg)).slice(0, 50);
     await ctx.resend.emails.send({
       from: ctx.from,
       to: p.notification_email,
-      subject: `💬 ${author.full_name} : ${msg.content.slice(0, 50)}`,
+      subject: `💬 ${author.full_name} : ${shortSubject}`,
       html: emailTemplate(ctx, {
         title: 'Nouveau message dans le chat',
         bodyHtml: `
@@ -169,7 +194,7 @@ async function onNewMessage(ctx, payload) {
       })
     });
   }
-  console.log(`📧 Chat → ${(profiles || []).filter(p => p.notification_email).length} destinataires`);
+  console.log(`📧 Chat → ${recipients.length}/${profiles.length} email(s) (online: ${profiles.length - recipients.length})`);
 }
 
 // Daily digest : à chaque membre, ses tâches du jour (groupées par catégorie)
