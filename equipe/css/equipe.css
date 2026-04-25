@@ -1209,3 +1209,125 @@ input, select, textarea { font-family: inherit; }
 @media (max-width: 720px) {
   .btn-install { padding: 6px 10px; font-size: 12px; }
 }
+
+/* =========================================================
+   PHASE 7 — Pièces jointes du chat
+   ========================================================= */
+.btn-icon {
+  background: transparent;
+  border: 1px solid var(--gray-300);
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all .15s;
+  flex-shrink: 0;
+  align-self: flex-end;
+}
+.btn-icon:hover { background: var(--gray-100); border-color: var(--orange); }
+.btn-icon:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.attachment-preview {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  background: #fff4e6;
+  border-top: 1px solid var(--gray-200);
+}
+.attachment-name {
+  flex: 1;
+  font-size: 13px;
+  color: var(--gray-900);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.recording-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: #fff5f5;
+  border-top: 2px solid var(--red);
+  font-size: 14px;
+  color: var(--gray-900);
+}
+.recording-bar .rec-dot {
+  width: 10px;
+  height: 10px;
+  background: var(--red);
+  border-radius: 50%;
+  animation: rec-pulse 1s infinite;
+}
+.rec-duration {
+  flex: 1;
+  font-family: ui-monospace, Menlo, monospace;
+  font-weight: 600;
+  color: var(--red);
+}
+@keyframes rec-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+.msg-media {
+  margin: 6px 0 4px;
+  border-radius: 8px;
+  overflow: hidden;
+  max-width: 320px;
+}
+.msg-media img,
+.msg-media video {
+  width: 100%;
+  max-height: 320px;
+  object-fit: cover;
+  display: block;
+  cursor: pointer;
+  background: var(--gray-200);
+}
+.msg-media-zoom {
+  position: fixed !important;
+  top: 0; left: 0; right: 0; bottom: 0;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: none !important;
+  max-height: none !important;
+  z-index: 1000;
+  background: rgba(0, 0, 0, .9);
+  padding: 20px;
+}
+.msg-media-zoom img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: contain !important;
+  max-height: 100% !important;
+}
+.msg-media-error::before {
+  content: '⚠️ Média indisponible';
+  display: block;
+  padding: 20px;
+  background: var(--gray-100);
+  color: var(--gray-500);
+  text-align: center;
+  font-size: 13px;
+}
+.msg-audio {
+  margin: 6px 0 4px;
+}
+.msg-audio audio {
+  width: 100%;
+  max-width: 280px;
+  height: 36px;
+}
+.msg-mine .msg-audio audio { filter: invert(1) hue-rotate(180deg); }
+
+@media (max-width: 720px) {
+  .btn-icon { width: 36px; height: 36px; }
+  .msg-media { max-width: 240px; }
+}

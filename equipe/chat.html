@@ -14,7 +14,7 @@
 <link rel="icon" href="../favicon.ico">
 <link rel="apple-touch-icon" href="../Images/LOGO-1.png">
 <link rel="manifest" href="manifest.json">
-<link rel="stylesheet" href="css/equipe.css?v=11">
+<link rel="stylesheet" href="css/equipe.css?v=12">
 </head>
 <body class="app-body">
 
@@ -46,9 +46,27 @@
 
     <div id="messagesList" class="messages-list"></div>
 
+    <!-- Aperçu du fichier sélectionné avant envoi -->
+    <div id="attachmentPreview" class="attachment-preview" hidden>
+      <span id="attachmentName" class="attachment-name"></span>
+      <button type="button" id="cancelAttachment" class="btn-ghost" title="Retirer">✖</button>
+    </div>
+
+    <!-- État d'enregistrement vocal -->
+    <div id="recordingBar" class="recording-bar" hidden>
+      <span class="rec-dot"></span>
+      <span>Enregistrement…</span>
+      <span id="recDuration" class="rec-duration">00:00</span>
+      <button type="button" id="recCancel" class="btn-ghost">Annuler</button>
+      <button type="button" id="recStop" class="btn-primary">Envoyer</button>
+    </div>
+
     <form id="chatForm" class="chat-form" action="javascript:void(0);">
-      <textarea id="chatInput" placeholder="Écris un message… (Entrée pour envoyer, Maj+Entrée pour une nouvelle ligne)" rows="1" maxlength="2000" required></textarea>
-      <button type="button" id="enableNotifBtn" class="btn-ghost" hidden title="Activer les notifications du navigateur">🔔</button>
+      <button type="button" id="attachBtn" class="btn-icon" title="Joindre image/vidéo/audio">📎</button>
+      <input type="file" id="attachInput" accept="image/*,video/*,audio/*" hidden>
+      <button type="button" id="recBtn" class="btn-icon" title="Message vocal">🎤</button>
+      <textarea id="chatInput" placeholder="Écris un message…" rows="1" maxlength="2000"></textarea>
+      <button type="button" id="enableNotifBtn" class="btn-icon" hidden title="Activer les notifications">🔔</button>
       <button type="submit" class="btn-primary">Envoyer</button>
     </form>
   </section>
@@ -59,6 +77,6 @@
 <script src="js/supabase.js?v=11"></script>
 <script src="js/auth.js?v=11"></script>
 <script src="js/pwa.js?v=11"></script>
-<script src="js/chat.js?v=11"></script>
+<script src="js/chat.js?v=12"></script>
 </body>
 </html>
