@@ -10,6 +10,7 @@ import { createClient } from '@supabase/supabase-js';
 import fs from 'node:fs';
 import path from 'node:path';
 import { randomUUID } from 'node:crypto';
+import { startNotifier } from './notifier.js';
 
 const {
   SUPABASE_URL,
@@ -275,7 +276,13 @@ app.listen(PORT, () => {
   console.log(`✅ Serveur GCBTP démarré sur http://localhost:${PORT}`);
   console.log(`   Max upload : ${MAX_FILE_MB} Mo`);
   console.log(`   CORS origin : ${CORS_ORIGIN}`);
-  console.log('');
-  console.log('👉 Maintenant lance le tunnel Cloudflare dans une autre fenêtre :');
-  console.log(`   cloudflared tunnel --url http://localhost:${PORT}`);
+
+  // Démarrer le module de notifications email
+  startNotifier({
+    supabaseUrl: SUPABASE_URL,
+    serviceKey:  process.env.SUPABASE_SERVICE_ROLE_KEY,
+    resendKey:   process.env.RESEND_API_KEY,
+    fromEmail:   process.env.MAIL_FROM,
+    siteUrl:     process.env.SITE_URL || 'https://www.guindoconstruction.xyz/equipe/'
+  });
 });
