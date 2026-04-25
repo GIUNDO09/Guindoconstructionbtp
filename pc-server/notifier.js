@@ -35,15 +35,23 @@ export function startNotifier(opts) {
       (p) => safeRun('new_message', () => onNewMessage(ctx, p)))
     .subscribe((status) => console.log(`📧 Notifier: ${status}`));
 
-  // Cron : check des tâches en retard tous les jours à 8h
+  // Cron : digests quotidien et hebdomadaire à 8h
+  let lastDailyDate = null;
+  let lastWeeklyDate = null;
   setInterval(() => {
     const now = new Date();
-    if (now.getHours() === 8 && now.getMinutes() < 5) {
-      safeRun('overdue_check', () => checkOverdueTasks(ctx));
+    const today = now.toISOString().slice(0, 10);
+    if (now.getHours() === 8 && lastDailyDate !== today) {
+      lastDailyDate = today;
+      safeRun('daily_digest', () => sendDailyDigest(ctx));
+      if (now.getDay() === 1 && lastWeeklyDate !== today) {  // Lundi
+        lastWeeklyDate = today;
+        safeRun('weekly_digest', () => sendWeeklyDigest(ctx));
+      }
     }
-  }, 5 * 60 * 1000); // toutes les 5 min
+  }, 5 * 60 * 1000); // check toutes les 5 min
 
-  console.log('📧 Notifier démarré (events realtime + cron tâches en retard à 8h)');
+  console.log('📧 Notifier démarré (events realtime + digests quotidien 8h, hebdo lundi 8h)');
 }
 
 function safeRun(label, fn) {
@@ -155,37 +163,144 @@ async function onNewMessage(ctx, payload) {
   console.log(`📧 Chat → ${(profiles || []).filter(p => p.notification_email).length} destinataires`);
 }
 
-async function checkOverdueTasks(ctx) {
+// Daily digest : à chaque membre, ses tâches du jour (groupées par catégorie)
+async function sendDailyDigest(ctx) {
+  console.log('📧 Daily digest — démarrage');
   const today = new Date().toISOString().slice(0, 10);
-  const { data: tasks } = await ctx.sb
-    .from('tasks').select('*').lt('due_date', today).neq('status', 'done');
-  if (!tasks?.length) return;
-  console.log(`📧 ${tasks.length} tâche(s) en retard à signaler`);
 
-  for (const task of tasks) {
-    const { data: assignees } = await ctx.sb
-      .from('task_assignees').select('user_id').eq('task_id', task.id);
-    for (const a of (assignees || [])) {
-      const profile = await getProfile(ctx, a.user_id);
-      if (!profile?.notification_email) continue;
+  // 1. Récupérer tous les profils avec notification_email
+  const { data: profiles } = await ctx.sb
+    .from('profiles').select('id, full_name, notification_email')
+    .not('notification_email', 'is', null);
+  if (!profiles?.length) return;
 
-      const dueDate = new Date(task.due_date).toLocaleDateString('fr-FR');
-      await ctx.resend.emails.send({
-        from: ctx.from,
-        to: profile.notification_email,
-        subject: `⚠️ Tâche en retard : ${task.title}`,
-        html: emailTemplate(ctx, {
-          title: 'Tu as une tâche en retard',
-          bodyHtml: `
-            <p>Bonjour ${escapeHtml(profile.full_name)},</p>
-            <p>La tâche <strong>${escapeHtml(task.title)}</strong> avait pour échéance le <strong>${dueDate}</strong> et n'est pas encore terminée.</p>
-            ${task.project ? `<p>🏗️ Chantier : ${escapeHtml(task.project)}</p>` : ''}`,
-          cta: 'Mettre à jour la tâche',
-          ctaUrl: ctx.siteUrl + 'dashboard.html'
-        })
-      });
-    }
+  // 2. Récupérer toutes les tâches non terminées + toutes les assignations
+  const { data: tasks } = await ctx.sb.from('tasks').select('*').neq('status', 'done');
+  const { data: links } = await ctx.sb.from('task_assignees').select('*');
+  const assigneesByUser = {};
+  (links || []).forEach(l => {
+    (assigneesByUser[l.user_id] ||= []).push(l.task_id);
+  });
+  const tasksById = Object.fromEntries((tasks || []).map(t => [t.id, t]));
+
+  let sent = 0;
+  for (const p of profiles) {
+    const myTaskIds = assigneesByUser[p.id] || [];
+    const myTasks = myTaskIds.map(id => tasksById[id]).filter(Boolean);
+    if (myTasks.length === 0) continue;
+
+    // Catégoriser
+    const overdue   = myTasks.filter(t => t.due_date && t.due_date < today);
+    const dueToday  = myTasks.filter(t => t.due_date === today);
+    const inProg    = myTasks.filter(t => t.status === 'in_progress' && (!t.due_date || t.due_date > today));
+    const upcoming  = myTasks.filter(t => t.status === 'todo' && (!t.due_date || t.due_date > today));
+
+    if (overdue.length === 0 && dueToday.length === 0 && inProg.length === 0 && upcoming.length === 0) continue;
+
+    const sections = [];
+    if (overdue.length)  sections.push(renderTaskSection('⚠️ En retard', overdue, 'overdue'));
+    if (dueToday.length) sections.push(renderTaskSection('📅 Échéance aujourd\'hui', dueToday, 'today'));
+    if (inProg.length)   sections.push(renderTaskSection('⚙️ En cours', inProg, 'progress'));
+    if (upcoming.length) sections.push(renderTaskSection('📋 À faire prochainement', upcoming.slice(0, 5), 'todo'));
+
+    await ctx.resend.emails.send({
+      from: ctx.from,
+      to: p.notification_email,
+      subject: `📋 Tes tâches du jour (${myTasks.length})`,
+      html: emailTemplate(ctx, {
+        title: `Bonjour ${escapeHtml(p.full_name.split(' ')[0])}, voici ton point du jour`,
+        bodyHtml: `
+          <p>Tu as <strong>${myTasks.length} tâche(s)</strong> en cours.</p>
+          ${sections.join('')}`,
+        cta: 'Ouvrir le dashboard',
+        ctaUrl: ctx.siteUrl + 'dashboard.html'
+      })
+    });
+    sent++;
   }
+  console.log(`📧 Daily digest envoyé à ${sent} membre(s)`);
+}
+
+// Weekly digest : récap équipe envoyé chaque lundi
+async function sendWeeklyDigest(ctx) {
+  console.log('📧 Weekly digest — démarrage');
+  const today = new Date();
+  const oneWeekAgo = new Date(today.getTime() - 7 * 24 * 3600 * 1000).toISOString();
+  const todayIso = today.toISOString().slice(0, 10);
+
+  const { data: profiles } = await ctx.sb
+    .from('profiles').select('id, full_name, notification_email')
+    .not('notification_email', 'is', null);
+  if (!profiles?.length) return;
+
+  const { data: doneLastWeek } = await ctx.sb
+    .from('tasks').select('*').eq('status', 'done').gte('updated_at', oneWeekAgo);
+  const { data: inProgress }   = await ctx.sb
+    .from('tasks').select('*').eq('status', 'in_progress');
+  const { data: overdue }      = await ctx.sb
+    .from('tasks').select('*').neq('status', 'done').lt('due_date', todayIso);
+
+  const bodyHtml = `
+    <p>Voici le point hebdomadaire de l'équipe.</p>
+    <div style="display: flex; gap: 14px; margin: 18px 0; flex-wrap: wrap;">
+      ${statBox('✅', (doneLastWeek || []).length, 'Terminées 7 derniers jours', '#2f9e44')}
+      ${statBox('⚙️', (inProgress || []).length, 'En cours', '#f59f00')}
+      ${statBox('⚠️', (overdue || []).length, 'En retard', '#e03131')}
+    </div>
+    ${(overdue || []).length ? renderTaskSection('⚠️ Tâches en retard', overdue.slice(0, 10), 'overdue') : ''}
+    ${(doneLastWeek || []).length ? renderTaskSection('✅ Terminées récemment', doneLastWeek.slice(0, 10), 'done') : ''}
+  `;
+
+  let sent = 0;
+  for (const p of profiles) {
+    await ctx.resend.emails.send({
+      from: ctx.from,
+      to: p.notification_email,
+      subject: `📊 Récap hebdo équipe — ${(doneLastWeek || []).length} terminées, ${(overdue || []).length} en retard`,
+      html: emailTemplate(ctx, {
+        title: 'Récapitulatif de la semaine',
+        bodyHtml,
+        cta: 'Voir le dashboard',
+        ctaUrl: ctx.siteUrl + 'dashboard.html'
+      })
+    });
+    sent++;
+  }
+  console.log(`📧 Weekly digest envoyé à ${sent} membre(s)`);
+}
+
+// Helpers de rendu
+function renderTaskSection(title, tasks, kind) {
+  const colors = {
+    overdue:  { bg: '#fff5f5', border: '#e03131' },
+    today:    { bg: '#fff4e6', border: '#e87722' },
+    progress: { bg: '#fff9db', border: '#f59f00' },
+    todo:     { bg: '#f1f3f5', border: '#868e96' },
+    done:     { bg: '#d3f9d8', border: '#2f9e44' }
+  };
+  const c = colors[kind] || colors.todo;
+  return `
+    <h3 style="margin: 18px 0 8px; color: #1e3a5f; font-size: 15px;">${escapeHtml(title)}</h3>
+    <ul style="list-style: none; padding: 0; margin: 0;">
+      ${tasks.map(t => {
+        const due = t.due_date ? new Date(t.due_date).toLocaleDateString('fr-FR') : '';
+        return `
+        <li style="background: ${c.bg}; border-left: 3px solid ${c.border}; padding: 8px 12px; margin-bottom: 6px; border-radius: 4px;">
+          <strong>${escapeHtml(t.title)}</strong>
+          ${t.project ? `<small style="color: #495057;"> · 🏗️ ${escapeHtml(t.project)}</small>` : ''}
+          ${due ? `<small style="color: #495057;"> · 📅 ${due}</small>` : ''}
+        </li>`;
+      }).join('')}
+    </ul>`;
+}
+
+function statBox(icon, value, label, color) {
+  return `
+    <div style="flex: 1; min-width: 130px; background: #f8f9fa; padding: 14px; border-radius: 8px; text-align: center; border-top: 3px solid ${color};">
+      <div style="font-size: 28px; line-height: 1;">${icon}</div>
+      <div style="font-size: 28px; font-weight: 700; color: #1e3a5f; margin-top: 4px;">${value}</div>
+      <div style="font-size: 12px; color: #868e96; text-transform: uppercase; letter-spacing: .5px; margin-top: 4px;">${label}</div>
+    </div>`;
 }
 
 // -----------------------------------------------------------
