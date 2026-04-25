@@ -14,7 +14,7 @@
 <link rel="icon" href="../favicon.ico">
 <link rel="apple-touch-icon" href="../Images/LOGO-1.png">
 <link rel="manifest" href="manifest.json">
-<link rel="stylesheet" href="css/equipe.css?v=11">
+<link rel="stylesheet" href="css/equipe.css?v=18">
 </head>
 <body class="app-body">
 
@@ -104,13 +104,35 @@
       </form>
 
     </div>
+
+    <hr class="profil-sep">
+
+    <!-- Changement de mot de passe -->
+    <section class="profil-password">
+      <h3>🔒 Changer mon mot de passe</h3>
+      <form id="passwordForm" class="profil-form" action="javascript:void(0);">
+        <label>
+          <span>Nouveau mot de passe *</span>
+          <input name="new_password" type="password" required minlength="8" maxlength="100" autocomplete="new-password" placeholder="Au moins 8 caractères">
+        </label>
+        <label>
+          <span>Confirmer le nouveau mot de passe *</span>
+          <input name="confirm_password" type="password" required minlength="8" maxlength="100" autocomplete="new-password">
+        </label>
+        <div class="profil-actions">
+          <button type="submit" class="btn-primary">🔐 Mettre à jour le mot de passe</button>
+          <span id="passwordStatus" class="form-hint"></span>
+        </div>
+      </form>
+    </section>
+
   </div>
 </main>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/supabase.js?v=11"></script>
-<script src="js/auth.js?v=11"></script>
-<script src="js/pwa.js?v=11"></script>
-<script src="js/profil.js?v=11"></script>
+<script src="js/supabase.js?v=18"></script>
+<script src="js/auth.js?v=18"></script>
+<script src="js/pwa.js?v=18"></script>
+<script src="js/profil.js?v=18"></script>
 </body>
 </html>

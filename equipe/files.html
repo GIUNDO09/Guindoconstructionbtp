@@ -14,7 +14,7 @@
 <link rel="icon" href="../favicon.ico">
 <link rel="apple-touch-icon" href="../Images/LOGO-1.png">
 <link rel="manifest" href="manifest.json">
-<link rel="stylesheet" href="css/equipe.css?v=11">
+<link rel="stylesheet" href="css/equipe.css?v=18">
 </head>
 <body class="app-body">
 
@@ -69,6 +69,15 @@
         </div>
       </div>
 
+      <div class="files-controls">
+        <input type="search" id="searchFiles" class="search-input" placeholder="🔍 Rechercher dans le dossier…" autocomplete="off">
+        <select id="sortFiles" class="select">
+          <option value="recent">Trier : récents</option>
+          <option value="name">Trier : nom A-Z</option>
+          <option value="size">Trier : taille</option>
+        </select>
+      </div>
+
       <div id="dropzone" class="dropzone">
         <div class="dropzone-inner">
           <div class="dropzone-icon">📤</div>
@@ -86,9 +95,9 @@
 </main>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/supabase.js?v=11"></script>
-<script src="js/auth.js?v=11"></script>
-<script src="js/pwa.js?v=11"></script>
-<script src="js/files.js?v=11"></script>
+<script src="js/supabase.js?v=18"></script>
+<script src="js/auth.js?v=18"></script>
+<script src="js/pwa.js?v=18"></script>
+<script src="js/files.js?v=18"></script>
 </body>
 </html>

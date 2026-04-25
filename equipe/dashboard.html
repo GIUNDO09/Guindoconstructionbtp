@@ -14,7 +14,7 @@
 <link rel="icon" href="../favicon.ico">
 <link rel="apple-touch-icon" href="../Images/LOGO-1.png">
 <link rel="manifest" href="manifest.json">
-<link rel="stylesheet" href="css/equipe.css?v=11">
+<link rel="stylesheet" href="css/equipe.css?v=18">
 </head>
 <body class="app-body">
 
@@ -76,6 +76,7 @@ window.__hideModal = function(id) {
     <div class="panel-head">
       <h2>Tâches</h2>
       <div class="toolbar">
+        <input type="search" id="searchTasks" class="search-input" placeholder="🔍 Rechercher (titre, projet, description)…" autocomplete="off">
         <select id="filterAssignee" class="select">
           <option value="all">Tous les membres</option>
         </select>
@@ -84,6 +85,12 @@ window.__hideModal = function(id) {
           <option value="todo">À faire</option>
           <option value="in_progress">En cours</option>
           <option value="done">Terminées</option>
+        </select>
+        <select id="sortTasks" class="select">
+          <option value="due">Trier : échéance</option>
+          <option value="priority">Trier : priorité</option>
+          <option value="created">Trier : date de création</option>
+          <option value="title">Trier : titre A-Z</option>
         </select>
         <button id="newTaskBtn" class="btn-primary" hidden>+ Nouvelle tâche</button>
       </div>
@@ -174,9 +181,9 @@ window.__hideModal = function(id) {
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/supabase.js?v=11"></script>
-<script src="js/auth.js?v=11"></script>
-<script src="js/pwa.js?v=11"></script>
-<script src="js/dashboard.js?v=11"></script>
+<script src="js/supabase.js?v=18"></script>
+<script src="js/auth.js?v=18"></script>
+<script src="js/pwa.js?v=18"></script>
+<script src="js/dashboard.js?v=18"></script>
 </body>
 </html>

@@ -3722,3 +3722,64 @@ footer a:hover {
     .btn-espace-equipe span { display: none; }
     .btn-espace-equipe { padding: 9px 12px; }
 }
+
+/* =====================================================================
+   MOBILE — Améliorations finales (Phase 11)
+   ===================================================================== */
+
+/* Fix iOS zoom sur les inputs : taille mini 16px sur mobile */
+@media (max-width: 768px) {
+  input[type="text"],
+  input[type="email"],
+  input[type="tel"],
+  input[type="number"],
+  input[type="search"],
+  input[type="url"],
+  input[type="password"],
+  input[type="date"],
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
+}
+
+/* Tap targets confortables (au moins 44 × 44 px en mobile) */
+@media (max-width: 768px) {
+  .btn, button, .nav-link, .footer a, .social-link {
+    min-height: 44px;
+  }
+  .btn { display: inline-flex; align-items: center; justify-content: center; }
+  .nav-link { padding-top: 14px; padding-bottom: 14px; }
+}
+
+/* Hauteur de ligne plus aérée + h1/h2 plus lisibles sur petits écrans */
+@media (max-width: 480px) {
+  body { line-height: 1.55; }
+  .hero-content h1 { font-size: 1.7rem; line-height: 1.2; }
+  .hero-content h2 { font-size: 1rem; }
+  .section-title { font-size: 1.5rem; margin-bottom: 1.2rem; }
+  p { font-size: 0.95rem; }
+}
+
+/* Le bouton WhatsApp flottant existant reste seul (whatsapp-float)
+   pour éviter d'encombrer l'écran mobile avec plusieurs CTA. */
+
+/* Forcer max-width 100% sur les images de contenu pour éviter
+   les débordements horizontaux sur petits écrans */
+@media (max-width: 768px) {
+  .container img,
+  .service-card img,
+  .project-card img,
+  .team-member img,
+  .hero img {
+    max-width: 100%;
+    height: auto;
+  }
+}
+
+/* Header / nav : padding plus serré sur très petit écran */
+@media (max-width: 480px) {
+  .nav-container { padding: 0 14px; }
+  .hero-content { padding: 0 8px; }
+  .footer-content { padding: 0 14px; }
+}

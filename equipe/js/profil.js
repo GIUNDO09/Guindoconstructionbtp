@@ -106,6 +106,47 @@ function bindUI() {
     state.me.avatar_file_id = null;
     renderProfile();
   });
+
+  // Changement de mot de passe
+  document.getElementById('passwordForm').addEventListener('submit', onPasswordSubmit);
+}
+
+async function onPasswordSubmit(e) {
+  e.preventDefault();
+  const form = e.target;
+  const status = document.getElementById('passwordStatus');
+  const fd = new FormData(form);
+  const newPwd = fd.get('new_password');
+  const confirm = fd.get('confirm_password');
+
+  if (newPwd !== confirm) {
+    status.textContent = '❌ Les deux mots de passe ne correspondent pas';
+    status.className = 'form-hint form-hint-warn';
+    return;
+  }
+  if (newPwd.length < 8) {
+    status.textContent = '❌ Au moins 8 caractères requis';
+    status.className = 'form-hint form-hint-warn';
+    return;
+  }
+
+  const submitBtn = form.querySelector('button[type="submit"]');
+  submitBtn.disabled = true;
+  status.textContent = '⏳ Mise à jour…';
+  status.className = 'form-hint';
+
+  try {
+    const { error } = await sb.auth.updateUser({ password: newPwd });
+    if (error) throw error;
+    form.reset();
+    status.textContent = '✅ Mot de passe mis à jour';
+    status.className = 'form-hint form-hint-ok';
+  } catch (err) {
+    status.textContent = '❌ ' + (err.message || 'Échec');
+    status.className = 'form-hint form-hint-warn';
+  } finally {
+    submitBtn.disabled = false;
+  }
 }
 
 async function onProfileSubmit(e) {

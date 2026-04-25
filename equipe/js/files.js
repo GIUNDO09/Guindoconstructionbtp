@@ -7,8 +7,11 @@ let state = {
   folders: [],
   files: [],
   currentFolderId: null,
-  serverUrl: null
+  serverUrl: null,
+  search: '',
+  sort: 'recent'
 };
+const thumbCache = new Map(); // file_id → blob URL pour vignettes images
 
 (async () => {
   const session = await requireAuth();
@@ -116,10 +119,10 @@ const STATUS_MAP = {
 
 function renderFolderContent() {
   const current = state.folders.find(f => f.id === state.currentFolderId);
-  const subFolders = state.folders.filter(f =>
+  let subFolders = state.folders.filter(f =>
     state.currentFolderId ? f.parent_id === state.currentFolderId : !f.parent_id
   );
-  const filesHere = state.files.filter(f => f.folder_id === state.currentFolderId);
+  let filesHere = state.files.filter(f => f.folder_id === state.currentFolderId);
 
   document.getElementById('currentFolderTitle').textContent = current ? current.name : 'Racine';
   document.getElementById('folderActions').hidden = !current;
@@ -128,9 +131,30 @@ function renderFolderContent() {
     document.getElementById('folderStatus').value = current.status;
   }
 
+  // Recherche
+  if (state.search) {
+    const q = state.search.toLowerCase();
+    subFolders = subFolders.filter(f => (f.name || '').toLowerCase().includes(q));
+    filesHere = filesHere.filter(f => (f.name || '').toLowerCase().includes(q));
+  }
+
+  // Tri
+  if (state.sort === 'name') {
+    subFolders.sort((a, b) => (a.name || '').localeCompare(b.name || '', 'fr', { sensitivity: 'base' }));
+    filesHere.sort((a, b) => (a.name || '').localeCompare(b.name || '', 'fr', { sensitivity: 'base' }));
+  } else if (state.sort === 'size') {
+    filesHere.sort((a, b) => (b.size_bytes || 0) - (a.size_bytes || 0));
+  } else {
+    // recent
+    filesHere.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    subFolders.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+  }
+
   const box = document.getElementById('folderContent');
   if (subFolders.length === 0 && filesHere.length === 0) {
-    box.innerHTML = '<p class="empty">Ce dossier est vide. Crée un sous-dossier ou dépose des fichiers.</p>';
+    box.innerHTML = state.search
+      ? '<p class="empty">Aucun résultat pour cette recherche.</p>'
+      : '<p class="empty">Ce dossier est vide. Crée un sous-dossier ou dépose des fichiers.</p>';
     return;
   }
 
@@ -150,15 +174,17 @@ function renderFolderContent() {
   const filesHtml = filesHere.map(file => {
     const uploader = state.profilesById[file.uploaded_by]?.full_name || '—';
     const when = new Date(file.created_at).toLocaleDateString('fr-FR');
-    const sizeMb = (file.size_bytes / 1024 / 1024).toFixed(2);
     const isImage = (file.mime_type || '').startsWith('image/');
     const canDelete = file.uploaded_by === state.me?.id || state.me?.role === 'admin';
+    const iconHtml = isImage
+      ? `<img class="item-thumb" data-thumb-id="${file.id}" alt="" loading="lazy">`
+      : `<span class="item-icon">${fileIcon(file.name)}</span>`;
     return `
-      <div class="item item-file" data-file-id="${file.id}">
-        <div class="item-icon">${isImage ? '🖼️' : '📄'}</div>
+      <div class="item item-file ${isImage ? 'item-image' : ''}" data-file-id="${file.id}">
+        ${iconHtml}
         <div class="item-body">
           <div class="item-name">${escapeHtml(file.name)}</div>
-          <div class="item-meta">${sizeMb} Mo · ${escapeHtml(uploader)} · ${when}</div>
+          <div class="item-meta">${formatBytes(file.size_bytes)} · ${escapeHtml(uploader)} · ${when}</div>
         </div>
         <button class="item-download" data-file-id="${file.id}" title="Télécharger">⬇</button>
         ${canDelete ? `<button class="item-delete" data-file-id="${file.id}" title="Supprimer">×</button>` : ''}
@@ -166,11 +192,68 @@ function renderFolderContent() {
   }).join('');
 
   box.innerHTML = foldersHtml + filesHtml;
+  // Hydrater les vignettes
+  box.querySelectorAll('img.item-thumb').forEach(img => loadThumbnail(img, img.dataset.thumbId));
+}
+
+async function loadThumbnail(imgEl, fileId) {
+  if (!state.serverUrl || !fileId) return;
+  if (thumbCache.has(fileId)) { imgEl.src = thumbCache.get(fileId); return; }
+  try {
+    const token = (await sb.auth.getSession()).data.session?.access_token;
+    if (!token) return;
+    const r = await fetch(`${state.serverUrl}/stream/${fileId}`, { headers: { 'Authorization': `Bearer ${token}` } });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const blob = await r.blob();
+    const url = URL.createObjectURL(blob);
+    thumbCache.set(fileId, url);
+    imgEl.src = url;
+  } catch (e) {
+    imgEl.style.display = 'none';
+  }
+}
+
+function formatBytes(n) {
+  if (!n || n < 0) return '';
+  if (n < 1024) return `${n} o`;
+  if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} Ko`;
+  if (n < 1024 * 1024 * 1024) return `${(n / 1024 / 1024).toFixed(1)} Mo`;
+  return `${(n / 1024 / 1024 / 1024).toFixed(2)} Go`;
+}
+function fileIcon(name) {
+  const ext = (name || '').toLowerCase().split('.').pop();
+  if (ext === 'pdf') return '📕';
+  if (['doc', 'docx'].includes(ext)) return '📘';
+  if (['xls', 'xlsx', 'csv'].includes(ext)) return '📗';
+  if (['ppt', 'pptx'].includes(ext)) return '📙';
+  if (['zip', 'rar', '7z'].includes(ext)) return '🗜️';
+  if (['mp4', 'mov', 'webm', 'avi'].includes(ext)) return '🎞️';
+  if (['mp3', 'wav', 'm4a', 'webm', 'ogg'].includes(ext)) return '🎵';
+  if (['txt', 'md'].includes(ext)) return '📄';
+  return '📄';
 }
 
 // ---------- UI ----------
 function bindUI() {
   document.getElementById('logoutBtn').addEventListener('click', logout);
+
+  // Recherche
+  const search = document.getElementById('searchFiles');
+  if (search) {
+    let t;
+    search.addEventListener('input', (e) => {
+      clearTimeout(t);
+      t = setTimeout(() => {
+        state.search = e.target.value.trim();
+        renderFolderContent();
+      }, 150);
+    });
+  }
+  const sortSel = document.getElementById('sortFiles');
+  if (sortSel) sortSel.addEventListener('change', (e) => {
+    state.sort = e.target.value;
+    renderFolderContent();
+  });
 
   // Breadcrumb navigation
   document.getElementById('breadcrumb').addEventListener('click', (e) => {
@@ -178,6 +261,8 @@ function bindUI() {
     if (!a) return;
     e.preventDefault();
     state.currentFolderId = a.dataset.id || null;
+    state.search = '';
+    const s = document.getElementById('searchFiles'); if (s) s.value = '';
     renderAll();
   });
 
@@ -186,6 +271,8 @@ function bindUI() {
     const item = e.target.closest('.tree-item');
     if (!item) return;
     state.currentFolderId = item.dataset.folderId;
+    state.search = '';
+    const s = document.getElementById('searchFiles'); if (s) s.value = '';
     renderAll();
   });
 

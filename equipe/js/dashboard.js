@@ -20,7 +20,7 @@ let state = {
   assigneesByTask: {},  // { taskId: [userId, userId, ...] }
   folders: [],
   serverUrl: null,
-  filters: { assignee: 'all', status: 'all' },
+  filters: { assignee: 'all', status: 'all', search: '', sort: 'due' },
   openTaskId: null,
   commentsChannel: null
 };
@@ -165,11 +165,38 @@ function renderTeamProgress() {
 
 function renderTasks() {
   const container = document.getElementById('tasksList');
-  const { assignee, status } = state.filters;
-  let tasks = state.tasks;
+  const { assignee, status, search, sort } = state.filters;
+  let tasks = state.tasks.slice();
   if (assignee === 'me')        tasks = tasks.filter(t => (state.assigneesByTask[t.id] || []).includes(state.me.id));
   else if (assignee !== 'all')  tasks = tasks.filter(t => (state.assigneesByTask[t.id] || []).includes(assignee));
   if (status !== 'all')          tasks = tasks.filter(t => t.status === status);
+
+  if (search) {
+    const q = search.toLowerCase();
+    tasks = tasks.filter(t =>
+      (t.title || '').toLowerCase().includes(q) ||
+      (t.project || '').toLowerCase().includes(q) ||
+      (t.description || '').toLowerCase().includes(q)
+    );
+  }
+
+  // Tri
+  const PR_RANK = { high: 0, medium: 1, low: 2 };
+  if (sort === 'priority') {
+    tasks.sort((a, b) => (PR_RANK[a.priority] ?? 9) - (PR_RANK[b.priority] ?? 9));
+  } else if (sort === 'created') {
+    tasks.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+  } else if (sort === 'title') {
+    tasks.sort((a, b) => (a.title || '').localeCompare(b.title || '', 'fr', { sensitivity: 'base' }));
+  } else {
+    // due — déjà trié à la requête, mais on refait au cas où
+    tasks.sort((a, b) => {
+      if (!a.due_date && !b.due_date) return 0;
+      if (!a.due_date) return 1;
+      if (!b.due_date) return -1;
+      return new Date(a.due_date) - new Date(b.due_date);
+    });
+  }
 
   if (tasks.length === 0) {
     container.innerHTML = '<p class="empty">Aucune tâche.</p>';
@@ -182,12 +209,18 @@ function renderTasks() {
   }
   state._coverUrls = [];
 
+  const today = new Date(new Date().toDateString());
   container.innerHTML = tasks.map(t => {
     const st = STATUS_LABEL[t.status];
     const pr = PRIORITY_LABEL[t.priority];
     const taskAssignees = assigneesOf(t.id);
     const due = t.due_date ? new Date(t.due_date).toLocaleDateString('fr-FR') : '';
-    const overdue = t.due_date && t.status !== 'done' && new Date(t.due_date) < new Date(new Date().toDateString());
+    const dueDate = t.due_date ? new Date(t.due_date) : null;
+    const dDays = dueDate ? Math.round((dueDate - today) / 86400000) : null;
+    const overdue = dueDate && t.status !== 'done' && dueDate < today;
+    const dueSoon = dueDate && t.status !== 'done' && !overdue && dDays !== null && dDays <= 3;
+    const dueChipCls = overdue ? 'chip-danger' : dueSoon ? 'chip-warn' : '';
+    const dueLabel  = overdue ? `⚠️ ${due}` : dueSoon ? `🟠 ${due}` : `📅 ${due}`;
     const hasCover = t.cover_file_id && state.serverUrl;
 
     const assigneesHtml = taskAssignees.length === 0
@@ -205,12 +238,12 @@ function renderTasks() {
         <div class="row-main">
           <div class="row-title-line">
             <h3 class="row-title">${escapeHtml(t.title)}</h3>
-            <span class="status-pill ${st.cls}">${st.label}</span>
+            <button type="button" class="status-pill status-cycle ${st.cls}" data-cycle="${t.id}" data-status="${t.status}" title="Cliquer pour changer le statut">${st.label}</button>
           </div>
           <div class="row-meta">
             <span class="badge ${pr.cls}">${pr.label}</span>
             ${t.project ? `<span class="chip">🏗️ ${escapeHtml(t.project)}</span>` : ''}
-            ${due ? `<span class="chip ${overdue ? 'chip-danger' : ''}">📅 ${due}</span>` : ''}
+            ${due ? `<span class="chip ${dueChipCls}">${dueLabel}</span>` : ''}
           </div>
         </div>
         <div class="row-assignees">${assigneesHtml}</div>
@@ -283,6 +316,19 @@ function bindUI() {
     state.filters.status = e.target.value;
     renderTasks();
   });
+  document.getElementById('sortTasks').addEventListener('change', (e) => {
+    state.filters.sort = e.target.value;
+    renderTasks();
+  });
+  const search = document.getElementById('searchTasks');
+  let searchTimer;
+  search.addEventListener('input', (e) => {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(() => {
+      state.filters.search = e.target.value.trim();
+      renderTasks();
+    }, 150);
+  });
 
   // Changement de statut rapide
   document.getElementById('tasksList').addEventListener('change', async (e) => {
@@ -295,6 +341,18 @@ function bindUI() {
 
   // Modifier / supprimer / ouvrir détail
   document.getElementById('tasksList').addEventListener('click', async (e) => {
+    // Cycle de statut : todo → in_progress → done → todo
+    const cycleBtn = e.target.closest('.status-cycle');
+    if (cycleBtn) {
+      e.stopPropagation();
+      const id = cycleBtn.dataset.cycle;
+      const cur = cycleBtn.dataset.status;
+      const next = cur === 'todo' ? 'in_progress' : cur === 'in_progress' ? 'done' : 'todo';
+      cycleBtn.disabled = true;
+      const { error } = await sb.from('tasks').update({ status: next }).eq('id', id);
+      if (error) { alert('Erreur: ' + error.message); cycleBtn.disabled = false; }
+      return;
+    }
     const editBtn    = e.target.closest('.btn-edit');
     const delBtn     = e.target.closest('.btn-delete');
     const commentBtn = e.target.closest('.btn-comment');
