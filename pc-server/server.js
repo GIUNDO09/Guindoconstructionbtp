@@ -32,7 +32,21 @@ fs.mkdirSync(FILES_DIR, { recursive: true });
 console.log(`📁 Stockage : ${FILES_DIR}`);
 
 const app = express();
-app.use(cors({ origin: CORS_ORIGIN.split(',').map(s => s.trim()) }));
+
+// CORS robuste : gère le wildcard, plusieurs origines, et les preflight (OPTIONS)
+const corsAllowed = CORS_ORIGIN.trim() === '*' ? true : CORS_ORIGIN.split(',').map(s => s.trim()).filter(Boolean);
+const corsConfig = {
+  origin: corsAllowed,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Range'],
+  exposedHeaders: ['Content-Length', 'Content-Type', 'Content-Disposition', 'Accept-Ranges'],
+  credentials: false,
+  optionsSuccessStatus: 204,
+  maxAge: 600
+};
+app.use(cors(corsConfig));
+// Préflight explicite pour toutes les routes (compat tunnels Cloudflare)
+app.options(/.*/, cors(corsConfig));
 app.use(express.json());
 
 // Client Supabase (anon) — utilisé pour valider les tokens utilisateurs
