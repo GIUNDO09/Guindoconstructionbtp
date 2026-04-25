@@ -95,7 +95,7 @@ function folderBreadcrumb(folderId) {
 
 // ---------- Data ----------
 async function loadProfiles() {
-  const { data, error } = await sb.from('profiles').select('*').order('full_name');
+  const { data, error } = await sb.from('profiles').select('id, full_name, role, avatar_file_id, title').order('full_name');
   if (error) { console.error(error); return; }
   state.profiles = data || [];
   state.profilesById = Object.fromEntries(state.profiles.map(p => [p.id, p]));
@@ -192,9 +192,8 @@ function renderTasks() {
 
     const assigneesHtml = taskAssignees.length === 0
       ? '<span class="row-assignee-empty">Non assignée</span>'
-      : taskAssignees.slice(0, 4).map(p =>
-          `<span class="row-avatar" title="${escapeHtml(p.full_name)}">${escapeHtml(initials(p.full_name))}</span>`
-        ).join('') + (taskAssignees.length > 4 ? `<span class="row-avatar row-avatar-more">+${taskAssignees.length - 4}</span>` : '');
+      : taskAssignees.slice(0, 4).map(p => avatarChip(p, 'row-avatar')).join('')
+        + (taskAssignees.length > 4 ? `<span class="row-avatar row-avatar-more">+${taskAssignees.length - 4}</span>` : '');
 
     return `
       <div class="task-row task-open" data-id="${t.id}">
@@ -220,6 +219,15 @@ function renderTasks() {
   }).join('');
   // Charger les images de couverture (auth)
   hydrateCoverImages(container);
+}
+
+function avatarChip(profile, cls) {
+  const title = escapeHtml(profile.full_name + (profile.title ? ` · ${profile.title}` : ''));
+  const ini = escapeHtml(initials(profile.full_name));
+  if (profile.avatar_file_id && state.serverUrl) {
+    return `<span class="${cls}" title="${title}"><img data-cover-id="${profile.avatar_file_id}" alt=""></span>`;
+  }
+  return `<span class="${cls}" title="${title}">${ini}</span>`;
 }
 
 function initials(fullName) {
@@ -366,7 +374,11 @@ async function openTaskDetail(taskId) {
 
   const assigneesHtml = taskAssignees.length === 0
     ? '<span class="chip chip-muted">Non assignée</span>'
-    : taskAssignees.map(p => `<span class="chip-pill">👤 ${escapeHtml(p.full_name)}</span>`).join('');
+    : taskAssignees.map(p => `
+        <span class="assignee-pill">
+          ${avatarChip(p, 'assignee-avatar')}
+          <span>${escapeHtml(p.full_name)}${p.title ? ` <small>· ${escapeHtml(p.title)}</small>` : ''}</span>
+        </span>`).join('');
 
   const isAdmin = state.me?.role === 'admin';
 

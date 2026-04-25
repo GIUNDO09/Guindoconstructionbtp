@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>Mon profil — Espace équipe GCBTP</title>
+<link rel="icon" href="../favicon.ico">
+<link rel="stylesheet" href="css/equipe.css?v=10">
+</head>
+<body class="app-body">
+
+<header class="app-header">
+  <a href="../index.html" class="brand">
+    <img src="../Images/LOGO-1.png" alt="GCBTP">
+    <span>Espace équipe</span>
+  </a>
+  <nav class="app-nav">
+    <a href="dashboard.html" class="nav-pill">Tâches</a>
+    <a href="chat.html" class="nav-pill">Chat</a>
+    <a href="files.html" class="nav-pill">Fichiers</a>
+    <a href="profil.html" class="nav-pill nav-pill-active">Mon profil</a>
+  </nav>
+  <div class="app-user">
+    <span id="userName">…</span>
+    <button id="logoutBtn" class="btn-ghost">Déconnexion</button>
+  </div>
+</header>
+
+<main class="profil-main">
+
+  <div class="profil-card">
+    <h2>Mon profil</h2>
+    <p class="profil-sub">Mets à jour tes informations. Elles seront visibles par les autres membres de l'équipe.</p>
+
+    <div class="profil-layout">
+
+      <!-- Avatar -->
+      <div class="profil-avatar-section">
+        <div id="avatarPreview" class="avatar-preview">
+          <span class="avatar-initials-lg">?</span>
+        </div>
+        <div class="avatar-actions">
+          <label class="btn-primary avatar-upload-btn">
+            📷 Changer la photo
+            <input type="file" id="avatarInput" accept="image/*" hidden>
+          </label>
+          <button type="button" id="removeAvatarBtn" class="btn-ghost btn-danger">Supprimer</button>
+        </div>
+        <p id="avatarStatus" class="form-hint"></p>
+      </div>
+
+      <!-- Formulaire -->
+      <form id="profileForm" class="profil-form" action="javascript:void(0);">
+
+        <div class="profil-readonly">
+          <div>
+            <span class="profil-label">Email de connexion</span>
+            <span id="authEmail" class="profil-readonly-value">—</span>
+            <small class="form-hint">Cet email sert à te connecter — il ne peut pas être changé ici.</small>
+          </div>
+          <div>
+            <span class="profil-label">Rôle</span>
+            <span id="roleBadge" class="profil-readonly-value">—</span>
+          </div>
+        </div>
+
+        <hr class="profil-sep">
+
+        <label>
+          <span>Nom complet *</span>
+          <input name="full_name" type="text" required maxlength="100" placeholder="Prénom NOM">
+        </label>
+
+        <label>
+          <span>Titre / Poste</span>
+          <input name="title" type="text" maxlength="100" placeholder="Ex : Ingénieur, Technicien, Gestionnaire">
+        </label>
+
+        <label>
+          <span>Email personnel (pour les notifications)</span>
+          <input name="notification_email" type="email" maxlength="200" placeholder="prenom.nom@gmail.com">
+          <small class="form-hint">C'est sur cet email que tu recevras les rappels (nouvelle tâche, retard, message…).</small>
+        </label>
+
+        <label>
+          <span>Téléphone</span>
+          <input name="phone" type="tel" maxlength="30" placeholder="+221 77 123 45 67">
+        </label>
+
+        <div class="profil-actions">
+          <button type="submit" class="btn-primary">💾 Enregistrer</button>
+          <span id="saveStatus" class="form-hint"></span>
+        </div>
+      </form>
+
+    </div>
+  </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabase.js?v=10"></script>
+<script src="js/auth.js?v=10"></script>
+<script src="js/profil.js?v=10"></script>
+</body>
+</html>
