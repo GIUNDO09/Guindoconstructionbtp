@@ -35,7 +35,15 @@ let mentionState = null;               // { start, query } pour autocomplete
   await loadServerUrl();
   await loadMessages();
 
-  chatChannel = sb.channel('messages-realtime', { config: { broadcast: { self: false } } })
+  chatChannel = sb.channel('messages-realtime', {
+      config: {
+        broadcast: { self: false },
+        presence: { key: me?.id || 'anon' }
+      }
+    })
+    .on('presence', { event: 'sync' }, () => renderOnlineCount())
+    .on('presence', { event: 'join' }, () => renderOnlineCount())
+    .on('presence', { event: 'leave' }, () => renderOnlineCount())
     .on('postgres_changes',
       { event: 'INSERT', schema: 'public', table: 'messages' },
       (payload) => {
@@ -70,7 +78,15 @@ let mentionState = null;               // { start, query } pour autocomplete
       typingUsers.set(user_id, { name: name || 'Quelqu\'un', expiresAt: Date.now() + 4000 });
       renderTyping();
     })
-    .subscribe();
+    .subscribe(async (status) => {
+      if (status === 'SUBSCRIBED') {
+        await chatChannel.track({
+          user_id: me?.id,
+          name: me?.full_name || 'Inconnu',
+          online_at: new Date().toISOString()
+        });
+      }
+    });
 
   // Marquer comme lu quand la fenêtre est active
   window.addEventListener('focus', markVisibleAsRead);
@@ -687,6 +703,27 @@ function closeLightbox() {
   lb.hidden = true;
   lb.querySelector('.lightbox-img').removeAttribute('src');
   document.body.classList.remove('no-scroll');
+}
+
+// -----------------------------------------------------------
+// Présence (utilisateurs en ligne dans le chat)
+// -----------------------------------------------------------
+function renderOnlineCount() {
+  const indicator = document.getElementById('onlineIndicator');
+  const countEl = document.getElementById('onlineCount');
+  if (!indicator || !countEl || !chatChannel) return;
+  const state = chatChannel.presenceState();
+  // Une "key" peut avoir plusieurs sessions (multi-onglets), on compte les keys uniques
+  const keys = Object.keys(state || {});
+  const count = keys.length;
+  countEl.textContent = count;
+  // Tooltip : noms des présents
+  const names = keys.map(k => {
+    const arr = state[k];
+    return arr?.[0]?.name || profilesById[k]?.full_name || 'Inconnu';
+  });
+  indicator.title = names.length ? names.join(', ') : 'Aucune présence détectée';
+  indicator.classList.toggle('online-empty', count === 0);
 }
 
 // -----------------------------------------------------------
