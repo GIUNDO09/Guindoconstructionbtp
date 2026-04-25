@@ -33,20 +33,31 @@ console.log(`📁 Stockage : ${FILES_DIR}`);
 
 const app = express();
 
-// CORS robuste : gère le wildcard, plusieurs origines, et les preflight (OPTIONS)
-const corsAllowed = CORS_ORIGIN.trim() === '*' ? true : CORS_ORIGIN.split(',').map(s => s.trim()).filter(Boolean);
-const corsConfig = {
-  origin: corsAllowed,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Range'],
-  exposedHeaders: ['Content-Length', 'Content-Type', 'Content-Disposition', 'Accept-Ranges'],
-  credentials: false,
-  optionsSuccessStatus: 204,
-  maxAge: 600
-};
-app.use(cors(corsConfig));
-// Préflight explicite pour toutes les routes (compat tunnels Cloudflare)
-app.options(/.*/, cors(corsConfig));
+// -----------------------------------------------------------
+// CORS — handler manuel (fiable avec tunnels Cloudflare + Node 24)
+// -----------------------------------------------------------
+const allowedOrigins = CORS_ORIGIN.trim() === '*'
+  ? null  // wildcard total
+  : CORS_ORIGIN.split(',').map(s => s.trim()).filter(Boolean);
+
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  if (allowedOrigins === null) {
+    res.setHeader('Access-Control-Allow-Origin', origin || '*');
+  } else if (origin && allowedOrigins.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  } else if (origin) {
+    // Origine non autorisée — on log pour debug mais on ne pose pas l'en-tête
+    console.warn(`⚠️  CORS bloqué : origin "${origin}" non listée dans CORS_ORIGIN`);
+  }
+  res.setHeader('Vary', 'Origin');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Range');
+  res.setHeader('Access-Control-Expose-Headers', 'Content-Length, Content-Type, Content-Disposition, Accept-Ranges');
+  res.setHeader('Access-Control-Max-Age', '600');
+  if (req.method === 'OPTIONS') return res.status(204).end();
+  next();
+});
 app.use(express.json());
 
 // Client Supabase (anon) — utilisé pour valider les tokens utilisateurs
