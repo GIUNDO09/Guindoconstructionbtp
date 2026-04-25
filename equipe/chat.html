@@ -14,7 +14,7 @@
 <link rel="icon" href="../favicon.ico">
 <link rel="apple-touch-icon" href="../Images/LOGO-1.png">
 <link rel="manifest" href="manifest.json">
-<link rel="stylesheet" href="css/equipe.css?v=12">
+<link rel="stylesheet" href="css/equipe.css?v=17">
 </head>
 <body class="app-body">
 
@@ -40,11 +40,37 @@
 
   <section class="chat-panel">
     <div class="chat-header">
-      <h2>💬 Canal général</h2>
-      <p class="chat-sub">Discussion en temps réel avec toute l'équipe</p>
+      <div class="chat-header-row">
+        <div>
+          <h2>💬 Canal général</h2>
+          <p class="chat-sub">Discussion en temps réel avec toute l'équipe</p>
+        </div>
+        <button type="button" id="searchToggleBtn" class="btn-icon-bubble" title="Rechercher">🔍</button>
+      </div>
+      <div id="searchBar" class="search-bar" hidden>
+        <input type="search" id="searchInput" placeholder="Rechercher dans les messages…" autocomplete="off">
+        <span id="searchCount" class="search-count"></span>
+        <button type="button" id="searchClose" class="btn-inline" aria-label="Fermer la recherche">✕</button>
+      </div>
     </div>
 
     <div id="messagesList" class="messages-list"></div>
+
+    <!-- Indicateur "X est en train d'écrire…" -->
+    <div id="typingIndicator" class="typing-indicator" hidden>
+      <span class="typing-dots"><span></span><span></span><span></span></span>
+      <span id="typingText"></span>
+    </div>
+
+    <!-- Aperçu de la citation (réponse) -->
+    <div id="replyPreview" class="reply-preview" hidden>
+      <span class="reply-bar"></span>
+      <div class="reply-info">
+        <span class="reply-author" id="replyAuthor"></span>
+        <span class="reply-text" id="replyText"></span>
+      </div>
+      <button type="button" id="cancelReply" class="btn-inline" title="Annuler la réponse">✕</button>
+    </div>
 
     <!-- Aperçu du fichier sélectionné avant envoi -->
     <div id="attachmentPreview" class="attachment-preview" hidden>
@@ -62,21 +88,46 @@
     </div>
 
     <form id="chatForm" class="chat-form" action="javascript:void(0);">
-      <button type="button" id="attachBtn" class="btn-icon" title="Joindre image/vidéo/audio">📎</button>
-      <input type="file" id="attachInput" accept="image/*,video/*,audio/*" hidden>
-      <button type="button" id="recBtn" class="btn-icon" title="Message vocal">🎤</button>
-      <textarea id="chatInput" placeholder="Écris un message…" rows="1" maxlength="2000"></textarea>
-      <button type="button" id="enableNotifBtn" class="btn-icon" hidden title="Activer les notifications">🔔</button>
-      <button type="submit" class="btn-primary">Envoyer</button>
+      <button type="button" id="enableNotifBtn" class="btn-icon-bubble" hidden title="Activer les notifications">🔔</button>
+      <div class="chat-input-wrap">
+        <button type="button" id="attachBtn" class="btn-inline" title="Joindre image/vidéo/audio">📎</button>
+        <input type="file" id="attachInput" accept="image/*,video/*,audio/*,application/pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.zip" hidden>
+        <textarea id="chatInput" placeholder="Écris un message…" rows="1" maxlength="2000"></textarea>
+        <button type="button" id="recBtn" class="btn-inline" title="Message vocal">🎤</button>
+      </div>
+      <button type="submit" class="btn-send" aria-label="Envoyer">➤</button>
     </form>
   </section>
 
 </main>
 
+<!-- Picker d'emoji pour réactions (popup contextuelle) -->
+<div id="reactionPicker" class="reaction-picker" hidden>
+  <button type="button" data-emoji="👍">👍</button>
+  <button type="button" data-emoji="❤️">❤️</button>
+  <button type="button" data-emoji="😂">😂</button>
+  <button type="button" data-emoji="😮">😮</button>
+  <button type="button" data-emoji="😢">😢</button>
+  <button type="button" data-emoji="🙏">🙏</button>
+  <button type="button" data-emoji="🔥">🔥</button>
+</div>
+
+<!-- Picker de mentions (autocomplete @) -->
+<div id="mentionPicker" class="mention-picker" hidden></div>
+
+<!-- Visionneuse plein écran (image) -->
+<div id="lightbox" class="lightbox" hidden role="dialog" aria-modal="true" aria-label="Image en plein écran">
+  <div class="lightbox-toolbar">
+    <a class="lightbox-download" href="#" download="image" title="Télécharger" aria-label="Télécharger">⬇</a>
+    <button type="button" class="lightbox-close" aria-label="Fermer">✕</button>
+  </div>
+  <img class="lightbox-img" alt="">
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/supabase.js?v=11"></script>
 <script src="js/auth.js?v=11"></script>
 <script src="js/pwa.js?v=11"></script>
-<script src="js/chat.js?v=12"></script>
+<script src="js/chat.js?v=17"></script>
 </body>
 </html>
