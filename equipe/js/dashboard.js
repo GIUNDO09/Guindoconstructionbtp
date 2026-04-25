@@ -176,13 +176,19 @@ function renderTasks() {
     return;
   }
 
+  // Cleanup d'object URLs précédents pour libérer la mémoire
+  if (state._coverUrls) {
+    state._coverUrls.forEach(u => URL.revokeObjectURL(u));
+  }
+  state._coverUrls = [];
+
   container.innerHTML = tasks.map(t => {
     const st = STATUS_LABEL[t.status];
     const pr = PRIORITY_LABEL[t.priority];
     const taskAssignees = assigneesOf(t.id);
     const due = t.due_date ? new Date(t.due_date).toLocaleDateString('fr-FR') : '';
     const overdue = t.due_date && t.status !== 'done' && new Date(t.due_date) < new Date(new Date().toDateString());
-    const coverUrl = (t.cover_file_id && state.serverUrl) ? `${state.serverUrl}/stream/${t.cover_file_id}` : null;
+    const hasCover = t.cover_file_id && state.serverUrl;
 
     const assigneesHtml = taskAssignees.length === 0
       ? '<span class="row-assignee-empty">Non assignée</span>'
@@ -193,8 +199,8 @@ function renderTasks() {
     return `
       <div class="task-row task-open" data-id="${t.id}">
         <div class="row-cover">
-          ${coverUrl
-            ? `<img src="${coverUrl}" alt="" loading="lazy" onerror="this.style.display='none';this.parentElement.classList.add('row-cover-empty')">`
+          ${hasCover
+            ? `<img alt="" loading="lazy" data-cover-id="${t.cover_file_id}">`
             : `<span class="row-cover-icon">📋</span>`}
         </div>
         <div class="row-main">
@@ -212,6 +218,8 @@ function renderTasks() {
         <div class="row-chevron">›</div>
       </div>`;
   }).join('');
+  // Charger les images de couverture (auth)
+  hydrateCoverImages(container);
 }
 
 function initials(fullName) {
@@ -219,6 +227,36 @@ function initials(fullName) {
   if (parts.length === 0) return '?';
   if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+
+// Charge une image via fetch authentifié (le header Bearer ne peut pas être passé sur <img src>)
+async function loadAuthedImage(imgEl, fileId) {
+  if (!state.serverUrl || !fileId) return;
+  try {
+    const token = (await sb.auth.getSession()).data.session?.access_token;
+    if (!token) return;
+    const r = await fetch(`${state.serverUrl}/stream/${fileId}`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const blob = await r.blob();
+    const url = URL.createObjectURL(blob);
+    state._coverUrls = state._coverUrls || [];
+    state._coverUrls.push(url);
+    imgEl.src = url;
+  } catch (e) {
+    imgEl.style.display = 'none';
+    if (imgEl.parentElement) imgEl.parentElement.classList.add('row-cover-empty');
+  }
+}
+
+// À appeler après renderTasks ou openTaskDetail pour charger les images authentifiées
+function hydrateCoverImages(rootEl) {
+  rootEl.querySelectorAll('img[data-cover-id]').forEach(img => {
+    if (img.src) return; // déjà chargé
+    const fileId = img.dataset.coverId;
+    loadAuthedImage(img, fileId);
+  });
 }
 
 function firstName(full) {
@@ -317,7 +355,7 @@ async function openTaskDetail(taskId) {
   const due = task.due_date ? new Date(task.due_date).toLocaleDateString('fr-FR') : null;
   const st = STATUS_LABEL[task.status];
   const pr = PRIORITY_LABEL[task.priority];
-  const coverUrl = (task.cover_file_id && state.serverUrl) ? `${state.serverUrl}/stream/${task.cover_file_id}` : null;
+  const hasCover = task.cover_file_id && state.serverUrl;
   const folder = task.folder_id ? state.folders.find(f => f.id === task.folder_id) : null;
   const created  = task.created_at ? new Date(task.created_at) : null;
   const updated  = task.updated_at ? new Date(task.updated_at) : null;
@@ -333,7 +371,7 @@ async function openTaskDetail(taskId) {
   const isAdmin = state.me?.role === 'admin';
 
   document.getElementById('taskDetailHead').innerHTML = `
-    ${coverUrl ? `<div class="detail-cover"><img src="${coverUrl}" alt="" onerror="this.parentElement.style.display='none'"></div>` : ''}
+    ${hasCover ? `<div class="detail-cover"><img alt="" data-cover-id="${task.cover_file_id}"></div>` : ''}
     <div class="detail-head">
       <h3>${escapeHtml(task.title)}</h3>
       <div class="detail-chips">
@@ -383,8 +421,10 @@ async function openTaskDetail(taskId) {
       </div>
     </div>`;
 
-  // Lier les nouveaux boutons
   const detailHead = document.getElementById('taskDetailHead');
+  hydrateCoverImages(detailHead);
+
+  // Lier les nouveaux boutons
   detailHead.querySelectorAll('.status-btn').forEach(btn => {
     btn.addEventListener('click', async () => {
       const newStatus = btn.dataset.status;
