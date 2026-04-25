@@ -14,7 +14,7 @@
 <link rel="icon" href="../favicon.ico">
 <link rel="apple-touch-icon" href="../Images/LOGO-1.png">
 <link rel="manifest" href="manifest.json">
-<link rel="stylesheet" href="css/equipe.css?v=18">
+<link rel="stylesheet" href="css/equipe.css?v=20">
 </head>
 <body class="app-body">
 
@@ -82,9 +82,14 @@
       <div id="dropzone" class="dropzone">
         <div class="dropzone-inner">
           <div class="dropzone-icon">📤</div>
-          <p>Clique ou glisse des fichiers ici pour les déposer dans ce dossier</p>
+          <p>Glisse <strong>fichiers ou dossiers</strong> ici, ou choisis ci-dessous :</p>
+          <div class="dropzone-actions">
+            <button type="button" id="pickFilesBtn" class="btn-ghost">📄 Choisir des fichiers</button>
+            <button type="button" id="pickFolderBtn" class="btn-ghost">📂 Importer un dossier</button>
+          </div>
         </div>
         <input type="file" id="fileInput" multiple hidden>
+        <input type="file" id="folderInput" webkitdirectory directory multiple hidden>
       </div>
 
       <div id="uploadProgress" class="upload-progress" hidden></div>
@@ -96,9 +101,9 @@
 </main>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/supabase.js?v=18"></script>
-<script src="js/auth.js?v=18"></script>
-<script src="js/pwa.js?v=18"></script>
-<script src="js/files.js?v=18"></script>
+<script src="js/supabase.js?v=20"></script>
+<script src="js/auth.js?v=20"></script>
+<script src="js/pwa.js?v=20"></script>
+<script src="js/files.js?v=20"></script>
 </body>
 </html>

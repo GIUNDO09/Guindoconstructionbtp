@@ -314,15 +314,78 @@ function bindUI() {
   // Upload
   const dropzone = document.getElementById('dropzone');
   const fileInput = document.getElementById('fileInput');
-  dropzone.addEventListener('click', () => fileInput.click());
-  fileInput.addEventListener('change', (e) => handleUpload(Array.from(e.target.files)));
+  const folderInput = document.getElementById('folderInput');
+  const pickFilesBtn = document.getElementById('pickFilesBtn');
+  const pickFolderBtn = document.getElementById('pickFolderBtn');
+
+  // Boutons de la dropzone (sans déclencher le clic global du dropzone)
+  pickFilesBtn?.addEventListener('click', (e) => { e.stopPropagation(); fileInput.click(); });
+  pickFolderBtn?.addEventListener('click', (e) => { e.stopPropagation(); folderInput.click(); });
+
+  // Sélection de fichiers individuels
+  fileInput.addEventListener('change', (e) => {
+    const items = Array.from(e.target.files).map(f => ({ file: f, relativePath: f.name }));
+    handleUpload(items);
+    fileInput.value = '';
+  });
+  // Sélection d'un dossier complet (avec arborescence)
+  folderInput.addEventListener('change', (e) => {
+    const items = Array.from(e.target.files).map(f => ({ file: f, relativePath: f.webkitRelativePath || f.name }));
+    handleUpload(items);
+    folderInput.value = '';
+  });
+
+  // Drag & drop : supporte fichiers ET dossiers
   dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.classList.add('dropzone-active'); });
   dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dropzone-active'));
-  dropzone.addEventListener('drop', (e) => {
+  dropzone.addEventListener('drop', async (e) => {
     e.preventDefault();
     dropzone.classList.remove('dropzone-active');
-    handleUpload(Array.from(e.dataTransfer.files));
+    const items = e.dataTransfer.items;
+    if (items && typeof items[0]?.webkitGetAsEntry === 'function') {
+      // Browser supporte la FileSystem API → on peut walker dans les dossiers
+      const all = [];
+      const promises = [];
+      for (let i = 0; i < items.length; i++) {
+        const entry = items[i].webkitGetAsEntry?.();
+        if (entry) promises.push(walkEntry(entry, '', all));
+      }
+      await Promise.all(promises);
+      if (all.length) handleUpload(all);
+    } else {
+      // Fallback : juste les fichiers (pas les dossiers)
+      const files = Array.from(e.dataTransfer.files).map(f => ({ file: f, relativePath: f.name }));
+      handleUpload(files);
+    }
   });
+}
+
+// Parcours récursif d'une FileSystemEntry (fichier ou dossier)
+async function walkEntry(entry, basePath, out) {
+  if (entry.isFile) {
+    return new Promise((resolve) => {
+      entry.file((file) => {
+        out.push({ file, relativePath: basePath + file.name });
+        resolve();
+      }, () => resolve());
+    });
+  }
+  if (entry.isDirectory) {
+    const reader = entry.createReader();
+    const folderPath = basePath + entry.name + '/';
+    // readEntries peut être appelé plusieurs fois jusqu'à recevoir un tableau vide
+    const readAll = () => new Promise((resolve) => {
+      const results = [];
+      const next = () => reader.readEntries(async (batch) => {
+        if (!batch.length) return resolve(results);
+        results.push(...batch);
+        next();
+      }, () => resolve(results));
+      next();
+    });
+    const children = await readAll();
+    await Promise.all(children.map(c => walkEntry(c, folderPath, out)));
+  }
 }
 
 async function createFolder(parentId) {
@@ -388,24 +451,77 @@ async function handleDownload(fileId) {
   URL.revokeObjectURL(a.href);
 }
 
-async function handleUpload(files) {
+async function handleUpload(items) {
+  // items : [{ file, relativePath }] — relativePath inclut éventuellement des "dossier/sous-dossier/fichier.ext"
   if (!state.serverUrl) { alert('Serveur non configuré — contacte l\'admin'); return; }
-  if (files.length === 0) return;
+  if (!items || items.length === 0) return;
 
   const token = (await sb.auth.getSession()).data.session.access_token;
   const progress = document.getElementById('uploadProgress');
   progress.hidden = false;
   progress.innerHTML = '';
 
-  for (const file of files) {
+  // 1. Construire l'arbre des dossiers à créer (uniques)
+  const folderPaths = new Set();
+  for (const it of items) {
+    const parts = (it.relativePath || it.file.name).split('/');
+    parts.pop(); // enlever le nom de fichier
+    let acc = '';
+    for (const p of parts) {
+      if (!p) continue;
+      acc = acc ? `${acc}/${p}` : p;
+      folderPaths.add(acc);
+    }
+  }
+
+  // 2. Créer les dossiers en DB, parents d'abord (tri par profondeur)
+  const sortedPaths = [...folderPaths].sort((a, b) => a.split('/').length - b.split('/').length);
+  const folderIdByPath = {};
+  if (sortedPaths.length > 0) {
+    const headLine = document.createElement('div');
+    headLine.className = 'upload-line';
+    headLine.innerHTML = `<span>📂 Création de ${sortedPaths.length} dossier(s)…</span><span class="upload-status">⏳</span>`;
+    progress.appendChild(headLine);
+
+    for (const path of sortedPaths) {
+      const parts = path.split('/');
+      const name = parts[parts.length - 1];
+      const parentPath = parts.slice(0, -1).join('/');
+      const parentId = parentPath ? folderIdByPath[parentPath] : (state.currentFolderId || null);
+      try {
+        const { data, error } = await sb.from('folders').insert({
+          name,
+          parent_id: parentId,
+          created_by: state.me.id,
+          status: 'todo'
+        }).select('id').single();
+        if (error) throw error;
+        folderIdByPath[path] = data.id;
+      } catch (err) {
+        console.error('Folder create error for', path, err);
+      }
+    }
+    headLine.querySelector('.upload-status').textContent = '✅';
+    headLine.querySelector('.upload-status').className = 'upload-status ok';
+  }
+
+  // 3. Uploader chaque fichier dans son dossier de destination
+  for (const it of items) {
+    const path = it.relativePath || it.file.name;
+    const parts = path.split('/');
+    const folderPath = parts.slice(0, -1).join('/');
+    const folderId = folderPath
+      ? folderIdByPath[folderPath]
+      : (state.currentFolderId || null);
+
     const line = document.createElement('div');
     line.className = 'upload-line';
-    line.innerHTML = `<span>${escapeHtml(file.name)}</span><span class="upload-status">⏳ En cours…</span>`;
+    line.innerHTML = `<span>${escapeHtml(path)}</span><span class="upload-status">⏳ En cours…</span>`;
     progress.appendChild(line);
 
     const fd = new FormData();
-    fd.append('file', file);
-    if (state.currentFolderId) fd.append('folder_id', state.currentFolderId);
+    fd.append('file', it.file);
+    if (folderId) fd.append('folder_id', folderId);
 
     try {
       const r = await fetch(`${state.serverUrl}/upload`, {
@@ -427,7 +543,7 @@ async function handleUpload(files) {
     }
   }
 
-  setTimeout(() => { progress.hidden = true; }, 4000);
+  setTimeout(() => { progress.hidden = true; }, 6000);
 }
 
 function escapeHtml(s) {
