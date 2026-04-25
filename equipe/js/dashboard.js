@@ -183,40 +183,42 @@ function renderTasks() {
     const due = t.due_date ? new Date(t.due_date).toLocaleDateString('fr-FR') : '';
     const overdue = t.due_date && t.status !== 'done' && new Date(t.due_date) < new Date(new Date().toDateString());
     const coverUrl = (t.cover_file_id && state.serverUrl) ? `${state.serverUrl}/stream/${t.cover_file_id}` : null;
-    const folder = t.folder_id ? state.folders.find(f => f.id === t.folder_id) : null;
 
     const assigneesHtml = taskAssignees.length === 0
-      ? '<span class="chip chip-muted">Non assignée</span>'
-      : `<div class="assignees-chips">${taskAssignees.map(p =>
-          `<span class="chip chip-assignee" title="${escapeHtml(p.full_name)}">${escapeHtml(firstName(p.full_name))}</span>`
-        ).join('')}</div>`;
+      ? '<span class="row-assignee-empty">Non assignée</span>'
+      : taskAssignees.slice(0, 4).map(p =>
+          `<span class="row-avatar" title="${escapeHtml(p.full_name)}">${escapeHtml(initials(p.full_name))}</span>`
+        ).join('') + (taskAssignees.length > 4 ? `<span class="row-avatar row-avatar-more">+${taskAssignees.length - 4}</span>` : '');
 
     return `
-      <article class="task-card" data-id="${t.id}">
-        ${coverUrl ? `<div class="task-cover"><img src="${coverUrl}" alt="" loading="lazy" onerror="this.parentElement.style.display='none'"></div>` : ''}
-        <div class="task-head">
-          <h3 class="task-title task-open" data-id="${t.id}">${escapeHtml(t.title)}</h3>
-          <span class="badge ${pr.cls}">${pr.label}</span>
+      <div class="task-row task-open" data-id="${t.id}">
+        <div class="row-cover">
+          ${coverUrl
+            ? `<img src="${coverUrl}" alt="" loading="lazy" onerror="this.style.display='none';this.parentElement.classList.add('row-cover-empty')">`
+            : `<span class="row-cover-icon">📋</span>`}
         </div>
-        ${t.description ? `<p class="task-desc">${escapeHtml(t.description)}</p>` : ''}
-        <div class="task-meta">
-          ${t.project ? `<span class="chip">🏗️ ${escapeHtml(t.project)}</span>` : ''}
-          ${folder ? `<a class="chip chip-folder" href="files.html" title="Voir le dossier">📁 ${escapeHtml(folder.name)}</a>` : ''}
-          ${due ? `<span class="chip ${overdue ? 'chip-danger' : ''}">📅 ${due}</span>` : ''}
+        <div class="row-main">
+          <div class="row-title-line">
+            <h3 class="row-title">${escapeHtml(t.title)}</h3>
+            <span class="status-pill ${st.cls}">${st.label}</span>
+          </div>
+          <div class="row-meta">
+            <span class="badge ${pr.cls}">${pr.label}</span>
+            ${t.project ? `<span class="chip">🏗️ ${escapeHtml(t.project)}</span>` : ''}
+            ${due ? `<span class="chip ${overdue ? 'chip-danger' : ''}">📅 ${due}</span>` : ''}
+          </div>
         </div>
-        <div class="task-meta">${assigneesHtml}</div>
-        <div class="task-actions">
-          <select class="task-status ${st.cls}" data-id="${t.id}">
-            <option value="todo" ${t.status==='todo'?'selected':''}>À faire</option>
-            <option value="in_progress" ${t.status==='in_progress'?'selected':''}>En cours</option>
-            <option value="done" ${t.status==='done'?'selected':''}>Terminée</option>
-          </select>
-          <button class="btn-ghost btn-comment" data-id="${t.id}">💬 Discussion</button>
-          <button class="btn-ghost btn-edit" data-id="${t.id}">Modifier</button>
-          ${state.me?.role === 'admin' ? `<button class="btn-ghost btn-danger btn-delete" data-id="${t.id}">Supprimer</button>` : ''}
-        </div>
-      </article>`;
+        <div class="row-assignees">${assigneesHtml}</div>
+        <div class="row-chevron">›</div>
+      </div>`;
   }).join('');
+}
+
+function initials(fullName) {
+  const parts = String(fullName || '').trim().split(/\s+/);
+  if (parts.length === 0) return '?';
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }
 
 function firstName(full) {
@@ -312,30 +314,95 @@ async function openTaskDetail(taskId) {
   state.openTaskId = taskId;
 
   const taskAssignees = assigneesOf(task.id);
-  const due = task.due_date ? new Date(task.due_date).toLocaleDateString('fr-FR') : '—';
+  const due = task.due_date ? new Date(task.due_date).toLocaleDateString('fr-FR') : null;
   const st = STATUS_LABEL[task.status];
   const pr = PRIORITY_LABEL[task.priority];
   const coverUrl = (task.cover_file_id && state.serverUrl) ? `${state.serverUrl}/stream/${task.cover_file_id}` : null;
   const folder = task.folder_id ? state.folders.find(f => f.id === task.folder_id) : null;
+  const created  = task.created_at ? new Date(task.created_at) : null;
+  const updated  = task.updated_at ? new Date(task.updated_at) : null;
+  const overdue  = task.due_date && task.status !== 'done' && new Date(task.due_date) < new Date(new Date().toDateString());
 
-  const assigneesChips = taskAssignees.length === 0
+  const progressPct = task.status === 'todo' ? 0 : task.status === 'in_progress' ? 50 : 100;
+  const creatorName = state.profilesById[task.created_by]?.full_name || '—';
+
+  const assigneesHtml = taskAssignees.length === 0
     ? '<span class="chip chip-muted">Non assignée</span>'
-    : taskAssignees.map(p => `<span class="chip">👤 ${escapeHtml(p.full_name)}</span>`).join('');
+    : taskAssignees.map(p => `<span class="chip-pill">👤 ${escapeHtml(p.full_name)}</span>`).join('');
+
+  const isAdmin = state.me?.role === 'admin';
 
   document.getElementById('taskDetailHead').innerHTML = `
-    ${coverUrl ? `<div class="detail-cover"><img src="${coverUrl}" alt="Image de couverture" onerror="this.parentElement.style.display='none'"></div>` : ''}
+    ${coverUrl ? `<div class="detail-cover"><img src="${coverUrl}" alt="" onerror="this.parentElement.style.display='none'"></div>` : ''}
     <div class="detail-head">
       <h3>${escapeHtml(task.title)}</h3>
       <div class="detail-chips">
         <span class="badge ${pr.cls}">${pr.label}</span>
-        <span class="chip ${st.cls}">${st.label}</span>
         ${task.project ? `<span class="chip">🏗️ ${escapeHtml(task.project)}</span>` : ''}
         ${folder ? `<a class="chip chip-folder" href="files.html">📁 ${escapeHtml(folder.name)}</a>` : ''}
-        <span class="chip">📅 ${due}</span>
+        ${due ? `<span class="chip ${overdue ? 'chip-danger' : ''}">📅 ${due}${overdue ? ' (en retard)' : ''}</span>` : ''}
       </div>
-      <div class="detail-chips">${assigneesChips}</div>
-      ${task.description ? `<p class="detail-desc">${escapeHtml(task.description)}</p>` : ''}
+
+      <div class="detail-section">
+        <h4>Avancement</h4>
+        <div class="progress-block">
+          <div class="progress-bar progress-bar-lg"><div class="progress-fill" style="width:${progressPct}%"></div></div>
+          <span class="progress-pct">${progressPct}%</span>
+        </div>
+        <div class="status-buttons" data-task-id="${task.id}">
+          <button class="status-btn ${task.status==='todo'?'status-btn-active':''}" data-status="todo">📝 À faire</button>
+          <button class="status-btn ${task.status==='in_progress'?'status-btn-active':''}" data-status="in_progress">⚙️ En cours</button>
+          <button class="status-btn ${task.status==='done'?'status-btn-active':''}" data-status="done">✅ Terminée</button>
+        </div>
+      </div>
+
+      <div class="detail-section">
+        <h4>Assignées à</h4>
+        <div class="detail-chips">${assigneesHtml}</div>
+      </div>
+
+      ${task.description ? `
+        <div class="detail-section">
+          <h4>Description</h4>
+          <p class="detail-desc">${escapeHtml(task.description).replace(/\n/g, '<br>')}</p>
+        </div>` : ''}
+
+      <div class="detail-section">
+        <h4>Timeline</h4>
+        <ul class="timeline">
+          ${created ? `<li><span class="tl-icon">🟢</span><span class="tl-text"><strong>Créée</strong> par ${escapeHtml(creatorName)} le ${created.toLocaleDateString('fr-FR')} à ${created.toLocaleTimeString('fr-FR', {hour:'2-digit',minute:'2-digit'})}</span></li>` : ''}
+          ${updated && created && updated.getTime() !== created.getTime() ? `<li><span class="tl-icon">🔄</span><span class="tl-text"><strong>Dernière modification</strong> le ${updated.toLocaleDateString('fr-FR')} à ${updated.toLocaleTimeString('fr-FR', {hour:'2-digit',minute:'2-digit'})}</span></li>` : ''}
+          ${due ? `<li><span class="tl-icon">${overdue ? '⚠️' : '📅'}</span><span class="tl-text"><strong>Échéance</strong> ${due}${overdue ? ' — <span class="tl-overdue">en retard</span>' : ''}</span></li>` : ''}
+          ${task.status === 'done' && updated ? `<li><span class="tl-icon">✅</span><span class="tl-text"><strong>Marquée terminée</strong> le ${updated.toLocaleDateString('fr-FR')}</span></li>` : ''}
+        </ul>
+      </div>
+
+      <div class="detail-actions">
+        <button class="btn-ghost" id="detailEdit">✏️ Modifier</button>
+        ${isAdmin ? `<button class="btn-ghost btn-danger" id="detailDelete">🗑 Supprimer</button>` : ''}
+      </div>
     </div>`;
+
+  // Lier les nouveaux boutons
+  const detailHead = document.getElementById('taskDetailHead');
+  detailHead.querySelectorAll('.status-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const newStatus = btn.dataset.status;
+      const { error } = await sb.from('tasks').update({ status: newStatus }).eq('id', task.id);
+      if (error) alert('Erreur : ' + error.message);
+      else openTaskDetail(task.id);  // re-render
+    });
+  });
+  document.getElementById('detailEdit')?.addEventListener('click', () => {
+    closeTaskDetail();
+    openTaskModal(task);
+  });
+  document.getElementById('detailDelete')?.addEventListener('click', async () => {
+    if (!confirm('Supprimer cette tâche ?')) return;
+    const { error } = await sb.from('tasks').delete().eq('id', task.id);
+    if (error) alert('Erreur : ' + error.message);
+    else closeTaskDetail();
+  });
 
   const modal = document.getElementById('taskDetailModal');
   modal.removeAttribute('hidden');
