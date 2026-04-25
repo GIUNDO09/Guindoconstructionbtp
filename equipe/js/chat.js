@@ -20,7 +20,10 @@ let profilesById = {};
   sb.channel('messages-realtime')
     .on('postgres_changes',
       { event: 'INSERT', schema: 'public', table: 'messages' },
-      (payload) => appendMessage(payload.new, true)
+      (payload) => {
+        appendMessage(payload.new, true);
+        notifyIfNeeded(payload.new);
+      }
     )
     .on('postgres_changes',
       { event: 'DELETE', schema: 'public', table: 'messages' },
@@ -28,6 +31,24 @@ let profilesById = {};
     )
     .subscribe();
 })();
+
+// Joue un bip + notification système si le message vient d'un autre membre
+function notifyIfNeeded(m) {
+  if (m.user_id === me?.id) return;  // mon propre message
+  const author = profilesById[m.user_id]?.full_name || 'Quelqu\'un';
+  const preview = m.content.length > 80 ? m.content.slice(0, 80) + '…' : m.content;
+
+  // Bip sonore (toujours joué quand un nouveau message arrive)
+  window.gcbtp?.notif?.chime();
+
+  // Notification système : seulement si la fenêtre n'est pas active
+  if (document.hidden || !document.hasFocus()) {
+    const notif = window.gcbtp?.notif?.show(`💬 ${author}`, preview, { tag: 'gcbtp-chat' });
+    if (notif) {
+      notif.onclick = () => { window.focus(); notif.close(); };
+    }
+  }
+}
 
 async function loadProfiles() {
   const { data } = await sb.from('profiles').select('id, full_name');
@@ -82,6 +103,20 @@ function scrollToBottom() {
 
 function bindUI() {
   document.getElementById('logoutBtn').addEventListener('click', logout);
+
+  // Bouton "Activer notifications" : visible si la permission n'est pas accordée
+  const notifBtn = document.getElementById('enableNotifBtn');
+  if ('Notification' in window) {
+    if (Notification.permission === 'default') notifBtn.hidden = false;
+    notifBtn.addEventListener('click', async () => {
+      const ok = await window.gcbtp.notif.requestPermission();
+      if (ok) {
+        notifBtn.hidden = true;
+        window.gcbtp.notif.chime();
+        window.gcbtp.notif.show('✅ Notifications activées', 'Tu seras alerté(e) des nouveaux messages.');
+      }
+    });
+  }
 
   const form = document.getElementById('chatForm');
   form.addEventListener('submit', async (e) => {

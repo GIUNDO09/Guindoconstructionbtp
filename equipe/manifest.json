@@ -1,0 +1,21 @@
+{
+  "name": "GCBTP — Espace équipe",
+  "short_name": "GCBTP Équipe",
+  "description": "Plateforme de gestion d'équipe — Guindo Construction BTP",
+  "start_url": "/equipe/dashboard.html",
+  "scope": "/equipe/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "lang": "fr",
+  "background_color": "#0f2542",
+  "theme_color": "#e87722",
+  "icons": [
+    {
+      "src": "../Images/LOGO-1.png",
+      "sizes": "192x192 512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["productivity", "business"]
+}
