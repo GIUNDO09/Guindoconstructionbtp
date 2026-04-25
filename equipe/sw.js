@@ -3,7 +3,7 @@
 // Stratégie : network-first pour HTML (toujours frais),
 // cache-first pour les autres ressources statiques
 // =========================================================
-const CACHE = 'gcbtp-equipe-v3';
+const CACHE = 'gcbtp-equipe-v4';
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();
@@ -53,6 +53,41 @@ self.addEventListener('fetch', (event) => {
         }
         return r;
       });
+    })
+  );
+});
+
+// =========================================================
+// Web Push — réception et affichage des notifications
+// =========================================================
+self.addEventListener('push', (event) => {
+  let payload = { title: 'GCBTP', body: 'Nouvelle notification', url: '/equipe/chat.html' };
+  if (event.data) {
+    try { payload = { ...payload, ...event.data.json() }; }
+    catch { payload.body = event.data.text(); }
+  }
+  const opts = {
+    body: payload.body,
+    icon: '/Images/LOGO-1.png',
+    badge: '/Images/LOGO-1.png',
+    tag: payload.tag || 'gcbtp-push',
+    renotify: true,
+    data: { url: payload.url || '/equipe/chat.html' },
+    vibrate: [100, 50, 100]
+  };
+  event.waitUntil(self.registration.showNotification(payload.title, opts));
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const url = event.notification.data?.url || '/equipe/chat.html';
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clients => {
+      // Si un onglet GCBTP est déjà ouvert, le focus
+      for (const c of clients) {
+        if (c.url.includes('/equipe/') && 'focus' in c) { c.navigate(url); return c.focus(); }
+      }
+      if (self.clients.openWindow) return self.clients.openWindow(url);
     })
   );
 });

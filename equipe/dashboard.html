@@ -14,7 +14,7 @@
 <link rel="icon" href="../favicon.ico">
 <link rel="apple-touch-icon" href="../Images/LOGO-1.png">
 <link rel="manifest" href="manifest.json">
-<link rel="stylesheet" href="css/equipe.css?v=18">
+<link rel="stylesheet" href="css/equipe.css?v=19">
 </head>
 <body class="app-body">
 
@@ -35,6 +35,7 @@ window.__hideModal = function(id) {
   </a>
   <nav class="app-nav">
     <a href="dashboard.html" class="nav-pill nav-pill-active">Tâches</a>
+    <a href="calendar.html" class="nav-pill">📅 Calendrier</a>
     <a href="chat.html" class="nav-pill">Chat</a>
     <a href="files.html" class="nav-pill">Fichiers</a>
     <a href="profil.html" class="nav-pill">Mon profil</a>
@@ -92,6 +93,7 @@ window.__hideModal = function(id) {
           <option value="created">Trier : date de création</option>
           <option value="title">Trier : titre A-Z</option>
         </select>
+        <button id="exportPdfBtn" class="btn-ghost" title="Exporter la liste filtrée en PDF">📄 Export PDF</button>
         <button id="newTaskBtn" class="btn-primary" hidden>+ Nouvelle tâche</button>
       </div>
     </div>
@@ -180,10 +182,12 @@ window.__hideModal = function(id) {
   </div>
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.1/jspdf.plugin.autotable.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/supabase.js?v=18"></script>
-<script src="js/auth.js?v=18"></script>
-<script src="js/pwa.js?v=18"></script>
-<script src="js/dashboard.js?v=18"></script>
+<script src="js/supabase.js?v=19"></script>
+<script src="js/auth.js?v=19"></script>
+<script src="js/pwa.js?v=19"></script>
+<script src="js/dashboard.js?v=19"></script>
 </body>
 </html>

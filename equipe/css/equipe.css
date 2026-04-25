@@ -1623,8 +1623,11 @@ button.status-pill:disabled { opacity: .5; cursor: wait; }
 .profil-readonly-value { font-size: 14px; color: var(--gray-900); font-weight: 500; }
 
 .profil-sep { border: none; border-top: 1px solid var(--gray-200); margin: 24px 0 16px; }
-.profil-password { padding-top: 8px; }
-.profil-password h3 { margin: 0 0 14px; color: var(--blue-dark); font-size: 16px; }
+.profil-password,
+.profil-push { padding-top: 8px; }
+.profil-password h3,
+.profil-push h3 { margin: 0 0 14px; color: var(--blue-dark); font-size: 16px; }
+.profil-push p.form-hint { margin: 0 0 12px; }
 
 .profil-actions {
   display: flex;
@@ -1894,4 +1897,128 @@ body.no-scroll { overflow: hidden; }
   .lightbox-close, .lightbox-download { width: 40px; height: 40px; font-size: 18px; }
   .recording-bar { padding: 10px 12px; gap: 8px; font-size: 13px; flex-wrap: wrap; }
   .attachment-preview { padding: 8px 12px; }
+}
+
+/* =====================================================================
+   CALENDRIER (Phase 12)
+   ===================================================================== */
+.cal-main { max-width: 1200px; margin: 0 auto; padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+.cal-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+.cal-title {
+  margin: 0;
+  font-size: 18px;
+  color: var(--blue-dark);
+  flex: 1;
+  text-align: center;
+  text-transform: capitalize;
+}
+.cal-toolbar .btn-ghost { padding: 6px 12px; }
+.cal-toolbar #calPrev, .cal-toolbar #calNext { font-size: 18px; padding: 4px 12px; line-height: 1; }
+
+.cal-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  margin-bottom: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--gray-500);
+  text-transform: uppercase;
+}
+.cal-weekdays span { text-align: center; padding: 6px 0; }
+
+.cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+.cal-cell {
+  aspect-ratio: 1 / 1;
+  background: #fff;
+  border: 1px solid var(--gray-200);
+  border-radius: 6px;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  cursor: pointer;
+  transition: all .15s;
+  min-height: 70px;
+  position: relative;
+}
+.cal-cell:hover { border-color: var(--orange); transform: translateY(-1px); }
+.cal-cell-off { background: var(--gray-50); color: var(--gray-500); }
+.cal-cell-today { border-color: var(--orange); border-width: 2px; }
+.cal-cell-today .cal-cell-day { color: var(--orange); font-weight: 700; }
+.cal-cell-selected { background: #fff4e6; border-color: var(--orange); box-shadow: 0 0 0 2px rgba(232, 119, 34, .25); }
+.cal-cell-day { font-size: 14px; font-weight: 600; color: var(--gray-700); }
+.cal-cell-dots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  margin-top: auto;
+}
+.cal-cell-count {
+  font-size: 10px;
+  color: var(--gray-500);
+  font-weight: 500;
+  margin-top: 2px;
+}
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+}
+.dot-todo     { background: #6b7280; }
+.dot-progress { background: #2563eb; }
+.dot-done     { background: #16a34a; }
+.dot-overdue  { background: #dc2626; }
+
+.cal-legend {
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--gray-200);
+  font-size: 13px;
+  color: var(--gray-700);
+}
+.cal-legend-item { display: flex; align-items: center; gap: 6px; }
+
+/* Liste tâches du jour sélectionné */
+.cal-day-tasks { display: flex; flex-direction: column; gap: 8px; }
+.cal-day-task {
+  display: block;
+  padding: 12px 14px;
+  background: var(--gray-50);
+  border-radius: 8px;
+  text-decoration: none;
+  color: inherit;
+  border: 1px solid transparent;
+  transition: all .15s;
+}
+.cal-day-task:hover { border-color: var(--gray-300); background: #fff; }
+.cal-day-task-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+.cal-day-task-head h4 { margin: 0; font-size: 14px; color: var(--gray-900); }
+.cal-day-task-meta { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+
+@media (max-width: 720px) {
+  .cal-main { padding: 10px; }
+  .cal-cell { min-height: 56px; padding: 4px; aspect-ratio: auto; }
+  .cal-cell-day { font-size: 12px; }
+  .dot { width: 6px; height: 6px; }
+  .cal-toolbar { gap: 6px; }
+  .cal-title { font-size: 15px; }
+  .cal-weekdays { font-size: 10px; }
+  .cal-weekdays span { padding: 4px 0; }
+  .cal-legend { font-size: 12px; gap: 12px; }
 }

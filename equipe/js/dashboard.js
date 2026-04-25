@@ -375,6 +375,7 @@ function bindUI() {
   });
 
   document.getElementById('newTaskBtn').addEventListener('click', () => openTaskModal());
+  document.getElementById('exportPdfBtn').addEventListener('click', exportTasksPdf);
   document.getElementById('modalCancel').addEventListener('click', closeTaskModal);
   document.getElementById('taskForm').addEventListener('submit', onTaskSubmit);
 
@@ -713,6 +714,96 @@ async function onTaskSubmit(e) {
 }
 
 // ---------- Utils ----------
+// ---------- Export PDF ----------
+function exportTasksPdf() {
+  if (!window.jspdf || !window.jspdf.jsPDF) {
+    alert('Bibliothèque PDF non chargée — recharge la page');
+    return;
+  }
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a4' });
+
+  // Récupérer les tâches filtrées (mêmes filtres que renderTasks)
+  const { assignee, status, search, sort } = state.filters;
+  let tasks = state.tasks.slice();
+  if (assignee === 'me')        tasks = tasks.filter(t => (state.assigneesByTask[t.id] || []).includes(state.me.id));
+  else if (assignee !== 'all')  tasks = tasks.filter(t => (state.assigneesByTask[t.id] || []).includes(assignee));
+  if (status !== 'all')          tasks = tasks.filter(t => t.status === status);
+  if (search) {
+    const q = search.toLowerCase();
+    tasks = tasks.filter(t =>
+      (t.title || '').toLowerCase().includes(q) ||
+      (t.project || '').toLowerCase().includes(q) ||
+      (t.description || '').toLowerCase().includes(q)
+    );
+  }
+  const PR_RANK = { high: 0, medium: 1, low: 2 };
+  if (sort === 'priority') tasks.sort((a, b) => (PR_RANK[a.priority] ?? 9) - (PR_RANK[b.priority] ?? 9));
+  else if (sort === 'created') tasks.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+  else if (sort === 'title') tasks.sort((a, b) => (a.title || '').localeCompare(b.title || '', 'fr'));
+  else tasks.sort((a, b) => {
+    if (!a.due_date && !b.due_date) return 0;
+    if (!a.due_date) return 1;
+    if (!b.due_date) return -1;
+    return new Date(a.due_date) - new Date(b.due_date);
+  });
+
+  // En-tête
+  doc.setFillColor(232, 119, 34);
+  doc.rect(0, 0, doc.internal.pageSize.getWidth(), 50, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(16);
+  doc.setFont('helvetica', 'bold');
+  doc.text('GCBTP — Liste des tâches', 30, 32);
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'normal');
+  const now = new Date().toLocaleString('fr-FR');
+  doc.text(`Généré le ${now} · ${tasks.length} tâche${tasks.length > 1 ? 's' : ''}`, doc.internal.pageSize.getWidth() - 30, 32, { align: 'right' });
+
+  // Tableau
+  const rows = tasks.map(t => {
+    const st = STATUS_LABEL[t.status]?.label || t.status;
+    const pr = PRIORITY_LABEL[t.priority]?.label || t.priority;
+    const assignees = (state.assigneesByTask[t.id] || []).map(uid => state.profilesById[uid]?.full_name).filter(Boolean).join(', ') || '—';
+    const due = t.due_date ? new Date(t.due_date).toLocaleDateString('fr-FR') : '—';
+    return [t.title || '', t.project || '—', assignees, pr, st, due];
+  });
+
+  doc.autoTable({
+    startY: 70,
+    head: [['Titre', 'Projet', 'Assignées', 'Priorité', 'Statut', 'Échéance']],
+    body: rows,
+    theme: 'striped',
+    headStyles: { fillColor: [30, 58, 95], textColor: 255, fontStyle: 'bold' },
+    styles: { fontSize: 9, cellPadding: 6 },
+    columnStyles: {
+      0: { cellWidth: 200 },
+      1: { cellWidth: 130 },
+      2: { cellWidth: 160 },
+      3: { cellWidth: 60 },
+      4: { cellWidth: 70 },
+      5: { cellWidth: 70 }
+    },
+    didParseCell: (data) => {
+      if (data.section === 'body' && data.column.index === 4) {
+        const v = data.cell.raw;
+        if (v === 'Terminée')  data.cell.styles.textColor = [22, 163, 74];
+        else if (v === 'En cours') data.cell.styles.textColor = [37, 99, 235];
+      }
+    },
+    margin: { top: 60, left: 30, right: 30, bottom: 40 },
+    didDrawPage: (data) => {
+      const pageCount = doc.internal.getNumberOfPages();
+      doc.setFontSize(8);
+      doc.setTextColor(120);
+      doc.text(`Page ${data.pageNumber}/${pageCount}`, doc.internal.pageSize.getWidth() / 2, doc.internal.pageSize.getHeight() - 20, { align: 'center' });
+    }
+  });
+
+  const filename = `GCBTP-taches-${new Date().toISOString().slice(0,10)}.pdf`;
+  doc.save(filename);
+}
+
 function escapeHtml(s) {
   return String(s ?? '').replace(/[&<>"']/g, c =>
     ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));

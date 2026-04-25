@@ -4,6 +4,7 @@
 // =========================================================
 import { createClient } from '@supabase/supabase-js';
 import { Resend } from 'resend';
+import webpush from 'web-push';
 
 export function startNotifier(opts) {
   const { supabaseUrl, serviceKey, resendKey, fromEmail, siteUrl } = opts;
@@ -135,6 +136,14 @@ async function onNewMessage(ctx, payload) {
   const msg = payload.new;
   const author = await getProfile(ctx, msg.user_id);
   if (!author) return;
+
+  // Push notifications (instantanées) — à tous les autres membres abonnés
+  await sendPushToAllExcept(ctx, msg.user_id, {
+    title: `💬 ${author.full_name}`,
+    body: previewMessage(msg),
+    url: '/equipe/chat.html',
+    tag: 'gcbtp-chat'
+  });
 
   // Notifier tous les autres membres ayant un notification_email
   const { data: profiles } = await ctx.sb
@@ -343,3 +352,64 @@ function escapeHtml(s) {
   return String(s ?? '').replace(/[&<>"']/g, c =>
     ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
 }
+
+// =========================================================
+// Web Push helpers
+// =========================================================
+let _pushReady = false;
+function ensureWebPushConfigured() {
+  if (_pushReady) return true;
+  const pub = process.env.VAPID_PUBLIC_KEY;
+  const priv = process.env.VAPID_PRIVATE_KEY;
+  const subj = process.env.VAPID_SUBJECT || 'mailto:contact@guindoconstruction.xyz';
+  if (!pub || !priv) return false;
+  try {
+    webpush.setVapidDetails(subj, pub, priv);
+    _pushReady = true;
+    return true;
+  } catch (e) {
+    console.warn('🔔 VAPID config invalide:', e.message);
+    return false;
+  }
+}
+
+function previewMessage(msg) {
+  if (msg.attachment_type === 'image') return '📷 Image' + (msg.content ? ` — ${msg.content}` : '');
+  if (msg.attachment_type === 'video') return '🎞️ Vidéo' + (msg.content ? ` — ${msg.content}` : '');
+  if (msg.attachment_type === 'audio') return '🎤 Message vocal';
+  if (msg.attachment_type === 'document') return '📎 ' + (msg.attachment_name || 'Document');
+  const c = msg.content || '';
+  return c.length > 120 ? c.slice(0, 120) + '…' : c;
+}
+
+async function sendPushToAllExcept(ctx, excludeUserId, payload) {
+  if (!ensureWebPushConfigured()) return;
+  const { data: subs } = await ctx.sb
+    .from('push_subscriptions')
+    .select('endpoint, p256dh, auth, user_id')
+    .neq('user_id', excludeUserId);
+  if (!subs?.length) return;
+
+  const data = JSON.stringify(payload);
+  const expired = [];
+  await Promise.all(subs.map(async (s) => {
+    try {
+      await webpush.sendNotification({
+        endpoint: s.endpoint,
+        keys: { p256dh: s.p256dh, auth: s.auth }
+      }, data, { TTL: 600 });
+    } catch (e) {
+      // 404/410 = endpoint expiré → on supprime
+      if (e?.statusCode === 404 || e?.statusCode === 410) expired.push(s.endpoint);
+      else console.warn('🔔 push erreur:', e?.statusCode || e?.message);
+    }
+  }));
+  if (expired.length) {
+    await ctx.sb.from('push_subscriptions').delete().in('endpoint', expired);
+    console.log(`🔔 ${expired.length} subscription(s) expirée(s) nettoyée(s)`);
+  }
+  console.log(`🔔 push envoyé à ${subs.length - expired.length} appareil(s)`);
+}
+
+// Exporter pour usage éventuel ailleurs (digests etc.)
+export { sendPushToAllExcept, previewMessage };

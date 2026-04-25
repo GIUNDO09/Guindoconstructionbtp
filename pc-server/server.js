@@ -11,6 +11,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { startNotifier } from './notifier.js';
+import webpush from 'web-push';
 
 const {
   SUPABASE_URL,
@@ -265,6 +266,61 @@ app.delete('/folder/:folderId', requireAuth, async (req, res) => {
     res.json({ ok: true });
   } catch (err) {
     console.error('Folder delete error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// -----------------------------------------------------------
+// Web Push — endpoints
+// -----------------------------------------------------------
+const VAPID_PUBLIC = process.env.VAPID_PUBLIC_KEY;
+const VAPID_PRIVATE = process.env.VAPID_PRIVATE_KEY;
+const VAPID_SUBJECT = process.env.VAPID_SUBJECT || 'mailto:contact@guindoconstruction.xyz';
+
+if (VAPID_PUBLIC && VAPID_PRIVATE) {
+  webpush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC, VAPID_PRIVATE);
+  console.log('🔔 Web Push activé');
+} else {
+  console.log('⚠️  VAPID_PUBLIC_KEY/VAPID_PRIVATE_KEY absentes — Web Push désactivé');
+}
+
+// Public : récupérer la clé publique VAPID (pas besoin d'auth pour ça)
+app.get('/push/vapid-public-key', (req, res) => {
+  if (!VAPID_PUBLIC) return res.status(503).json({ error: 'Push non configuré' });
+  res.json({ key: VAPID_PUBLIC });
+});
+
+// Enregistre une subscription pour l'utilisateur courant
+app.post('/push/subscribe', requireAuth, async (req, res) => {
+  try {
+    const { endpoint, keys } = req.body || {};
+    if (!endpoint || !keys?.p256dh || !keys?.auth) {
+      return res.status(400).json({ error: 'subscription invalide' });
+    }
+    const userAgent = req.headers['user-agent'] || null;
+    const { error } = await req.sb.from('push_subscriptions').upsert({
+      user_id: req.user.id,
+      endpoint,
+      p256dh: keys.p256dh,
+      auth: keys.auth,
+      user_agent: userAgent,
+      last_used_at: new Date().toISOString()
+    }, { onConflict: 'endpoint' });
+    if (error) return res.status(500).json({ error: error.message });
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Désinscrit une subscription
+app.post('/push/unsubscribe', requireAuth, async (req, res) => {
+  try {
+    const { endpoint } = req.body || {};
+    if (!endpoint) return res.status(400).json({ error: 'endpoint manquant' });
+    await req.sb.from('push_subscriptions').delete().eq('endpoint', endpoint);
+    res.json({ ok: true });
+  } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });

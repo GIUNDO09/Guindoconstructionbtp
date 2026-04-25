@@ -109,6 +109,67 @@ function bindUI() {
 
   // Changement de mot de passe
   document.getElementById('passwordForm').addEventListener('submit', onPasswordSubmit);
+
+  // Notifications push
+  initPushUI();
+}
+
+async function initPushUI() {
+  const subBtn = document.getElementById('pushSubscribeBtn');
+  const unsubBtn = document.getElementById('pushUnsubscribeBtn');
+  const status = document.getElementById('pushStatus');
+  if (!subBtn || !unsubBtn || !status) return;
+
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+    status.textContent = '⚠️ Ce navigateur ne supporte pas les notifications push.';
+    status.className = 'form-hint form-hint-warn';
+    return;
+  }
+
+  async function refresh() {
+    try {
+      const isSub = await window.gcbtp.push.isSubscribed();
+      subBtn.hidden = isSub;
+      unsubBtn.hidden = !isSub;
+      status.textContent = isSub ? '✅ Notifications push activées sur cet appareil' : '';
+      status.className = isSub ? 'form-hint form-hint-ok' : 'form-hint';
+    } catch (e) {
+      status.textContent = '⚠️ ' + e.message;
+      status.className = 'form-hint form-hint-warn';
+    }
+  }
+
+  subBtn.addEventListener('click', async () => {
+    subBtn.disabled = true;
+    status.textContent = '⏳ Activation…';
+    status.className = 'form-hint';
+    try {
+      await window.gcbtp.push.subscribe();
+      await refresh();
+    } catch (e) {
+      status.textContent = '❌ ' + e.message;
+      status.className = 'form-hint form-hint-warn';
+    } finally {
+      subBtn.disabled = false;
+    }
+  });
+
+  unsubBtn.addEventListener('click', async () => {
+    unsubBtn.disabled = true;
+    status.textContent = '⏳ Désactivation…';
+    status.className = 'form-hint';
+    try {
+      await window.gcbtp.push.unsubscribe();
+      await refresh();
+    } catch (e) {
+      status.textContent = '❌ ' + e.message;
+      status.className = 'form-hint form-hint-warn';
+    } finally {
+      unsubBtn.disabled = false;
+    }
+  });
+
+  await refresh();
 }
 
 async function onPasswordSubmit(e) {
