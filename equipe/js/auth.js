@@ -101,4 +101,54 @@
   window.gcbtp.cache = {
     getServerUrl, getProfiles, getMe, invalidate: invalidateCache
   };
+
+  // -----------------------------------------------------------
+  // Auto-monte la pastille avatar du header (toutes pages protégées).
+  // L'élément cible est <a id="headerAvatar" class="header-avatar"></a>.
+  // -----------------------------------------------------------
+  function initialsOf(s) {
+    const parts = String(s || '').trim().split(/\s+/);
+    if (!parts[0]) return '?';
+    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  }
+
+  async function mountHeaderAvatar() {
+    const slot = document.getElementById('headerAvatar');
+    if (!slot) return;
+    const me = await getMe().catch(() => null);
+    if (!me) return;
+
+    if (slot.tagName === 'A') {
+      slot.href = `profil-public.html?id=${me.id}`;
+      slot.title = me.full_name ? `Voir le profil de ${me.full_name}` : 'Mon profil';
+    }
+
+    // Initiales par défaut (fallback immédiat, évite le flash vide)
+    slot.textContent = initialsOf(me.full_name || '?');
+
+    if (!me.avatar_file_id) return;
+    const serverUrl = await getServerUrl().catch(() => null);
+    if (!serverUrl) return;
+    try {
+      const token = (await sb.auth.getSession()).data.session?.access_token;
+      if (!token) return;
+      const r = await fetch(`${serverUrl}/stream/${me.avatar_file_id}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!r.ok) return;
+      const blob = await r.blob();
+      const img = document.createElement('img');
+      img.src = URL.createObjectURL(blob);
+      img.alt = '';
+      slot.textContent = '';
+      slot.appendChild(img);
+    } catch {}
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', mountHeaderAvatar);
+  } else {
+    mountHeaderAvatar();
+  }
 })();
