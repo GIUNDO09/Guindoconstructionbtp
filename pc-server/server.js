@@ -34,22 +34,11 @@ console.log(`📁 Stockage : ${FILES_DIR}`);
 const app = express();
 
 // -----------------------------------------------------------
-// CORS — handler manuel (fiable avec tunnels Cloudflare + Node 24)
+// CORS — permissif (sécurité gérée par Bearer token sur chaque endpoint)
 // -----------------------------------------------------------
-const allowedOrigins = CORS_ORIGIN.trim() === '*'
-  ? null  // wildcard total
-  : CORS_ORIGIN.split(',').map(s => s.trim()).filter(Boolean);
-
 app.use((req, res, next) => {
-  const origin = req.headers.origin;
-  if (allowedOrigins === null) {
-    res.setHeader('Access-Control-Allow-Origin', origin || '*');
-  } else if (origin && allowedOrigins.includes(origin)) {
-    res.setHeader('Access-Control-Allow-Origin', origin);
-  } else if (origin) {
-    // Origine non autorisée — on log pour debug mais on ne pose pas l'en-tête
-    console.warn(`⚠️  CORS bloqué : origin "${origin}" non listée dans CORS_ORIGIN`);
-  }
+  const origin = req.headers.origin || '*';
+  res.setHeader('Access-Control-Allow-Origin', origin);
   res.setHeader('Vary', 'Origin');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Range');
