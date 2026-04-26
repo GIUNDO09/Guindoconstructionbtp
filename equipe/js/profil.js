@@ -38,6 +38,16 @@ function renderProfile() {
   f.title.value = state.me.title || '';
   f.notification_email.value = state.me.notification_email || '';
   f.phone.value = state.me.phone || '';
+  if (f.bio) f.bio.value = state.me.bio || '';
+  if (f.description) f.description.value = state.me.description || '';
+  if (f.portfolio_url) f.portfolio_url.value = state.me.portfolio_url || '';
+  if (f.website_url) f.website_url.value = state.me.website_url || '';
+  if (f.cv_url) f.cv_url.value = state.me.cv_url || '';
+  if (f.linkedin_url) f.linkedin_url.value = state.me.linkedin_url || '';
+
+  // Lien vers la version publique
+  const viewBtn = document.getElementById('viewPublicProfileBtn');
+  if (viewBtn) viewBtn.href = `profil-public.html?id=${state.me.id}`;
 
   // Email de connexion (read-only)
   document.getElementById('authEmail').textContent = state.authEmail;
@@ -221,7 +231,13 @@ async function onProfileSubmit(e) {
     full_name:          f.full_name.value.trim() || null,
     title:              f.title.value.trim() || null,
     notification_email: f.notification_email.value.trim() || null,
-    phone:              f.phone.value.trim() || null
+    phone:              f.phone.value.trim() || null,
+    bio:                f.bio?.value.trim() || null,
+    description:        f.description?.value.trim() || null,
+    portfolio_url:      f.portfolio_url?.value.trim() || null,
+    website_url:        f.website_url?.value.trim() || null,
+    cv_url:             f.cv_url?.value.trim() || null,
+    linkedin_url:       f.linkedin_url?.value.trim() || null
   };
 
   if (!payload.full_name) {

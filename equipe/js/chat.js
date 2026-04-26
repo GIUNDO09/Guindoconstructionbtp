@@ -247,7 +247,7 @@ function appendMessage(m, animate) {
   div.innerHTML = `
     <div class="msg-bubble">
       <div class="msg-head">
-        <span class="msg-author">${escapeHtml(author)}</span>
+        <a class="msg-author" href="profil-public.html?id=${m.user_id}">${escapeHtml(author)}</a>
         <span class="msg-time">${when}</span>
       </div>
       ${quoteHtml}

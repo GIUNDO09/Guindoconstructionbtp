@@ -257,10 +257,13 @@ function renderTasks() {
 function avatarChip(profile, cls) {
   const title = escapeHtml(profile.full_name + (profile.title ? ` · ${profile.title}` : ''));
   const ini = escapeHtml(initials(profile.full_name));
+  const href = `profil-public.html?id=${profile.id}`;
+  // onclick stop : évite d'ouvrir le détail de tâche en même temps
+  const stop = `onclick="event.stopPropagation()"`;
   if (profile.avatar_file_id && state.serverUrl) {
-    return `<span class="${cls}" title="${title}"><img data-cover-id="${profile.avatar_file_id}" alt=""></span>`;
+    return `<a class="${cls}" title="${title}" href="${href}" ${stop}><img data-cover-id="${profile.avatar_file_id}" alt=""></a>`;
   }
-  return `<span class="${cls}" title="${title}">${ini}</span>`;
+  return `<a class="${cls}" title="${title}" href="${href}" ${stop}>${ini}</a>`;
 }
 
 function initials(fullName) {

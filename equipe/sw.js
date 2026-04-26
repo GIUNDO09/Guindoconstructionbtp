@@ -3,7 +3,7 @@
 // Stratégie : network-first pour HTML (toujours frais),
 // cache-first pour les autres ressources statiques
 // =========================================================
-const CACHE = 'gcbtp-equipe-v4';
+const CACHE = 'gcbtp-equipe-v5';
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();

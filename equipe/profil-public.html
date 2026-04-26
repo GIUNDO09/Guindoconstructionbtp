@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<meta name="theme-color" content="#e87722">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="GCBTP Équipe">
+<title>Profil — Espace équipe GCBTP</title>
+<link rel="icon" href="../favicon.ico">
+<link rel="apple-touch-icon" href="../Images/LOGO-1.png">
+<link rel="manifest" href="manifest.json">
+<link rel="stylesheet" href="css/equipe.css?v=23">
+</head>
+<body class="app-body">
+
+<header class="app-header">
+  <a href="../index.html" class="brand">
+    <img src="../Images/LOGO-1.png" alt="GCBTP">
+    <span>Espace équipe</span>
+  </a>
+  <nav class="app-nav">
+    <a href="dashboard.html" class="nav-pill">Tâches</a>
+    <a href="calendar.html" class="nav-pill">📅 Calendrier</a>
+    <a href="chat.html" class="nav-pill">Chat</a>
+    <a href="files.html" class="nav-pill">Fichiers</a>
+    <a href="profil.html" class="nav-pill">Mon profil</a>
+  </nav>
+  <div class="app-user">
+    <span id="userName">…</span>
+    <button data-install-app class="btn-ghost btn-install" hidden title="Installer l'app">📥 Installer</button>
+    <button id="logoutBtn" class="btn-ghost">Déconnexion</button>
+  </div>
+</header>
+
+<main class="profil-public-main">
+
+  <div id="profileLoading" class="panel">⏳ Chargement…</div>
+
+  <article id="profileContent" class="profil-public" hidden>
+
+    <!-- Hero -->
+    <section class="pp-hero">
+      <div id="ppAvatar" class="pp-avatar"></div>
+      <div class="pp-hero-info">
+        <h1 id="ppName">…</h1>
+        <p id="ppTitle" class="pp-title"></p>
+        <span id="ppRole" class="pp-role"></span>
+        <p id="ppBio" class="pp-bio"></p>
+        <div id="ppLinks" class="pp-links"></div>
+      </div>
+      <div id="ppEditBtn" class="pp-edit-btn" hidden>
+        <a href="profil.html" class="btn-ghost">✏️ Éditer mon profil</a>
+      </div>
+    </section>
+
+    <!-- Stats principales -->
+    <section class="pp-stats">
+      <div class="pp-stat-card">
+        <div class="pp-stat-label">📊 Score travail</div>
+        <div class="pp-stat-value" id="ppWorkScore">—</div>
+        <div class="pp-stat-sub">/ 100</div>
+      </div>
+      <div class="pp-stat-card">
+        <div class="pp-stat-label">📅 Assiduité</div>
+        <div class="pp-stat-value" id="ppAttendance">—</div>
+        <div class="pp-stat-sub">/ 100</div>
+      </div>
+      <div class="pp-stat-card">
+        <div class="pp-stat-label">💰 Gains</div>
+        <div class="pp-stat-value" id="ppEarnings">—</div>
+        <div class="pp-stat-sub">FCFA</div>
+      </div>
+      <div class="pp-stat-card">
+        <div class="pp-stat-label">✅ Tâches</div>
+        <div class="pp-stat-value" id="ppTasksDone">—</div>
+        <div class="pp-stat-sub" id="ppTasksTotal">terminées</div>
+      </div>
+    </section>
+
+    <!-- Évolution dans le temps -->
+    <section class="panel">
+      <h3>📈 Évolution sur 12 semaines</h3>
+      <div id="ppHistory" class="pp-history">
+        <p class="empty">Aucun historique encore. Les snapshots sont enregistrés chaque lundi.</p>
+      </div>
+    </section>
+
+    <!-- Description longue -->
+    <section class="panel" id="ppDescriptionSection" hidden>
+      <h3>📝 À propos</h3>
+      <p id="ppDescription" class="pp-description"></p>
+    </section>
+
+    <!-- Édition admin (visible seulement si je suis admin et pas en train de regarder mon propre profil) -->
+    <section class="panel pp-admin-edit" id="adminEditSection" hidden>
+      <h3>👑 Édition admin (scores et gains)</h3>
+      <p class="form-hint">Ces valeurs ne peuvent être modifiées que par un admin.</p>
+      <form id="adminScoreForm" class="profil-form" action="javascript:void(0);">
+        <div class="form-row">
+          <label>
+            <span>Score travail (0-100)</span>
+            <input name="work_score" type="number" min="0" max="100">
+          </label>
+          <label>
+            <span>Assiduité (0-100)</span>
+            <input name="attendance_score" type="number" min="0" max="100">
+          </label>
+          <label>
+            <span>Gains (FCFA)</span>
+            <input name="total_earnings" type="number" min="0" step="1000">
+          </label>
+        </div>
+        <label>
+          <span>Note pour l'historique (optionnel)</span>
+          <input name="notes" type="text" maxlength="200" placeholder="Ex : bonus chantier Wassado">
+        </label>
+        <div class="profil-actions">
+          <button type="submit" class="btn-primary">💾 Enregistrer + snapshot</button>
+          <span id="adminScoreStatus" class="form-hint"></span>
+        </div>
+      </form>
+    </section>
+
+  </article>
+
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabase.js?v=23"></script>
+<script src="js/auth.js?v=23"></script>
+<script src="js/pwa.js?v=23"></script>
+<script src="js/profil-public.js?v=23"></script>
+</body>
+</html>

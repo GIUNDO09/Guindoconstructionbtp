@@ -15,7 +15,7 @@
 <link rel="icon" href="../favicon.ico">
 <link rel="apple-touch-icon" href="../Images/LOGO-1.png">
 <link rel="manifest" href="manifest.json">
-<link rel="stylesheet" href="css/equipe.css?v=18">
+<link rel="stylesheet" href="css/equipe.css?v=23">
 </head>
 <body class="app-body">
 
@@ -99,9 +99,43 @@
           <input name="phone" type="tel" maxlength="30" placeholder="+221 77 123 45 67">
         </label>
 
+        <hr class="profil-sep">
+        <h4 class="profil-section-title">📝 Présentation publique</h4>
+
+        <label>
+          <span>Bio courte (2-3 phrases, affichée en tête de profil)</span>
+          <textarea name="bio" rows="2" maxlength="280" placeholder="Ex : Ingénieur structure, passionné de béton armé."></textarea>
+        </label>
+
+        <label>
+          <span>Description détaillée</span>
+          <textarea name="description" rows="5" maxlength="2000" placeholder="Parcours, expertises, projets marquants…"></textarea>
+        </label>
+
+        <hr class="profil-sep">
+        <h4 class="profil-section-title">🔗 Liens externes</h4>
+
+        <label>
+          <span>Portfolio</span>
+          <input name="portfolio_url" type="url" maxlength="300" placeholder="https://monportfolio.com">
+        </label>
+        <label>
+          <span>Site web</span>
+          <input name="website_url" type="url" maxlength="300" placeholder="https://monsite.com">
+        </label>
+        <label>
+          <span>CV (lien vers PDF)</span>
+          <input name="cv_url" type="url" maxlength="300" placeholder="https://drive.google.com/...">
+        </label>
+        <label>
+          <span>LinkedIn</span>
+          <input name="linkedin_url" type="url" maxlength="300" placeholder="https://www.linkedin.com/in/...">
+        </label>
+
         <div class="profil-actions">
           <button type="submit" class="btn-primary">💾 Enregistrer</button>
           <span id="saveStatus" class="form-hint"></span>
+          <a id="viewPublicProfileBtn" href="#" class="btn-ghost" target="_blank">👁️ Voir mon profil public</a>
         </div>
       </form>
 
@@ -145,10 +179,10 @@
 </main>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/supabase.js?v=18"></script>
-<script src="js/auth.js?v=18"></script>
-<script src="js/pwa.js?v=18"></script>
-<script src="js/push.js?v=19"></script>
-<script src="js/profil.js?v=19"></script>
+<script src="js/supabase.js?v=23"></script>
+<script src="js/auth.js?v=23"></script>
+<script src="js/pwa.js?v=23"></script>
+<script src="js/push.js?v=23"></script>
+<script src="js/profil.js?v=23"></script>
 </body>
 </html>

@@ -48,6 +48,7 @@ export function startNotifier(opts) {
       if (now.getDay() === 1 && lastWeeklyDate !== today) {  // Lundi
         lastWeeklyDate = today;
         safeRun('weekly_digest', () => sendWeeklyDigest(ctx));
+        safeRun('weekly_score_snapshot', () => snapshotScores(ctx));
       }
     }
   }, 5 * 60 * 1000); // check toutes les 5 min
@@ -376,6 +377,73 @@ function emailTemplate(ctx, { title, bodyHtml, cta, ctaUrl }) {
 function escapeHtml(s) {
   return String(s ?? '').replace(/[&<>"']/g, c =>
     ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+}
+
+// =========================================================
+// Snapshot hebdomadaire des scores (Lundi 8h)
+// =========================================================
+async function snapshotScores(ctx) {
+  console.log('📊 Snapshot scores — démarrage');
+  const today = new Date().toISOString().slice(0, 10);
+  const ago30 = new Date(Date.now() - 30 * 86400000).toISOString();
+
+  // 1. Tous les profils + tous les liens d'assignation + toutes les tâches
+  const [{ data: profiles }, { data: links }, { data: tasks }, { data: reads }] = await Promise.all([
+    ctx.sb.from('profiles').select('id, work_score, attendance_score, total_earnings'),
+    ctx.sb.from('task_assignees').select('task_id, user_id'),
+    ctx.sb.from('tasks').select('id, status, due_date, updated_at, created_at'),
+    ctx.sb.from('message_reads').select('user_id, read_at').gte('read_at', ago30)
+  ]);
+  if (!profiles?.length) { console.log('📊 Aucun profil'); return; }
+
+  const tasksById = Object.fromEntries((tasks || []).map(t => [t.id, t]));
+  const tasksByUser = {};
+  (links || []).forEach(l => { (tasksByUser[l.user_id] ||= []).push(l.task_id); });
+
+  const readDaysByUser = {};
+  (reads || []).forEach(r => {
+    const day = r.read_at.slice(0, 10);
+    if (!readDaysByUser[r.user_id]) readDaysByUser[r.user_id] = new Set();
+    readDaysByUser[r.user_id].add(day);
+  });
+
+  let snapped = 0;
+  for (const p of profiles) {
+    // Score travail : % tâches terminées (parmi celles assignées au user, qui ont une due_date passée)
+    const myTaskIds = tasksByUser[p.id] || [];
+    const myTasks = myTaskIds.map(id => tasksById[id]).filter(Boolean);
+    const closed = myTasks.filter(t => t.status === 'done');
+    const dueClosed = closed.filter(t => !t.due_date || (t.updated_at && t.due_date && t.updated_at.slice(0,10) <= t.due_date));
+    const totalRelevant = myTasks.filter(t => t.due_date && t.due_date <= today).length || myTasks.length;
+    const workScore = totalRelevant === 0
+      ? p.work_score   // pas assez de données → on garde la valeur actuelle
+      : Math.round((dueClosed.length / Math.max(1, totalRelevant)) * 100);
+
+    // Assiduité : % de jours actifs sur les 30 derniers
+    const activeDays = readDaysByUser[p.id]?.size || 0;
+    const attendance = Math.round((activeDays / 30) * 100);
+
+    // Gains : la valeur courante (admin la pose à la main)
+    const earnings = p.total_earnings || 0;
+
+    // Mise à jour des colonnes profiles + insertion historique
+    await ctx.sb.from('profiles').update({
+      work_score: workScore,
+      attendance_score: attendance
+    }).eq('id', p.id);
+
+    await ctx.sb.from('profile_score_history').upsert({
+      user_id: p.id,
+      work_score: workScore,
+      attendance_score: attendance,
+      total_earnings: earnings,
+      recorded_at: today,
+      notes: 'snapshot auto hebdo'
+    }, { onConflict: 'user_id,recorded_at' });
+
+    snapped++;
+  }
+  console.log(`📊 Snapshot scores terminé : ${snapped} profil(s)`);
 }
 
 // =========================================================
