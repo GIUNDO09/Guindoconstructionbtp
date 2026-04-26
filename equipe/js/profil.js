@@ -44,9 +44,11 @@ function renderProfile() {
   if (f.cv_url) f.cv_url.value = state.me.cv_url || '';
   if (f.linkedin_url) f.linkedin_url.value = state.me.linkedin_url || '';
 
-  // Lien vers la version publique
-  const viewBtn = document.getElementById('viewPublicProfileBtn');
-  if (viewBtn) viewBtn.href = `profil-public.html?id=${state.me.id}`;
+  // Avatar cliquable → page profil public
+  const avatarLink = document.getElementById('avatarPreview');
+  if (avatarLink && avatarLink.tagName === 'A') {
+    avatarLink.href = `profil-public.html?id=${state.me.id}`;
+  }
 
   // Email de connexion (read-only)
   document.getElementById('authEmail').textContent = state.authEmail;

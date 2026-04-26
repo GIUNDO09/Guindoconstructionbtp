@@ -432,6 +432,21 @@ function bindUI() {
     if (src) openLightbox(src);
   });
 
+  // Clic sur le nom d'auteur ou une mention → page profil public
+  document.getElementById('messagesList').addEventListener('click', (e) => {
+    const author = e.target.closest('.msg-author');
+    if (author && author.href) {
+      e.preventDefault();
+      window.location.href = author.href;
+      return;
+    }
+    const mention = e.target.closest('.mention[data-user]');
+    if (mention) {
+      e.preventDefault();
+      window.location.href = `profil-public.html?id=${mention.dataset.user}`;
+    }
+  });
+
   const lightbox = document.getElementById('lightbox');
   lightbox.addEventListener('click', (e) => {
     // Ferme si clic sur le fond, le bouton ✕, ou l'image elle-même

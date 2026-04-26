@@ -1672,6 +1672,15 @@ button.status-pill:disabled { opacity: .5; cursor: wait; }
   overflow: hidden;
   box-shadow: var(--shadow-lg);
 }
+.avatar-preview-link {
+  cursor: pointer;
+  text-decoration: none;
+  transition: transform .15s ease, box-shadow .15s ease;
+}
+.avatar-preview-link:hover {
+  transform: scale(1.03);
+  box-shadow: 0 8px 24px rgba(30, 58, 95, .25);
+}
 .avatar-initials-lg {
   color: #fff;
   font-size: 64px;
