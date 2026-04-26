@@ -320,10 +320,16 @@ app.post('/move', requireAuth, async (req, res) => {
       const newAbs = path.join(newDir, finalName);
       const oldAbs = resolveFilePath(file.disk_filename);
 
+      // Si le fichier n'existe pas sur le disque, refuser le move (évite de créer un orphelin DB)
+      if (!fs.existsSync(oldAbs)) {
+        return res.status(410).json({ error: 'Fichier absent sur le disque (orphelin). Supprime-le et ré-upload.' });
+      }
+
       // Déplacer sur le disque
       let moved = false;
       try {
-        if (fs.existsSync(oldAbs)) { fs.renameSync(oldAbs, newAbs); moved = true; }
+        fs.renameSync(oldAbs, newAbs);
+        moved = true;
       } catch (e) {
         try {
           fs.copyFileSync(oldAbs, newAbs);
@@ -409,6 +415,39 @@ app.post('/move', requireAuth, async (req, res) => {
     console.error('Move error:', err);
     res.status(500).json({ error: err.message });
   }
+});
+
+// -----------------------------------------------------------
+// Maintenance : détection et nettoyage des fichiers orphelins
+// (entrées DB qui n'ont plus de fichier physique sur le disque)
+// -----------------------------------------------------------
+app.get('/admin/orphans', requireAuth, async (req, res) => {
+  if (req.user.role !== 'admin' && req.userRole !== 'admin') {
+    // Vérifier le rôle via la table profiles
+    const { data: prof } = await req.sb.from('profiles').select('role').eq('id', req.user.id).single();
+    if (prof?.role !== 'admin') return res.status(403).json({ error: 'Admin uniquement' });
+  }
+  const { data: files } = await req.sb.from('files').select('id, name, disk_filename, folder_id, size_bytes');
+  const orphans = (files || []).filter(f => {
+    if (!f.disk_filename) return true;
+    return !fs.existsSync(resolveFilePath(f.disk_filename));
+  });
+  res.json({ total: files?.length || 0, orphans, count: orphans.length });
+});
+
+app.post('/admin/orphans/cleanup', requireAuth, async (req, res) => {
+  const { data: prof } = await req.sb.from('profiles').select('role').eq('id', req.user.id).single();
+  if (prof?.role !== 'admin') return res.status(403).json({ error: 'Admin uniquement' });
+
+  const { data: files } = await req.sb.from('files').select('id, disk_filename');
+  const orphanIds = (files || [])
+    .filter(f => !f.disk_filename || !fs.existsSync(resolveFilePath(f.disk_filename)))
+    .map(f => f.id);
+  if (orphanIds.length === 0) return res.json({ deleted: 0 });
+
+  const { error } = await req.sb.from('files').delete().in('id', orphanIds);
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ deleted: orphanIds.length, ids: orphanIds });
 });
 
 // -----------------------------------------------------------

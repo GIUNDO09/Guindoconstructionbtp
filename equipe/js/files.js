@@ -23,6 +23,7 @@ const thumbCache = new Map(); // file_id → blob URL pour vignettes images
   if (state.me?.role === 'admin') {
     document.getElementById('configServerBtn').hidden = false;
     document.getElementById('newRootFolderBtn').hidden = false;
+    document.getElementById('cleanupOrphansBtn').hidden = false;
   }
 
   await Promise.all([loadProfiles(), loadSettings(), loadFolders(), loadFiles()]);
@@ -310,6 +311,7 @@ function bindUI() {
 
   // Config server (admin)
   document.getElementById('configServerBtn').addEventListener('click', configServer);
+  document.getElementById('cleanupOrphansBtn').addEventListener('click', cleanupOrphans);
 
   // Upload
   const dropzone = document.getElementById('dropzone');
@@ -509,6 +511,41 @@ async function createFolder(parentId) {
     status: 'todo'
   });
   if (error) alert('Erreur : ' + error.message);
+}
+
+async function cleanupOrphans() {
+  if (!state.serverUrl) { alert('Serveur non configuré'); return; }
+  const token = (await sb.auth.getSession()).data.session?.access_token;
+  if (!token) { alert('Session expirée'); return; }
+  try {
+    // 1. Lister d'abord
+    const listR = await fetch(`${state.serverUrl}/admin/orphans`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    if (!listR.ok) {
+      alert('Erreur : ' + (await listR.text()));
+      return;
+    }
+    const { count, orphans } = await listR.json();
+    if (count === 0) { alert('🎉 Aucun fichier orphelin — tout est propre.'); return; }
+
+    const names = orphans.slice(0, 10).map(o => `• ${o.name}`).join('\n');
+    const more = orphans.length > 10 ? `\n…et ${orphans.length - 10} autres` : '';
+    if (!confirm(`${count} fichier(s) orphelin(s) en DB sans fichier physique :\n\n${names}${more}\n\nLes supprimer définitivement de la base ?`)) return;
+
+    // 2. Supprimer
+    const delR = await fetch(`${state.serverUrl}/admin/orphans/cleanup`, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    if (!delR.ok) { alert('Erreur : ' + (await delR.text())); return; }
+    const { deleted } = await delR.json();
+    alert(`✅ ${deleted} entrée(s) supprimée(s)`);
+    await loadFiles();
+    renderAll();
+  } catch (err) {
+    alert('Erreur : ' + err.message);
+  }
 }
 
 async function configServer() {
