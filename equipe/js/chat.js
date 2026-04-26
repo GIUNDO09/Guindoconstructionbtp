@@ -58,7 +58,7 @@ let mentionState = null;               // { start, query } pour autocomplete
     )
     .on('postgres_changes',
       { event: '*', schema: 'public', table: 'app_settings', filter: 'key=eq.file_server_url' },
-      async () => { await loadServerUrl(); }
+      async () => { serverUrl = await window.gcbtp.cache.getServerUrl({ refresh: true }); }
     )
     .on('postgres_changes',
       { event: 'INSERT', schema: 'public', table: 'message_reactions' },
@@ -94,8 +94,7 @@ let mentionState = null;               // { start, query } pour autocomplete
 })();
 
 async function loadServerUrl() {
-  const { data } = await sb.from('app_settings').select('value').eq('key', 'file_server_url').maybeSingle();
-  serverUrl = data?.value || null;
+  serverUrl = await window.gcbtp.cache.getServerUrl();
 }
 
 function notifyIfNeeded(m) {
@@ -120,7 +119,7 @@ function previewText(m) {
 }
 
 async function loadProfiles() {
-  const { data } = await sb.from('profiles').select('id, full_name');
+  const data = await window.gcbtp.cache.getProfiles();
   profilesById = Object.fromEntries((data || []).map(p => [p.id, p]));
 }
 

@@ -74,8 +74,7 @@ async function loadFolders() {
 }
 
 async function loadServerUrl() {
-  const { data } = await sb.from('app_settings').select('value').eq('key', 'file_server_url').maybeSingle();
-  state.serverUrl = data?.value || null;
+  state.serverUrl = await window.gcbtp.cache.getServerUrl();
 }
 
 // Construit le chemin complet d'un dossier (pour affichage dans le select)
@@ -95,9 +94,8 @@ function folderBreadcrumb(folderId) {
 
 // ---------- Data ----------
 async function loadProfiles() {
-  const { data, error } = await sb.from('profiles').select('id, full_name, role, avatar_file_id, title').order('full_name');
-  if (error) { console.error(error); return; }
-  state.profiles = data || [];
+  const data = await window.gcbtp.cache.getProfiles();
+  state.profiles = (data || []).slice().sort((a, b) => (a.full_name || '').localeCompare(b.full_name || ''));
   state.profilesById = Object.fromEntries(state.profiles.map(p => [p.id, p]));
 }
 async function loadTasks() {

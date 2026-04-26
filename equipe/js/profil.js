@@ -25,8 +25,7 @@ async function loadProfile() {
 }
 
 async function loadServerUrl() {
-  const { data } = await sb.from('app_settings').select('value').eq('key', 'file_server_url').maybeSingle();
-  state.serverUrl = data?.value || null;
+  state.serverUrl = await window.gcbtp.cache.getServerUrl();
 }
 
 function renderProfile() {

@@ -138,64 +138,14 @@ async function onNewMessage(ctx, payload) {
   const author = await getProfile(ctx, msg.user_id);
   if (!author) return;
 
-  // 1. Push instantanées — à tous les autres membres abonnés
+  // Push instantanées uniquement — pas d'email, le chat reste dans le chat.
+  // Les notifs push couvrent le besoin (instantanées et hors-onglet).
   await sendPushToAllExcept(ctx, msg.user_id, {
     title: `💬 ${author.full_name}`,
     body: previewMessage(msg),
     url: '/equipe/chat.html',
     tag: 'gcbtp-chat'
   });
-
-  // 2. Emails seulement aux users "offline" : pas de push subscription OU inactifs > 5 min
-  //    (on évite ainsi de spammer ceux qui ont l'app ouverte ou les notifs push)
-  const fiveMinAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
-
-  const { data: profiles } = await ctx.sb
-    .from('profiles')
-    .select('id, full_name, notification_email')
-    .neq('id', msg.user_id)
-    .not('notification_email', 'is', null);
-  if (!profiles?.length) return;
-
-  const userIds = profiles.map(p => p.id);
-
-  // Qui a une subscription push valide ?
-  const { data: subs } = await ctx.sb
-    .from('push_subscriptions').select('user_id').in('user_id', userIds);
-  const subscribed = new Set((subs || []).map(s => s.user_id));
-
-  // Qui est "actif" (lecture ou envoi de message dans les 5 dernières minutes) ?
-  const [{ data: reads }, { data: msgs }] = await Promise.all([
-    ctx.sb.from('message_reads').select('user_id').in('user_id', userIds).gt('read_at', fiveMinAgo),
-    ctx.sb.from('messages').select('user_id').in('user_id', userIds).gt('created_at', fiveMinAgo)
-  ]);
-  const active = new Set([...(reads || []).map(r => r.user_id), ...(msgs || []).map(m => m.user_id)]);
-
-  // Emailer si : pas de push OU pas actif récemment
-  const recipients = profiles.filter(p => !subscribed.has(p.id) || !active.has(p.id));
-
-  for (const p of recipients) {
-    const raw = msg.content || '';
-    const preview = previewMessage(msg);
-    const shortSubject = (raw || previewMessage(msg)).slice(0, 50);
-    await ctx.resend.emails.send({
-      from: ctx.from,
-      to: p.notification_email,
-      subject: `💬 ${author.full_name} : ${shortSubject}`,
-      html: emailTemplate(ctx, {
-        title: 'Nouveau message dans le chat',
-        bodyHtml: `
-          <p>Bonjour ${escapeHtml(p.full_name)},</p>
-          <p><strong>${escapeHtml(author.full_name)}</strong> a écrit dans le canal général :</p>
-          <blockquote style="border-left: 3px solid #e87722; padding: 8px 14px; margin: 14px 0; background: #fff4e6; color: #495057;">
-            ${escapeHtml(preview)}
-          </blockquote>`,
-        cta: 'Répondre dans le chat',
-        ctaUrl: ctx.siteUrl + 'chat.html'
-      })
-    });
-  }
-  console.log(`📧 Chat → ${recipients.length}/${profiles.length} email(s) (online: ${profiles.length - recipients.length})`);
 }
 
 // Daily digest : à chaque membre, ses tâches du jour (groupées par catégorie)

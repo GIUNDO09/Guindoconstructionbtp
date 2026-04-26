@@ -38,7 +38,7 @@ const thumbCache = new Map(); // file_id → blob URL pour vignettes images
       await loadFiles(); renderAll();
     })
     .on('postgres_changes', { event: '*', schema: 'public', table: 'app_settings' }, async () => {
-      await loadSettings();
+      state.serverUrl = await window.gcbtp.cache.getServerUrl({ refresh: true });
       document.getElementById('serverStatus').textContent = state.serverUrl ? `🟢 Serveur : ${state.serverUrl}` : '🔴 Serveur non configuré';
     })
     .subscribe();
@@ -46,13 +46,12 @@ const thumbCache = new Map(); // file_id → blob URL pour vignettes images
 
 // ---------- Data ----------
 async function loadProfiles() {
-  const { data } = await sb.from('profiles').select('id, full_name');
+  const data = await window.gcbtp.cache.getProfiles();
   state.profilesById = Object.fromEntries((data || []).map(p => [p.id, p]));
 }
 
 async function loadSettings() {
-  const { data } = await sb.from('app_settings').select('*').eq('key', 'file_server_url').maybeSingle();
-  state.serverUrl = data?.value || null;
+  state.serverUrl = await window.gcbtp.cache.getServerUrl();
 }
 
 async function loadFolders() {

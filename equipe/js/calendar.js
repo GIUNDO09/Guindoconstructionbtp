@@ -39,7 +39,7 @@ const state = {
 })();
 
 async function loadProfiles() {
-  const { data } = await sb.from('profiles').select('id, full_name');
+  const data = await window.gcbtp.cache.getProfiles();
   state.profilesById = Object.fromEntries((data || []).map(p => [p.id, p]));
 }
 async function loadAssignees() {
