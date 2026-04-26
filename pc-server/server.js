@@ -139,30 +139,48 @@ app.get('/health', (req, res) => {
   res.json({ ok: true, time: new Date().toISOString() });
 });
 
-// Upload : multipart/form-data avec champs "file" et "folder_id"
+// Upload : multipart/form-data avec "file", "folder_id" (optionnel), "context" (optionnel)
+// context = 'chat' | 'avatar' | 'task' → range automatiquement le fichier dans
+// le sous-dossier système approprié (sans folder_id).
 app.post('/upload', requireAuth, upload.single('file'), async (req, res) => {
   const { folder_id } = req.body;
+  const context = req.body.context && ['chat', 'avatar', 'task'].includes(req.body.context)
+    ? req.body.context : null;
   const file = req.file;
   if (!file) return res.status(400).json({ error: 'No file' });
 
   try {
-    // 1) Reconstruire le chemin physique qui reflète l'arborescence de l'app
-    const subPath = folder_id ? await folderRelPath(req.sb, folder_id) : '';
+    // 1) Calcul du sous-chemin selon priorité : folder_id > context > racine
+    let subPath = '';
+    if (folder_id) {
+      subPath = await folderRelPath(req.sb, folder_id);
+    } else if (context === 'chat') {
+      const mime = file.mimetype || '';
+      if (mime.startsWith('image/'))      subPath = '_chat/images';
+      else if (mime.startsWith('video/')) subPath = '_chat/videos';
+      else if (mime.startsWith('audio/')) subPath = '_chat/audios';
+      else                                subPath = '_chat/documents';
+    } else if (context === 'avatar') {
+      subPath = '_avatars';
+    } else if (context === 'task') {
+      subPath = '_taches';
+    }
     const targetDir = path.join(FILES_DIR, subPath);
     fs.mkdirSync(targetDir, { recursive: true });
 
-    // 2) Choisir un nom propre (avec gestion des doublons)
+    // 2) Nom propre (gestion des doublons)
     const finalName = uniqueFilename(targetDir, sanitizeName(file.originalname));
     const finalAbs = path.join(targetDir, finalName);
 
     // 3) Déplacer depuis le dossier temporaire
     fs.renameSync(file.path, finalAbs);
 
-    // 4) Chemin relatif stocké en DB (POSIX style pour portabilité)
+    // 4) Chemin relatif (POSIX) stocké en DB
     const relDisk = path.join(subPath, finalName).split(path.sep).join('/');
 
     const { data, error } = await req.sb.from('files').insert({
       folder_id: folder_id || null,
+      context: context,
       name: file.originalname,
       disk_filename: relDisk,
       size_bytes: file.size,
@@ -176,7 +194,6 @@ app.post('/upload', requireAuth, upload.single('file'), async (req, res) => {
     }
     res.json({ file: data });
   } catch (err) {
-    // Nettoyer le fichier temporaire
     if (file?.path) fs.unlink(file.path, () => {});
     console.error('Upload error:', err);
     res.status(500).json({ error: err.message });
@@ -422,6 +439,81 @@ app.get('/admin/orphans', requireAuth, async (req, res) => {
     return !fs.existsSync(resolveFilePath(f.disk_filename));
   });
   res.json({ total: files?.length || 0, orphans, count: orphans.length });
+});
+
+// Range les fichiers existants à plat dans les bons sous-dossiers selon leur référence
+app.post('/admin/reorganize', requireAuth, async (req, res) => {
+  const { data: prof } = await req.sb.from('profiles').select('role').eq('id', req.user.id).single();
+  if (prof?.role !== 'admin') return res.status(403).json({ error: 'Admin uniquement' });
+
+  const targetByContext = {
+    avatar: '_avatars',
+    task:   '_taches'
+  };
+  const chatTargetByMime = (mime) => {
+    if (!mime) return '_chat/documents';
+    if (mime.startsWith('image/')) return '_chat/images';
+    if (mime.startsWith('video/')) return '_chat/videos';
+    if (mime.startsWith('audio/')) return '_chat/audios';
+    return '_chat/documents';
+  };
+
+  // Charger les références
+  const [{ data: messages }, { data: profiles }, { data: tasks }, { data: allFiles }] = await Promise.all([
+    req.sb.from('messages').select('attachment_file_id').not('attachment_file_id', 'is', null),
+    req.sb.from('profiles').select('avatar_file_id').not('avatar_file_id', 'is', null),
+    req.sb.from('tasks').select('cover_file_id').not('cover_file_id', 'is', null),
+    req.sb.from('files').select('id, name, disk_filename, mime_type, folder_id, context')
+  ]);
+
+  const chatIds = new Set((messages || []).map(m => m.attachment_file_id));
+  const avatarIds = new Set((profiles || []).map(p => p.avatar_file_id));
+  const taskIds = new Set((tasks || []).map(t => t.cover_file_id));
+
+  let moved = 0, skipped = 0, errors = [];
+
+  for (const f of (allFiles || [])) {
+    // Ne pas toucher aux fichiers déjà dans une arborescence projet (folder_id non null)
+    if (f.folder_id) { skipped++; continue; }
+    // Déjà dans le bon contexte ?
+    if (f.context) { skipped++; continue; }
+
+    // Détecter le contexte
+    let ctx = null;
+    if (chatIds.has(f.id))   ctx = 'chat';
+    else if (avatarIds.has(f.id)) ctx = 'avatar';
+    else if (taskIds.has(f.id))   ctx = 'task';
+    if (!ctx) { skipped++; continue; }
+
+    // Calculer la destination
+    const targetSubPath = ctx === 'chat' ? chatTargetByMime(f.mime_type) : targetByContext[ctx];
+    const newDir = path.join(FILES_DIR, targetSubPath);
+    fs.mkdirSync(newDir, { recursive: true });
+
+    const baseName = path.basename(f.disk_filename || '');
+    const finalName = uniqueFilename(newDir, baseName || `file-${f.id}`);
+    const newAbs = path.join(newDir, finalName);
+    const oldAbs = resolveFilePath(f.disk_filename || '');
+
+    try {
+      if (fs.existsSync(oldAbs)) {
+        fs.renameSync(oldAbs, newAbs);
+      }
+      // Maj DB même si le fichier n'existait pas sur disque (orphelin) — la prochaine
+      // tentative de stream renverra 404 mais le contexte sera correct
+      const newRel = path.join(targetSubPath, finalName).split(path.sep).join('/');
+      const { error } = await req.sb.from('files').update({
+        context: ctx,
+        disk_filename: newRel
+      }).eq('id', f.id);
+      if (error) throw error;
+      moved++;
+    } catch (e) {
+      errors.push({ id: f.id, error: e.message });
+    }
+  }
+
+  res.json({ moved, skipped, errors });
 });
 
 app.post('/admin/orphans/cleanup', requireAuth, async (req, res) => {

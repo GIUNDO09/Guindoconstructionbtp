@@ -672,6 +672,7 @@ async function onTaskSubmit(e) {
       const token = (await sb.auth.getSession()).data.session.access_token;
       const fd = new FormData();
       fd.append('file', coverFile);
+      fd.append('context', 'task');
       const r = await fetch(`${state.serverUrl}/upload`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` },

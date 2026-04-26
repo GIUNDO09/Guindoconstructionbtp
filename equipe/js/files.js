@@ -24,6 +24,7 @@ const thumbCache = new Map(); // file_id → blob URL pour vignettes images
     document.getElementById('configServerBtn').hidden = false;
     document.getElementById('newRootFolderBtn').hidden = false;
     document.getElementById('cleanupOrphansBtn').hidden = false;
+    document.getElementById('reorganizeBtn').hidden = false;
   }
 
   await Promise.all([loadProfiles(), loadSettings(), loadFolders(), loadFiles()]);
@@ -61,7 +62,9 @@ async function loadFolders() {
 }
 
 async function loadFiles() {
-  const { data, error } = await sb.from('files').select('*').order('created_at', { ascending: false });
+  // Page Fichiers = uniquement les fichiers projet (context null).
+  // Les médias chat/avatars/covers sont stockés à part (context = 'chat'|'avatar'|'task').
+  const { data, error } = await sb.from('files').select('*').is('context', null).order('created_at', { ascending: false });
   if (error) { console.error(error); return; }
   state.files = data || [];
 }
@@ -311,6 +314,7 @@ function bindUI() {
   // Config server (admin)
   document.getElementById('configServerBtn').addEventListener('click', configServer);
   document.getElementById('cleanupOrphansBtn').addEventListener('click', cleanupOrphans);
+  document.getElementById('reorganizeBtn').addEventListener('click', reorganize);
 
   // Upload
   const dropzone = document.getElementById('dropzone');
@@ -510,6 +514,28 @@ async function createFolder(parentId) {
     status: 'todo'
   });
   if (error) alert('Erreur : ' + error.message);
+}
+
+async function reorganize() {
+  if (!state.serverUrl) { alert('Serveur non configuré'); return; }
+  if (!confirm('Ranger automatiquement les médias chat / avatars / couvertures de tâches dans leurs sous-dossiers (_chat, _avatars, _taches) ?\n\nCette opération déplace les fichiers sur le disque et met à jour la base de données. Sans risque, mais peut prendre quelques secondes.')) return;
+  const token = (await sb.auth.getSession()).data.session?.access_token;
+  if (!token) { alert('Session expirée'); return; }
+  try {
+    const r = await fetch(`${state.serverUrl}/admin/reorganize`, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    if (!r.ok) { alert('Erreur : ' + (await r.text())); return; }
+    const { moved, skipped, errors } = await r.json();
+    let msg = `📦 Réorganisation terminée\n\n• ${moved} fichier(s) déplacé(s)\n• ${skipped} fichier(s) ignoré(s) (déjà rangés ou non identifiés)`;
+    if (errors?.length) msg += `\n• ${errors.length} erreur(s)`;
+    alert(msg);
+    await loadFiles();
+    renderAll();
+  } catch (err) {
+    alert('Erreur : ' + err.message);
+  }
 }
 
 async function cleanupOrphans() {

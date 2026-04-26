@@ -584,6 +584,7 @@ async function sendMessage() {
       const token = (await sb.auth.getSession()).data.session.access_token;
       const fd = new FormData();
       fd.append('file', pendingAttachment.file);
+      fd.append('context', 'chat');
       const r = await fetch(`${serverUrl}/upload`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` },

@@ -86,6 +86,7 @@ function bindUI() {
       const token = (await sb.auth.getSession()).data.session.access_token;
       const fd = new FormData();
       fd.append('file', file);
+      fd.append('context', 'avatar');
       const r = await fetch(`${state.serverUrl}/upload`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` },
