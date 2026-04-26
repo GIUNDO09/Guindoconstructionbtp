@@ -296,6 +296,122 @@ app.delete('/folder/:folderId', requireAuth, async (req, res) => {
 });
 
 // -----------------------------------------------------------
+// Déplacement fichier ou dossier
+// -----------------------------------------------------------
+app.post('/move', requireAuth, async (req, res) => {
+  const { type, id, target_folder_id } = req.body || {};
+  if (!type || !id) return res.status(400).json({ error: 'type et id requis' });
+  const newParentId = target_folder_id || null;
+
+  try {
+    if (type === 'file') {
+      const { data: file, error: fErr } = await req.sb.from('files').select('*').eq('id', id).maybeSingle();
+      if (fErr || !file) return res.status(404).json({ error: 'Fichier introuvable' });
+
+      // Si déjà dans le dossier cible, no-op
+      if ((file.folder_id || null) === newParentId) return res.json({ ok: true, noop: true });
+
+      const newSubPath = newParentId ? await folderRelPath(req.sb, newParentId) : '';
+      const newDir = path.join(FILES_DIR, newSubPath);
+      fs.mkdirSync(newDir, { recursive: true });
+
+      const baseName = path.basename(file.disk_filename);
+      const finalName = uniqueFilename(newDir, baseName);
+      const newAbs = path.join(newDir, finalName);
+      const oldAbs = resolveFilePath(file.disk_filename);
+
+      // Déplacer sur le disque
+      let moved = false;
+      try {
+        if (fs.existsSync(oldAbs)) { fs.renameSync(oldAbs, newAbs); moved = true; }
+      } catch (e) {
+        try {
+          fs.copyFileSync(oldAbs, newAbs);
+          fs.unlinkSync(oldAbs);
+          moved = true;
+        } catch (e2) {
+          return res.status(500).json({ error: 'Échec déplacement disque : ' + e2.message });
+        }
+      }
+
+      const newRel = path.join(newSubPath, finalName).split(path.sep).join('/');
+      const { error: uErr } = await req.sb.from('files').update({
+        folder_id: newParentId,
+        disk_filename: newRel
+      }).eq('id', id);
+      if (uErr) {
+        // Rollback disque
+        if (moved) { try { fs.renameSync(newAbs, oldAbs); } catch {} }
+        return res.status(500).json({ error: uErr.message });
+      }
+      return res.json({ ok: true });
+    }
+
+    if (type === 'folder') {
+      // Validations : pas dans soi-même ou un descendant
+      if (newParentId === id) return res.status(400).json({ error: 'Un dossier ne peut pas se contenir lui-même' });
+      const descendants = await getFolderDescendants(req.sb, id);
+      if (newParentId && descendants.includes(newParentId)) {
+        return res.status(400).json({ error: 'Impossible de déplacer un dossier dans son propre sous-dossier' });
+      }
+
+      const { data: folder, error: gErr } = await req.sb.from('folders').select('*').eq('id', id).maybeSingle();
+      if (gErr || !folder) return res.status(404).json({ error: 'Dossier introuvable' });
+      if ((folder.parent_id || null) === newParentId) return res.json({ ok: true, noop: true });
+
+      const oldSubPath = await folderRelPath(req.sb, id);
+      const oldAbs = path.join(FILES_DIR, oldSubPath);
+      const newParentSubPath = newParentId ? await folderRelPath(req.sb, newParentId) : '';
+      const newSubPath = path.join(newParentSubPath, sanitizeName(folder.name));
+      const newAbs = path.join(FILES_DIR, newSubPath);
+
+      fs.mkdirSync(path.dirname(newAbs) || FILES_DIR, { recursive: true });
+      if (fs.existsSync(newAbs)) {
+        return res.status(409).json({ error: 'Un dossier du même nom existe déjà à la destination' });
+      }
+
+      let movedOnDisk = false;
+      if (fs.existsSync(oldAbs)) {
+        try {
+          fs.renameSync(oldAbs, newAbs);
+          movedOnDisk = true;
+        } catch (e) {
+          return res.status(500).json({ error: 'Échec déplacement disque : ' + e.message });
+        }
+      }
+
+      // Maj DB : parent_id du dossier
+      const { error: uErr } = await req.sb.from('folders').update({ parent_id: newParentId }).eq('id', id);
+      if (uErr) {
+        if (movedOnDisk) { try { fs.renameSync(newAbs, oldAbs); } catch {} }
+        return res.status(500).json({ error: uErr.message });
+      }
+
+      // Maj disk_filename de tous les fichiers descendants
+      const oldPrefix = oldSubPath.split(path.sep).join('/');
+      const newPrefix = newSubPath.split(path.sep).join('/');
+      const allIds = [id, ...descendants];
+      const { data: descFiles } = await req.sb.from('files').select('id, disk_filename').in('folder_id', allIds);
+      for (const f of (descFiles || [])) {
+        if (!f.disk_filename) continue;
+        const newDisk = f.disk_filename.startsWith(oldPrefix)
+          ? newPrefix + f.disk_filename.slice(oldPrefix.length)
+          : f.disk_filename;
+        if (newDisk !== f.disk_filename) {
+          await req.sb.from('files').update({ disk_filename: newDisk }).eq('id', f.id);
+        }
+      }
+      return res.json({ ok: true, files_updated: descFiles?.length || 0 });
+    }
+
+    return res.status(400).json({ error: 'type invalide (file ou folder)' });
+  } catch (err) {
+    console.error('Move error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// -----------------------------------------------------------
 // Web Push — endpoints
 // -----------------------------------------------------------
 const VAPID_PUBLIC = process.env.VAPID_PUBLIC_KEY;

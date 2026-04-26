@@ -161,7 +161,7 @@ function renderFolderContent() {
   const foldersHtml = subFolders.map(f => {
     const st = STATUS_MAP[f.status];
     return `
-      <div class="item item-folder" data-folder-id="${f.id}">
+      <div class="item item-folder" draggable="true" data-folder-id="${f.id}" data-drop-target="folder">
         <div class="item-icon">📁</div>
         <div class="item-body">
           <div class="item-name">${escapeHtml(f.name)}</div>
@@ -180,7 +180,7 @@ function renderFolderContent() {
       ? `<img class="item-thumb" data-thumb-id="${file.id}" alt="" loading="lazy">`
       : `<span class="item-icon">${fileIcon(file.name)}</span>`;
     return `
-      <div class="item item-file ${isImage ? 'item-image' : ''}" data-file-id="${file.id}">
+      <div class="item item-file ${isImage ? 'item-image' : ''}" draggable="true" data-file-id="${file.id}">
         ${iconHtml}
         <div class="item-body">
           <div class="item-name">${escapeHtml(file.name)}</div>
@@ -359,6 +359,117 @@ function bindUI() {
     }
   });
 }
+
+// -----------------------------------------------------------
+// Drag & drop pour déplacer fichiers / dossiers
+// -----------------------------------------------------------
+function setupMoveDragDrop() {
+  const content = document.getElementById('folderContent');
+  const breadcrumb = document.getElementById('breadcrumb');
+  const tree = document.getElementById('folderTree');
+
+  // Démarrage du drag : marquer ce qu'on déplace
+  document.addEventListener('dragstart', (e) => {
+    const item = e.target.closest('.item[draggable="true"]');
+    if (!item) return;
+    const payload = item.dataset.fileId
+      ? { type: 'file', id: item.dataset.fileId }
+      : { type: 'folder', id: item.dataset.folderId };
+    e.dataTransfer.setData('application/x-gcbtp-move', JSON.stringify(payload));
+    e.dataTransfer.effectAllowed = 'move';
+    item.classList.add('item-dragging');
+  });
+  document.addEventListener('dragend', (e) => {
+    document.querySelectorAll('.item-dragging').forEach(el => el.classList.remove('item-dragging'));
+    document.querySelectorAll('.drop-target').forEach(el => el.classList.remove('drop-target'));
+  });
+
+  // Helper : extraire le payload move depuis dataTransfer (return null si pas un déplacement GCBTP)
+  const getMovePayload = (e) => {
+    if (!e.dataTransfer.types.includes('application/x-gcbtp-move')) return null;
+    try { return JSON.parse(e.dataTransfer.getData('application/x-gcbtp-move')); }
+    catch { return null; }
+  };
+
+  // Cibles de drop : dossiers dans la liste + breadcrumb + tree sidebar
+  const dropZones = [content, breadcrumb, tree];
+  dropZones.forEach(zone => {
+    if (!zone) return;
+
+    zone.addEventListener('dragover', (e) => {
+      const target = findDropTarget(e.target);
+      if (!target) return;
+      // Refuser de drop un item sur lui-même
+      const moveData = e.dataTransfer.types.includes('application/x-gcbtp-move');
+      if (!moveData) return;
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      // Highlighter la cible
+      document.querySelectorAll('.drop-target').forEach(el => el.classList.remove('drop-target'));
+      target.classList.add('drop-target');
+    });
+
+    zone.addEventListener('dragleave', (e) => {
+      const target = findDropTarget(e.target);
+      if (target) target.classList.remove('drop-target');
+    });
+
+    zone.addEventListener('drop', async (e) => {
+      const target = findDropTarget(e.target);
+      if (!target) return;
+      const payload = getMovePayload(e);
+      if (!payload) return;
+      e.preventDefault();
+      target.classList.remove('drop-target');
+
+      const targetFolderId = target.dataset.folderId || target.dataset.id || null;
+      // Pas de drop sur soi-même
+      if (payload.type === 'folder' && payload.id === targetFolderId) return;
+
+      await performMove(payload, targetFolderId);
+    });
+  });
+}
+
+function findDropTarget(el) {
+  // Item dossier dans la grille
+  const folderItem = el.closest('.item-folder[data-drop-target="folder"]');
+  if (folderItem) return folderItem;
+  // Lien breadcrumb (data-id sur les <a>)
+  const crumb = el.closest('#breadcrumb a[data-id], #breadcrumb a:not([data-id])');
+  if (crumb) return crumb;
+  // Item de l'arborescence sidebar
+  const treeItem = el.closest('.tree-item');
+  if (treeItem) return treeItem;
+  return null;
+}
+
+async function performMove(payload, targetFolderId) {
+  if (!state.serverUrl) { alert('Serveur non configuré'); return; }
+  const token = (await sb.auth.getSession()).data.session?.access_token;
+  if (!token) { alert('Session expirée'); return; }
+  try {
+    const r = await fetch(`${state.serverUrl}/move`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify({ type: payload.type, id: payload.id, target_folder_id: targetFolderId })
+    });
+    if (!r.ok) {
+      const txt = await r.text();
+      alert('Échec du déplacement : ' + (txt || `HTTP ${r.status}`));
+      return;
+    }
+    // Le realtime va rafraîchir la vue automatiquement (subscription folders/files)
+    // On force quand même un reload pour réactivité
+    await Promise.all([loadFiles(), loadFolders()]);
+    renderAll();
+  } catch (err) {
+    alert('Erreur : ' + err.message);
+  }
+}
+
+// Activer le drag-and-drop de déplacement au démarrage (une seule fois)
+setupMoveDragDrop();
 
 // Parcours récursif d'une FileSystemEntry (fichier ou dossier)
 async function walkEntry(entry, basePath, out) {

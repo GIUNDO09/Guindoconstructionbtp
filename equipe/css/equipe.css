@@ -1230,6 +1230,35 @@ input, select, textarea { font-family: inherit; }
 }
 .item:hover { border-color: var(--gray-300); background: #fff; }
 .item-folder { cursor: pointer; }
+.item[draggable="true"] { cursor: grab; }
+.item[draggable="true"]:active { cursor: grabbing; }
+.item-dragging { opacity: 0.4; }
+
+/* Cibles de drop : dossier dans la grille, breadcrumb, tree */
+.drop-target {
+  outline: 2px dashed var(--orange) !important;
+  outline-offset: 2px;
+  background: #fff4e6 !important;
+  position: relative;
+}
+.item-folder.drop-target::after {
+  content: '↩ Déposer ici';
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: var(--orange);
+  color: #fff;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+}
+#breadcrumb a.drop-target,
+.tree-item.drop-target {
+  outline-offset: 0;
+  border-radius: 4px;
+}
 .item-icon { font-size: 22px; flex-shrink: 0; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; }
 .item-thumb {
   width: 44px;
