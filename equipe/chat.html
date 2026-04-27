@@ -15,7 +15,7 @@
 <link rel="icon" href="../favicon.ico">
 <link rel="apple-touch-icon" href="../Images/LOGO-1.png">
 <link rel="manifest" href="manifest.json">
-<link rel="stylesheet" href="css/equipe.css?v=25">
+<link rel="stylesheet" href="css/equipe.css?v=27">
 </head>
 <body class="app-body">
 
@@ -39,20 +39,37 @@
   </div>
 </header>
 
-<main class="chat-main">
+<main class="chat-main" id="chatMain">
+
+  <aside class="conv-sidebar" id="convSidebar">
+    <div class="conv-sidebar-head">
+      <h3>Conversations</h3>
+      <button type="button" id="newConvBtn" class="btn-ghost" title="Nouvelle conversation privée">✏️</button>
+    </div>
+    <div id="convList" class="conv-list">
+      <button type="button" class="conv-item conv-item-active" data-conv-id="">
+        <div class="conv-avatar conv-avatar-channel">💬</div>
+        <div class="conv-body">
+          <div class="conv-name">Canal général</div>
+          <div class="conv-sub">Toute l'équipe</div>
+        </div>
+      </button>
+    </div>
+  </aside>
 
   <section class="chat-panel">
     <div class="chat-header">
       <div class="chat-header-row">
+        <button type="button" id="convBackBtn" class="btn-icon-bubble conv-back-btn" title="Conversations">☰</button>
         <div>
-          <h2>💬 Canal général</h2>
+          <h2 id="chatTitle">💬 Canal général</h2>
           <p class="chat-sub">
             <span id="onlineIndicator" class="online-indicator" title="Personnes connectées">
               <span class="online-dot"></span>
               <span id="onlineCount">…</span> en ligne
             </span>
             <span class="chat-sub-sep">·</span>
-            <span>Discussion en temps réel avec toute l'équipe</span>
+            <span id="chatSubText">Discussion en temps réel avec toute l'équipe</span>
           </p>
         </div>
         <button type="button" id="searchToggleBtn" class="btn-icon-bubble" title="Rechercher">🔍</button>
@@ -127,6 +144,17 @@
 <!-- Picker de mentions (autocomplete @) -->
 <div id="mentionPicker" class="mention-picker" hidden></div>
 
+<!-- Modal "Nouvelle conversation privée" -->
+<div id="newConvModal" class="modal" hidden role="dialog" aria-modal="true" aria-label="Nouvelle conversation">
+  <div class="modal-content">
+    <button type="button" class="modal-close" id="newConvClose" aria-label="Fermer">×</button>
+    <h3>Nouvelle conversation privée</h3>
+    <p class="form-hint">Choisis un membre de l'équipe pour commencer une discussion privée.</p>
+    <input type="search" id="newConvSearch" class="search-input" placeholder="🔍 Rechercher un membre…" autocomplete="off">
+    <div id="newConvMembers" class="new-conv-members"></div>
+  </div>
+</div>
+
 <!-- Visionneuse plein écran (image) -->
 <div id="lightbox" class="lightbox" hidden role="dialog" aria-modal="true" aria-label="Image en plein écran">
   <div class="lightbox-toolbar">
@@ -141,6 +169,6 @@
 <script src="js/auth.js?v=25"></script>
 <script src="js/pwa.js?v=11"></script>
 <script src="js/push.js?v=23"></script>
-<script src="js/chat.js?v=26"></script>
+<script src="js/chat.js?v=27"></script>
 </body>
 </html>

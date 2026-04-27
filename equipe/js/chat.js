@@ -22,6 +22,11 @@ const readsByMessage = new Map();      // message_id → Set<user_id>
 let pickerTargetMessageId = null;
 let mentionState = null;               // { start, query } pour autocomplete
 
+// Conversations : null = canal général, sinon UUID d'un DM
+let currentConversationId = null;
+let conversations = [];                // [{ id, type, otherUserId, ... }]
+let participantsByConv = {};           // conv_id → [user_id, ...]
+
 (async () => {
   const session = await requireAuth();
   if (!session) return;
@@ -33,7 +38,26 @@ let mentionState = null;               // { start, query } pour autocomplete
 
   await loadProfiles();
   await loadServerUrl();
-  await loadMessages();
+  await loadConversations();
+  renderConvSidebar();
+
+  // ?dm=<user_id> dans l'URL → ouvre/crée le DM, sinon canal général par défaut
+  const params = new URLSearchParams(location.search);
+  const dmTarget = params.get('dm');
+  let openedFromUrl = false;
+  if (dmTarget && dmTarget !== me?.id) {
+    try {
+      const { data: convId } = await sb.rpc('get_or_create_dm', { target_user: dmTarget });
+      if (convId) {
+        await loadConversations();
+        renderConvSidebar();
+        await switchConversation(convId);
+        history.replaceState(null, '', 'chat.html');
+        openedFromUrl = true;
+      }
+    } catch (e) { console.warn('DM auto-open échoué:', e.message); }
+  }
+  if (!openedFromUrl) await switchConversation(null);
 
   chatChannel = sb.channel('messages-realtime', {
       config: {
@@ -47,14 +71,26 @@ let mentionState = null;               // { start, query } pour autocomplete
     .on('postgres_changes',
       { event: 'INSERT', schema: 'public', table: 'messages' },
       (payload) => {
-        appendMessage(payload.new, true);
-        notifyIfNeeded(payload.new);
-        markVisibleAsRead();
+        const msg = payload.new;
+        const convId = msg.conversation_id || null;
+        if (convId === currentConversationId) {
+          appendMessage(msg, true);
+          notifyIfNeeded(msg);
+          markVisibleAsRead();
+        } else {
+          // Message dans une autre conversation : notif + bump de la sidebar
+          notifyIfNeeded(msg);
+          loadConversations().then(renderConvSidebar);
+        }
       }
     )
     .on('postgres_changes',
       { event: 'DELETE', schema: 'public', table: 'messages' },
       (payload) => removeMessage(payload.old.id)
+    )
+    .on('postgres_changes',
+      { event: 'INSERT', schema: 'public', table: 'conversations' },
+      () => loadConversations().then(renderConvSidebar)
     )
     .on('postgres_changes',
       { event: '*', schema: 'public', table: 'app_settings', filter: 'key=eq.file_server_url' },
@@ -101,11 +137,17 @@ function notifyIfNeeded(m) {
   if (m.user_id === me?.id) return;
   const author = profilesById[m.user_id]?.full_name || 'Quelqu\'un';
   const mentioned = isMentioned(m.content);
+  const isDm = !!m.conversation_id;
   const preview = (mentioned ? '🔔 ' : '') + previewText(m);
   window.gcbtp?.notif?.chime();
-  if (document.hidden || !document.hasFocus() || mentioned) {
-    const title = mentioned ? `🔔 ${author} t'a mentionné` : `💬 ${author}`;
-    const notif = window.gcbtp?.notif?.show(title, preview, { tag: 'gcbtp-chat' });
+  // Dans une autre conv que la courante OU document caché OU mentionné → notif
+  const otherConv = (m.conversation_id || null) !== currentConversationId;
+  if (document.hidden || !document.hasFocus() || mentioned || otherConv) {
+    const prefix = mentioned ? '🔔 ' : (isDm ? '📩 ' : '💬 ');
+    const suffix = mentioned ? " t'a mentionné" : '';
+    const title = `${prefix}${author}${suffix}`;
+    const tag = isDm ? `gcbtp-dm-${m.conversation_id}` : 'gcbtp-chat';
+    const notif = window.gcbtp?.notif?.show(title, preview, { tag });
     if (notif) notif.onclick = () => { window.focus(); notif.close(); };
   }
 }
@@ -123,10 +165,179 @@ async function loadProfiles() {
   profilesById = Object.fromEntries((data || []).map(p => [p.id, p]));
 }
 
+// -----------------------------------------------------------
+// Conversations (DMs)
+// -----------------------------------------------------------
+async function loadConversations() {
+  const [{ data: convs }, { data: parts }] = await Promise.all([
+    sb.from('conversations').select('*').eq('type', 'dm'),
+    sb.from('conversation_participants').select('*')
+  ]);
+  participantsByConv = {};
+  (parts || []).forEach(p => {
+    (participantsByConv[p.conversation_id] ||= []).push(p.user_id);
+  });
+  const meId = me?.id;
+  conversations = (convs || []).map(c => {
+    const ids = participantsByConv[c.id] || [];
+    return { ...c, otherUserId: ids.find(id => id !== meId) || null };
+  });
+  // Tri : le plus récent en haut (à terme : par dernier message)
+  conversations.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+}
+
+function renderConvSidebar() {
+  const list = document.getElementById('convList');
+  if (!list) return;
+  const generalActive = currentConversationId === null;
+  const generalHtml = `
+    <button type="button" class="conv-item ${generalActive ? 'conv-item-active' : ''}" data-conv-id="">
+      <div class="conv-avatar conv-avatar-channel">💬</div>
+      <div class="conv-body">
+        <div class="conv-name">Canal général</div>
+        <div class="conv-sub">Toute l'équipe</div>
+      </div>
+    </button>`;
+  const dmsHtml = conversations.map(c => {
+    const other = profilesById[c.otherUserId];
+    const name = other?.full_name || 'Conversation';
+    const sub  = other?.title || 'Conversation privée';
+    const active = c.id === currentConversationId ? 'conv-item-active' : '';
+    return `
+      <button type="button" class="conv-item ${active}" data-conv-id="${c.id}">
+        <div class="conv-avatar" data-avatar-user="${c.otherUserId || ''}">${escapeHtml(initialsOf(name))}</div>
+        <div class="conv-body">
+          <div class="conv-name">${escapeHtml(name)}</div>
+          <div class="conv-sub">${escapeHtml(sub)}</div>
+        </div>
+      </button>`;
+  }).join('');
+  list.innerHTML = generalHtml + dmsHtml;
+  // Hydrate avatars (image authentifiée si dispo)
+  list.querySelectorAll('[data-avatar-user]').forEach(el => {
+    const uid = el.dataset.avatarUser;
+    const profile = uid && profilesById[uid];
+    if (profile?.avatar_file_id && serverUrl) {
+      loadAvatarThumb(el, profile.avatar_file_id);
+    }
+  });
+}
+
+async function loadAvatarThumb(slot, fileId) {
+  try {
+    const token = (await sb.auth.getSession()).data.session?.access_token;
+    if (!token) return;
+    const r = await fetch(`${serverUrl}/stream/${fileId}`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    if (!r.ok) return;
+    const blob = await r.blob();
+    const img = document.createElement('img');
+    img.src = URL.createObjectURL(blob);
+    img.alt = '';
+    slot.textContent = '';
+    slot.appendChild(img);
+  } catch {}
+}
+
+async function switchConversation(convId) {
+  if (convId === '' || convId === undefined) convId = null;
+  currentConversationId = convId;
+
+  // Titre + sous-titre
+  const titleEl = document.getElementById('chatTitle');
+  const subEl = document.getElementById('chatSubText');
+  if (convId === null) {
+    titleEl.textContent = '💬 Canal général';
+    subEl.textContent = "Discussion en temps réel avec toute l'équipe";
+  } else {
+    const conv = conversations.find(c => c.id === convId);
+    const other = conv && profilesById[conv.otherUserId];
+    titleEl.textContent = other?.full_name ? `💬 ${other.full_name}` : '💬 Conversation';
+    subEl.textContent = other?.title || 'Conversation privée';
+  }
+
+  // Active dans la sidebar
+  document.querySelectorAll('.conv-item').forEach(el => {
+    const id = el.dataset.convId || '';
+    el.classList.toggle('conv-item-active', id === (convId || ''));
+  });
+
+  // Mobile : bascule la vue sur le panneau de chat
+  document.getElementById('chatMain').classList.add('with-conv');
+
+  // Reset de l'état des messages
+  document.getElementById('messagesList').innerHTML = '';
+  messageCache.clear();
+  reactionsByMessage.clear();
+  readsByMessage.clear();
+  lastSeenDayKey = null;
+  cancelReply();
+
+  await loadMessages();
+}
+
+function initialsOf(s) {
+  const parts = String(s || '').trim().split(/\s+/);
+  if (!parts[0]) return '?';
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+
+function openNewConvModal() {
+  const modal = document.getElementById('newConvModal');
+  if (!modal) return;
+  document.getElementById('newConvSearch').value = '';
+  renderNewConvMembers('');
+  modal.hidden = false;
+}
+function closeNewConvModal() {
+  document.getElementById('newConvModal').hidden = true;
+}
+
+function renderNewConvMembers(query) {
+  const list = document.getElementById('newConvMembers');
+  if (!list) return;
+  const q = (query || '').trim().toLowerCase();
+  const others = Object.values(profilesById)
+    .filter(p => p.id !== me?.id)
+    .filter(p => !q || (p.full_name || '').toLowerCase().includes(q) || (p.title || '').toLowerCase().includes(q))
+    .sort((a, b) => (a.full_name || '').localeCompare(b.full_name || ''));
+  list.innerHTML = others.map(p => `
+    <button type="button" class="new-conv-member" data-user-id="${p.id}">
+      <div class="conv-avatar" data-avatar-user="${p.id}">${escapeHtml(initialsOf(p.full_name))}</div>
+      <div class="conv-body">
+        <div class="conv-name">${escapeHtml(p.full_name || 'Sans nom')}</div>
+        <div class="conv-sub">${escapeHtml(p.title || '')}</div>
+      </div>
+    </button>`).join('') || '<p class="form-hint">Aucun membre.</p>';
+  list.querySelectorAll('[data-avatar-user]').forEach(el => {
+    const profile = profilesById[el.dataset.avatarUser];
+    if (profile?.avatar_file_id && serverUrl) loadAvatarThumb(el, profile.avatar_file_id);
+  });
+}
+
+async function startDmWith(userId) {
+  if (!userId || userId === me?.id) return;
+  try {
+    const { data: convId, error } = await sb.rpc('get_or_create_dm', { target_user: userId });
+    if (error) throw error;
+    await loadConversations();
+    renderConvSidebar();
+    closeNewConvModal();
+    await switchConversation(convId);
+  } catch (e) {
+    alert('Impossible de démarrer la conversation : ' + e.message);
+  }
+}
+
 async function loadMessages() {
-  const { data, error } = await sb
-    .from('messages').select('*')
+  let q = sb.from('messages').select('*')
     .order('created_at', { ascending: true }).limit(200);
+  q = currentConversationId
+    ? q.eq('conversation_id', currentConversationId)
+    : q.is('conversation_id', null);
+  const { data, error } = await q;
   if (error) { console.error(error); return; }
   const list = document.getElementById('messagesList');
   list.innerHTML = '';
@@ -367,6 +578,39 @@ function scrollToBottom() {
 // -----------------------------------------------------------
 function bindUI() {
   document.getElementById('logoutBtn').addEventListener('click', logout);
+
+  // Sidebar des conversations : clic sur un item → bascule
+  document.getElementById('convList').addEventListener('click', async (e) => {
+    const item = e.target.closest('.conv-item');
+    if (!item) return;
+    const id = item.dataset.convId || null;
+    if (id === currentConversationId) {
+      // Sur mobile : juste bascule la vue sur le panneau
+      document.getElementById('chatMain').classList.add('with-conv');
+      return;
+    }
+    await switchConversation(id);
+  });
+
+  // Bouton "nouvelle conversation"
+  document.getElementById('newConvBtn').addEventListener('click', openNewConvModal);
+  document.getElementById('newConvClose').addEventListener('click', closeNewConvModal);
+  document.getElementById('newConvModal').addEventListener('click', (e) => {
+    if (e.target.id === 'newConvModal') closeNewConvModal();
+  });
+  document.getElementById('newConvSearch').addEventListener('input', (e) => {
+    renderNewConvMembers(e.target.value);
+  });
+  document.getElementById('newConvMembers').addEventListener('click', async (e) => {
+    const btn = e.target.closest('.new-conv-member');
+    if (!btn) return;
+    await startDmWith(btn.dataset.userId);
+  });
+
+  // Bouton retour (mobile uniquement) : montre la sidebar
+  document.getElementById('convBackBtn').addEventListener('click', () => {
+    document.getElementById('chatMain').classList.remove('with-conv');
+  });
 
   // Bouton notifications
   const notifBtn = document.getElementById('enableNotifBtn');
@@ -634,7 +878,8 @@ async function sendMessage() {
     user_id: me.id,
     content: content || null,
     attachment_file_id: attachmentFileId,
-    attachment_type: attachmentType
+    attachment_type: attachmentType,
+    conversation_id: currentConversationId  // null = canal général
   };
   if (pendingAttachment) {
     insertRow.attachment_name = pendingAttachment.file.name;

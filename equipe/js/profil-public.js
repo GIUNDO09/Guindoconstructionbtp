@@ -105,9 +105,16 @@ function render() {
     `<a href="${escapeAttr(l.url)}" target="_blank" rel="noopener" class="pp-link">${l.icon} ${l.label}</a>`
   ).join('');
 
-  // Bouton "Éditer" si c'est mon propre profil
+  // Bouton "Éditer" si c'est mon propre profil, sinon "Envoyer un message"
   if (state.me?.id === p.id) {
     document.getElementById('ppEditBtn').hidden = false;
+  } else if (state.me?.id) {
+    const dmBtn = document.getElementById('ppDmBtn');
+    const dmLink = document.getElementById('ppDmLink');
+    if (dmBtn && dmLink) {
+      dmLink.href = `chat.html?dm=${p.id}`;
+      dmBtn.hidden = false;
+    }
   }
 
   // Stats
@@ -204,12 +211,17 @@ function bindUI() {
 
     // Snapshot dans l'historique
     const today = new Date().toISOString().slice(0, 10);
-    await sb.from('profile_score_history').upsert({
+    const { error: historyError } = await sb.from('profile_score_history').upsert({
       user_id: state.profile.id,
       work_score, attendance_score, total_earnings,
       recorded_at: today,
       notes
     }, { onConflict: 'user_id,recorded_at' });
+    if (historyError) {
+      status.textContent = '⚠️ Profil mis à jour, mais snapshot historique refusé : ' + historyError.message;
+      status.className = 'form-hint form-hint-warn';
+      return;
+    }
 
     Object.assign(state.profile, { work_score, attendance_score, total_earnings });
     await loadHistory(state.profile.id);

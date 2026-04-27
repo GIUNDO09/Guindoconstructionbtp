@@ -138,14 +138,32 @@ async function onNewMessage(ctx, payload) {
   const author = await getProfile(ctx, msg.user_id);
   if (!author) return;
 
-  // Push instantanées uniquement — pas d'email, le chat reste dans le chat.
-  // Les notifs push couvrent le besoin (instantanées et hors-onglet).
-  await sendPushToAllExcept(ctx, msg.user_id, {
+  const payloadBase = {
     title: `💬 ${author.full_name}`,
     body: previewMessage(msg),
     url: '/equipe/chat.html',
     tag: 'gcbtp-chat'
-  });
+  };
+
+  if (msg.conversation_id) {
+    // DM : push uniquement aux participants (sauf l'auteur)
+    const { data: parts } = await ctx.sb
+      .from('conversation_participants')
+      .select('user_id')
+      .eq('conversation_id', msg.conversation_id);
+    const recipients = (parts || [])
+      .map(p => p.user_id)
+      .filter(uid => uid !== msg.user_id);
+    if (recipients.length === 0) return;
+    await sendPushToUsers(ctx, recipients, {
+      ...payloadBase,
+      title: `📩 ${author.full_name}`,
+      tag: `gcbtp-dm-${msg.conversation_id}`
+    });
+  } else {
+    // Canal général : push à tout le monde sauf l'auteur
+    await sendPushToAllExcept(ctx, msg.user_id, payloadBase);
+  }
 }
 
 // Daily digest : à chaque membre, ses tâches du jour (groupées par catégorie)
@@ -425,12 +443,26 @@ function previewMessage(msg) {
   return c.length > 120 ? c.slice(0, 120) + '…' : c;
 }
 
+async function sendPushToUsers(ctx, userIds, payload) {
+  if (!ensureWebPushConfigured()) return;
+  if (!userIds || userIds.length === 0) return;
+  const { data: subs } = await ctx.sb
+    .from('push_subscriptions')
+    .select('endpoint, p256dh, auth, user_id')
+    .in('user_id', userIds);
+  await deliverPush(ctx, subs, payload);
+}
+
 async function sendPushToAllExcept(ctx, excludeUserId, payload) {
   if (!ensureWebPushConfigured()) return;
   const { data: subs } = await ctx.sb
     .from('push_subscriptions')
     .select('endpoint, p256dh, auth, user_id')
     .neq('user_id', excludeUserId);
+  await deliverPush(ctx, subs, payload);
+}
+
+async function deliverPush(ctx, subs, payload) {
   if (!subs?.length) return;
 
   const data = JSON.stringify(payload);
