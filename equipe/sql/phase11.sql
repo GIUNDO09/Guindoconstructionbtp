@@ -60,12 +60,41 @@ create policy "score history service role write"
   on public.profile_score_history for insert
   to service_role with check (true);
 
+drop policy if exists "score history admin update" on public.profile_score_history;
+create policy "score history admin update"
+  on public.profile_score_history for update
+  to authenticated
+  using (
+    exists (select 1 from public.profiles where id = auth.uid() and role = 'admin')
+  )
+  with check (
+    exists (select 1 from public.profiles where id = auth.uid() and role = 'admin')
+  );
+
+drop policy if exists "score history service role update" on public.profile_score_history;
+create policy "score history service role update"
+  on public.profile_score_history for update
+  to service_role
+  using (true)
+  with check (true);
+
 -- 4) Mise à jour des scores : seul l'admin peut écrire les colonnes scores/gains
 --    (les colonnes bio/description/links restent éditables par le user lui-même
 --     via la policy déjà en place sur profiles)
 -- Note : on s'appuie sur la policy existante "users update own profile".
 -- Pour empêcher un user de tricher sur ses propres scores via update direct :
 -- on créera un trigger qui rejette si non-admin tente de modifier work_score / attendance_score / total_earnings.
+
+drop policy if exists profiles_update_admin on public.profiles;
+create policy profiles_update_admin on public.profiles
+  for update
+  to authenticated
+  using (
+    exists (select 1 from public.profiles where id = auth.uid() and role = 'admin')
+  )
+  with check (
+    exists (select 1 from public.profiles where id = auth.uid() and role = 'admin')
+  );
 
 create or replace function public.profiles_score_guard()
 returns trigger language plpgsql security definer as $$
@@ -76,10 +105,12 @@ begin
   if coalesce(is_admin, false) then
     return new;
   end if;
-  -- Empêcher le user de modifier ses scores ou gains
-  if new.work_score       is distinct from old.work_score       then new.work_score       := old.work_score;       end if;
-  if new.attendance_score is distinct from old.attendance_score then new.attendance_score := old.attendance_score; end if;
-  if new.total_earnings   is distinct from old.total_earnings   then new.total_earnings   := old.total_earnings;   end if;
+  -- Empêcher un non-admin de modifier ses scores/gains (erreur explicite au lieu de reset silencieux)
+  if new.work_score is distinct from old.work_score
+     or new.attendance_score is distinct from old.attendance_score
+     or new.total_earnings is distinct from old.total_earnings then
+    raise exception 'Seul un admin peut modifier les scores et les gains';
+  end if;
   return new;
 end$$;
 
@@ -88,5 +119,17 @@ create trigger profiles_score_guard
   before update on public.profiles
   for each row execute function public.profiles_score_guard();
 
--- 5) Activer realtime sur l'historique
-alter publication supabase_realtime add table public.profile_score_history;
+-- 5) Activer realtime sur l'historique (idempotent)
+do $$
+begin
+  if not exists (
+    select 1
+    from pg_publication_tables
+    where pubname = 'supabase_realtime'
+      and schemaname = 'public'
+      and tablename = 'profile_score_history'
+  ) then
+    alter publication supabase_realtime add table public.profile_score_history;
+  end if;
+end
+$$;
