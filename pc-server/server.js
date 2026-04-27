@@ -521,10 +521,23 @@ app.post('/admin/orphans/cleanup', requireAuth, async (req, res) => {
   if (prof?.role !== 'admin') return res.status(403).json({ error: 'Admin uniquement' });
 
   const { data: files } = await req.sb.from('files').select('id, disk_filename');
+  const total = files?.length || 0;
   const orphanIds = (files || [])
     .filter(f => !f.disk_filename || !fs.existsSync(resolveFilePath(f.disk_filename)))
     .map(f => f.id);
   if (orphanIds.length === 0) return res.json({ deleted: 0 });
+
+  // ⚠️ Garde-fou : refuse si > 50% des fichiers seraient supprimés. Ce ratio
+  // élevé indique presque toujours un FILES_DIR mal configuré (disque débranché,
+  // dossier renommé, pc-server déplacé). Sans ce check, un mauvais clic vide
+  // toute la base.
+  if (total > 0 && (orphanIds.length / total) > 0.5) {
+    return res.status(412).json({
+      error: `Refus de sécurité : ${orphanIds.length} sur ${total} fichiers (${Math.round(orphanIds.length / total * 100)}%) seraient supprimés. Vérifie la config FILES_DIR du pc-server.`,
+      orphan_count: orphanIds.length,
+      total
+    });
+  }
 
   const { error } = await req.sb.from('files').delete().in('id', orphanIds);
   if (error) return res.status(500).json({ error: error.message });

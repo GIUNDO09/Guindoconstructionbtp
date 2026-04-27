@@ -12,6 +12,7 @@ let state = {
   sort: 'recent'
 };
 const thumbCache = new Map(); // file_id → blob URL pour vignettes images
+const thumbFailCache = new Set(); // file_id en échec (404/erreur disque) pour éviter les retries bruités
 
 (async () => {
   const session = await requireAuth();
@@ -205,6 +206,7 @@ function renderFolderContent() {
 
 async function loadThumbnail(imgEl, fileId) {
   if (!state.serverUrl || !fileId) return;
+  if (thumbFailCache.has(fileId)) { setThumbnailFallback(imgEl); return; }
   if (thumbCache.has(fileId)) { imgEl.src = thumbCache.get(fileId); return; }
   try {
     const token = (await sb.auth.getSession()).data.session?.access_token;
@@ -216,8 +218,21 @@ async function loadThumbnail(imgEl, fileId) {
     thumbCache.set(fileId, url);
     imgEl.src = url;
   } catch (e) {
-    imgEl.style.display = 'none';
+    thumbFailCache.add(fileId);
+    setThumbnailFallback(imgEl);
   }
+}
+
+function setThumbnailFallback(imgEl) {
+  // Placeholder neutre pour éviter une case vide quand la miniature n'est pas disponible.
+  imgEl.alt = 'Aperçu indisponible';
+  imgEl.src = 'data:image/svg+xml;utf8,' + encodeURIComponent(
+    '<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 80 80">' +
+    '<rect width="80" height="80" rx="8" fill="#f3f4f6"/>' +
+    '<path d="M16 54l14-14 9 9 11-11 14 16H16z" fill="#d1d5db"/>' +
+    '<circle cx="28" cy="28" r="6" fill="#d1d5db"/>' +
+    '</svg>'
+  );
 }
 
 function formatBytes(n) {
@@ -567,12 +582,39 @@ async function cleanupOrphans() {
       alert('Erreur : ' + (await listR.text()));
       return;
     }
-    const { count, orphans } = await listR.json();
+    const { count, total, orphans } = await listR.json();
     if (count === 0) { alert('🎉 Aucun fichier orphelin — tout est propre.'); return; }
+
+    // ⚠️ Garde-fou anti-catastrophe : si > 50% des fichiers seraient supprimés,
+    // c'est très probablement un problème de config pc-server (FILES_DIR pointé
+    // ailleurs, disque débranché, dossier renommé). On REFUSE.
+    const ratio = total > 0 ? (count / total) : 0;
+    if (ratio > 0.5) {
+      alert(
+        `⚠️ SUPPRESSION REFUSÉE\n\n` +
+        `${count} fichier(s) sur ${total} (${Math.round(ratio * 100)}%) seraient supprimés.\n\n` +
+        `C'est probablement un problème de config du pc-server :\n` +
+        `  • FILES_DIR pointe ailleurs ?\n` +
+        `  • Disque externe débranché ?\n` +
+        `  • Dossier renommé/déplacé ?\n\n` +
+        `Vérifie d'abord que le pc-server lit le bon dossier.\n` +
+        `Si c'est vraiment intentionnel, supprime les orphelins par lots dans Supabase.`
+      );
+      return;
+    }
 
     const names = orphans.slice(0, 10).map(o => `• ${o.name}`).join('\n');
     const more = orphans.length > 10 ? `\n…et ${orphans.length - 10} autres` : '';
     if (!confirm(`${count} fichier(s) orphelin(s) en DB sans fichier physique :\n\n${names}${more}\n\nLes supprimer définitivement de la base ?`)) return;
+
+    // Double confirmation au-delà de 10 fichiers
+    if (count > 10) {
+      const typed = prompt(`Pour confirmer la suppression de ${count} entrée(s), tape SUPPRIMER :`);
+      if (typed === null || typed.trim().toUpperCase() !== 'SUPPRIMER') {
+        alert('Suppression annulée.');
+        return;
+      }
+    }
 
     // 2. Supprimer
     const delR = await fetch(`${state.serverUrl}/admin/orphans/cleanup`, {
@@ -603,25 +645,75 @@ async function configServer() {
   if (error) alert('Erreur : ' + error.message);
 }
 
-async function handleDelete(btn) {
-  if (!confirm('Supprimer cet élément ?\n(Les fichiers seront aussi supprimés du PC)')) return;
-  if (!state.serverUrl) { alert('Serveur PC non configuré'); return; }
-  const token = (await sb.auth.getSession()).data.session.access_token;
-
-  if (btn.dataset.folderId) {
-    // Suppression de dossier : passe par le serveur pour nettoyer le disque
-    const r = await fetch(`${state.serverUrl}/folder/${btn.dataset.folderId}`, {
-      method: 'DELETE',
-      headers: { 'Authorization': `Bearer ${token}` }
+// Compte récursif des sous-dossiers et fichiers contenus dans un dossier
+function countFolderContents(folderId) {
+  let subfolders = 0, files = 0;
+  function walk(fid) {
+    state.folders.filter(f => f.parent_id === fid).forEach(sub => {
+      subfolders++;
+      walk(sub.id);
     });
-    if (!r.ok) alert('Erreur de suppression : ' + (await r.text()));
-  } else if (btn.dataset.fileId) {
+    files += state.files.filter(f => f.folder_id === fid).length;
+  }
+  walk(folderId);
+  return { subfolders, files };
+}
+
+async function handleDelete(btn) {
+  if (!state.serverUrl) { alert('Serveur PC non configuré'); return; }
+
+  // ----- Suppression d'un fichier -----
+  if (btn.dataset.fileId) {
+    const file = state.files.find(f => f.id === btn.dataset.fileId);
+    const name = file?.name || 'ce fichier';
+    if (!confirm(`Supprimer le fichier "${name}" ?\n\nCette action est irréversible (le fichier sera aussi effacé du PC).`)) return;
+    const token = (await sb.auth.getSession()).data.session.access_token;
     const r = await fetch(`${state.serverUrl}/file/${btn.dataset.fileId}`, {
       method: 'DELETE',
       headers: { 'Authorization': `Bearer ${token}` }
     });
     if (!r.ok) alert('Erreur de suppression : ' + (await r.text()));
+    return;
   }
+
+  // ----- Suppression d'un dossier (cascade !) -----
+  if (!btn.dataset.folderId) return;
+  const folder = state.folders.find(f => f.id === btn.dataset.folderId);
+  if (!folder) return;
+  const { subfolders, files } = countFolderContents(folder.id);
+  const total = subfolders + files;
+
+  // Confirm nominative avec compteurs
+  let msg = `Supprimer le dossier "${folder.name}" ?`;
+  if (total > 0) {
+    msg += `\n\n⚠️ Cela supprimera AUSSI :`;
+    if (subfolders > 0) msg += `\n   • ${subfolders} sous-dossier(s)`;
+    if (files > 0)      msg += `\n   • ${files} fichier(s)`;
+    msg += `\n\nCette action est IRRÉVERSIBLE.`;
+  }
+  if (!confirm(msg)) return;
+
+  // Double confirmation par retape du nom si dossier non-trivial
+  // (sous-dossiers OU > 5 fichiers : risque de cascade large)
+  const dangerous = subfolders > 0 || files > 5;
+  if (dangerous) {
+    const typed = prompt(
+      `⚠️ Suppression définitive de ${total} élément(s).\n\n` +
+      `Pour confirmer, retape EXACTEMENT le nom du dossier :\n\n${folder.name}`
+    );
+    if (typed === null) return;
+    if (typed.trim() !== folder.name) {
+      alert('Suppression annulée — le nom ne correspond pas exactement.');
+      return;
+    }
+  }
+
+  const token = (await sb.auth.getSession()).data.session.access_token;
+  const r = await fetch(`${state.serverUrl}/folder/${folder.id}`, {
+    method: 'DELETE',
+    headers: { 'Authorization': `Bearer ${token}` }
+  });
+  if (!r.ok) alert('Erreur de suppression : ' + (await r.text()));
 }
 
 // Aperçu PDF/image plein écran. Stream avec Bearer → blob → iframe ou img.
