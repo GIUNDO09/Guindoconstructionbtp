@@ -89,6 +89,35 @@ let participantsByConv = {};           // conv_id → [user_id, ...]
       (payload) => removeMessage(payload.old.id)
     )
     .on('postgres_changes',
+      { event: 'UPDATE', schema: 'public', table: 'messages' },
+      (payload) => {
+        const m = payload.new;
+        if ((m.conversation_id || null) !== currentConversationId) return;
+        // Met à jour le cache + réaffiche le badge "épinglé" sur la bulle
+        messageCache.set(m.id, m);
+        const el = document.querySelector(`.msg[data-id="${m.id}"] .msg-bubble`);
+        if (el) {
+          const flag = el.querySelector('.msg-pinned-flag');
+          if (m.pinned_at && !flag) {
+            const span = document.createElement('span');
+            span.className = 'msg-pinned-flag';
+            span.textContent = '📌 Épinglé';
+            el.prepend(span);
+          } else if (!m.pinned_at && flag) {
+            flag.remove();
+          }
+          // Met à jour le bouton pin (icône + état)
+          const btn = el.querySelector('.msg-act-pin');
+          if (btn) {
+            btn.textContent = m.pinned_at ? '📍' : '📌';
+            btn.title = m.pinned_at ? 'Désépingler' : 'Épingler';
+            btn.dataset.pinned = m.pinned_at ? '1' : '0';
+          }
+        }
+        loadPinnedForCurrentConv();
+      }
+    )
+    .on('postgres_changes',
       { event: 'INSERT', schema: 'public', table: 'conversations' },
       () => loadConversations().then(renderConvSidebar)
     )
@@ -274,7 +303,7 @@ async function switchConversation(convId) {
   lastSeenDayKey = null;
   cancelReply();
 
-  await loadMessages();
+  await Promise.all([loadMessages(), loadPinnedForCurrentConv()]);
 }
 
 function initialsOf(s) {
@@ -328,6 +357,67 @@ async function startDmWith(userId) {
     await switchConversation(convId);
   } catch (e) {
     alert('Impossible de démarrer la conversation : ' + e.message);
+  }
+}
+
+// -----------------------------------------------------------
+// Messages épinglés
+// -----------------------------------------------------------
+function canPinHere() {
+  // Canal général : admin uniquement. DM : tout participant (= moi puisque je vois la conv).
+  if (currentConversationId === null) return me?.role === 'admin';
+  return true;
+}
+
+async function loadPinnedForCurrentConv() {
+  let q = sb.from('messages').select('*').not('pinned_at', 'is', null);
+  q = currentConversationId
+    ? q.eq('conversation_id', currentConversationId)
+    : q.is('conversation_id', null);
+  q = q.order('pinned_at', { ascending: false }).limit(3);
+  const { data, error } = await q;
+  if (error) { console.warn('loadPinned:', error.message); return; }
+  renderPinned(data || []);
+}
+
+function renderPinned(items) {
+  const bar = document.getElementById('pinnedBar');
+  const list = document.getElementById('pinnedList');
+  const countEl = document.getElementById('pinnedCount');
+  if (!bar || !list) return;
+  if (!items.length) {
+    bar.hidden = true;
+    list.innerHTML = '';
+    return;
+  }
+  bar.hidden = false;
+  countEl.textContent = items.length;
+  const canUnpin = canPinHere();
+  list.innerHTML = items.map(m => {
+    const author = profilesById[m.user_id]?.full_name || 'Inconnu';
+    const preview = previewText(m).slice(0, 200) || '—';
+    const unpinBtn = canUnpin
+      ? `<button type="button" class="pinned-item-unpin" data-unpin-id="${m.id}" title="Désépingler">✕</button>`
+      : '';
+    return `
+      <div class="pinned-item" data-jump-id="${m.id}">
+        <div class="pinned-item-body">
+          <div class="pinned-item-author">${escapeHtml(author)}</div>
+          <div class="pinned-item-text">${escapeHtml(preview)}</div>
+        </div>
+        ${unpinBtn}
+      </div>`;
+  }).join('');
+  // Mémorise pour les realtime UPDATE
+  items.forEach(m => messageCache.set(m.id, m));
+}
+
+async function togglePin(messageId, doPin) {
+  try {
+    const { error } = await sb.rpc('toggle_pin', { msg_id: messageId, do_pin: doPin });
+    if (error) throw error;
+  } catch (e) {
+    alert(e.message || 'Action impossible');
   }
 }
 
@@ -454,8 +544,15 @@ function appendMessage(m, animate) {
     ? `<div class="msg-content">${renderMessageContent(m.content)}</div>`
     : '';
 
+  const pinnedFlag = m.pinned_at ? `<span class="msg-pinned-flag">📌 Épinglé</span>` : '';
+  const canPin = canPinHere();
+  const pinBtn = canPin
+    ? `<button type="button" class="msg-act msg-act-pin" title="${m.pinned_at ? 'Désépingler' : 'Épingler'}" data-id="${m.id}" data-pinned="${m.pinned_at ? '1' : '0'}">${m.pinned_at ? '📍' : '📌'}</button>`
+    : '';
+
   div.innerHTML = `
     <div class="msg-bubble">
+      ${pinnedFlag}
       <div class="msg-head">
         <a class="msg-author" href="profil-public.html?id=${m.user_id}">${escapeHtml(author)}</a>
         <span class="msg-time">${when}</span>
@@ -470,6 +567,7 @@ function appendMessage(m, animate) {
       <div class="msg-actions">
         <button type="button" class="msg-act msg-act-react" title="Réagir" data-id="${m.id}">😊</button>
         <button type="button" class="msg-act msg-act-reply" title="Répondre" data-id="${m.id}">↩</button>
+        ${pinBtn}
         ${mine ? `<button class="msg-act msg-delete" title="Supprimer" data-id="${m.id}">🗑</button>` : ''}
       </div>
     </div>`;
@@ -612,6 +710,24 @@ function bindUI() {
     document.getElementById('chatMain').classList.remove('with-conv');
   });
 
+  // Barre des épinglés : toggle, clic pour sauter, désépingler
+  document.getElementById('pinnedToggle').addEventListener('click', () => {
+    const bar = document.getElementById('pinnedBar');
+    bar.classList.toggle('collapsed');
+    const expanded = !bar.classList.contains('collapsed');
+    document.getElementById('pinnedToggle').setAttribute('aria-expanded', String(expanded));
+  });
+  document.getElementById('pinnedList').addEventListener('click', async (e) => {
+    const unpin = e.target.closest('.pinned-item-unpin');
+    if (unpin) {
+      e.stopPropagation();
+      await togglePin(unpin.dataset.unpinId, false);
+      return;
+    }
+    const item = e.target.closest('.pinned-item[data-jump-id]');
+    if (item) jumpToMessage(item.dataset.jumpId);
+  });
+
   // Bouton notifications
   const notifBtn = document.getElementById('enableNotifBtn');
   if ('Notification' in window) {
@@ -722,6 +838,15 @@ function bindUI() {
     // Répondre
     const replyBtn = e.target.closest('.msg-act-reply');
     if (replyBtn) { startReply(replyBtn.dataset.id); return; }
+
+    // Épingler / désépingler
+    const pinBtn = e.target.closest('.msg-act-pin');
+    if (pinBtn) {
+      e.stopPropagation();
+      const willPin = pinBtn.dataset.pinned !== '1';
+      await togglePin(pinBtn.dataset.id, willPin);
+      return;
+    }
 
     // Supprimer
     const delBtn = e.target.closest('.msg-delete');

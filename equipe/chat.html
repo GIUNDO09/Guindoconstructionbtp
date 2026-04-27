@@ -15,7 +15,7 @@
 <link rel="icon" href="../favicon.ico">
 <link rel="apple-touch-icon" href="../Images/LOGO-1.png">
 <link rel="manifest" href="manifest.json">
-<link rel="stylesheet" href="css/equipe.css?v=27">
+<link rel="stylesheet" href="css/equipe.css?v=28">
 </head>
 <body class="app-body">
 
@@ -79,6 +79,15 @@
         <span id="searchCount" class="search-count"></span>
         <button type="button" id="searchClose" class="btn-inline" aria-label="Fermer la recherche">✕</button>
       </div>
+    </div>
+
+    <!-- Barre des messages épinglés (max 3 par conversation) -->
+    <div id="pinnedBar" class="pinned-bar" hidden>
+      <div class="pinned-bar-head">
+        <span class="pinned-bar-title">📌 <span id="pinnedCount">0</span> épinglé(s)</span>
+        <button type="button" id="pinnedToggle" class="btn-inline pinned-toggle" title="Réduire/Déplier" aria-expanded="true">▾</button>
+      </div>
+      <div id="pinnedList" class="pinned-list"></div>
     </div>
 
     <div id="messagesList" class="messages-list"></div>
@@ -169,6 +178,6 @@
 <script src="js/auth.js?v=25"></script>
 <script src="js/pwa.js?v=11"></script>
 <script src="js/push.js?v=23"></script>
-<script src="js/chat.js?v=27"></script>
+<script src="js/chat.js?v=28"></script>
 </body>
 </html>

@@ -551,6 +551,92 @@ input, select, textarea { font-family: inherit; }
 .new-conv-member .conv-avatar { width: 34px; height: 34px; }
 .new-conv-member .conv-name { font-size: 14px; }
 .new-conv-member .conv-sub { font-size: 12px; }
+
+/* ----- Messages épinglés ----- */
+.pinned-bar {
+  background: #fff8e6;
+  border-bottom: 1px solid #f5d680;
+  flex-shrink: 0;
+  max-height: 40vh;
+  display: flex;
+  flex-direction: column;
+}
+.pinned-bar[hidden] { display: none; }
+.pinned-bar-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 14px;
+  font-size: 12px;
+  color: #8a6d1f;
+  font-weight: 600;
+  border-bottom: 1px solid rgba(245, 214, 128, .5);
+}
+.pinned-toggle {
+  width: 24px; height: 24px;
+  border-radius: 4px;
+  font-size: 12px;
+  color: #8a6d1f;
+  transition: transform .15s;
+}
+.pinned-bar.collapsed .pinned-toggle { transform: rotate(-90deg); }
+.pinned-bar.collapsed .pinned-list { display: none; }
+.pinned-list {
+  overflow-y: auto;
+  padding: 4px 8px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.pinned-item {
+  display: flex; align-items: flex-start; gap: 8px;
+  padding: 8px 10px;
+  background: #fff;
+  border: 1px solid rgba(232, 119, 34, .25);
+  border-left: 3px solid var(--orange);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background .12s;
+}
+.pinned-item:hover { background: #fff4e6; }
+.pinned-item-body { flex: 1; min-width: 0; font-size: 13px; }
+.pinned-item-author {
+  font-weight: 600;
+  color: var(--blue-dark);
+  font-size: 12px;
+  margin-bottom: 2px;
+}
+.pinned-item-text {
+  color: var(--gray-700);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  word-break: break-word;
+}
+.pinned-item-unpin {
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 4px;
+  font-size: 14px;
+  color: var(--gray-500);
+  flex-shrink: 0;
+}
+.pinned-item-unpin:hover { background: #fff5f5; color: var(--red, #e03131); }
+/* Indicateur 📌 sur un message épinglé dans la liste */
+.msg-pinned-flag {
+  position: absolute;
+  top: -8px;
+  right: 8px;
+  background: var(--orange);
+  color: #fff;
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 10px;
+  pointer-events: none;
+}
+.msg-mine .msg-pinned-flag { right: auto; left: 8px; }
 .chat-header {
   padding: 16px 20px;
   border-bottom: 1px solid var(--gray-200);
