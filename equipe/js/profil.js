@@ -74,11 +74,17 @@ function bindUI() {
 
   document.getElementById('profileForm').addEventListener('submit', onProfileSubmit);
 
-  // Upload avatar
+  // Upload avatar (passe d'abord par le cropper)
   document.getElementById('avatarInput').addEventListener('change', async (e) => {
     const file = e.target.files[0];
+    e.target.value = ''; // permet de re-choisir le même fichier
     if (!file) return;
     if (!state.serverUrl) { alert('Serveur PC non configuré — impossible d\'uploader la photo'); return; }
+
+    // Recadrage avant upload (l'utilisateur peut annuler)
+    const cropped = await openCropper(file);
+    if (!cropped) return;
+    const toUpload = new File([cropped], file.name.replace(/\.\w+$/, '') + '.jpg', { type: 'image/jpeg' });
 
     const status = document.getElementById('avatarStatus');
     status.textContent = '⏳ Upload en cours…';
@@ -87,7 +93,7 @@ function bindUI() {
     try {
       const token = (await sb.auth.getSession()).data.session.access_token;
       const fd = new FormData();
-      fd.append('file', file);
+      fd.append('file', toUpload);
       fd.append('context', 'avatar');
       const r = await fetch(`${state.serverUrl}/upload`, {
         method: 'POST',
@@ -101,6 +107,9 @@ function bindUI() {
       const { error } = await sb.from('profiles').update({ avatar_file_id: uploaded.id }).eq('id', state.me.id);
       if (error) throw new Error(error.message);
 
+      // Invalide le cache du header avatar pour que la pastille header reflète tout de suite
+      try { window.gcbtp.cache.invalidate('gcbtp.me'); } catch {}
+
       state.me.avatar_file_id = uploaded.id;
       renderProfile();
       status.textContent = '✅ Photo mise à jour';
@@ -110,6 +119,8 @@ function bindUI() {
       status.className = 'form-hint form-hint-warn';
     }
   });
+
+  bindCropper();
 
   document.getElementById('removeAvatarBtn').addEventListener('click', async () => {
     if (!confirm('Supprimer la photo de profil ?')) return;
@@ -288,5 +299,156 @@ async function loadAuthedImage(imgEl, fileId) {
 function escapeHtml(s) {
   return String(s ?? '').replace(/[&<>"']/g, c =>
     ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+}
+
+// ---------- Cropper d'avatar (modal recadrage) ----------
+const cropper = {
+  natural: null,        // { w, h }
+  base: 1,              // échelle "cover" du viewport
+  scale: 1,             // zoom user (1..4)
+  pos: { x: 0, y: 0 },  // translation de l'image dans le viewport
+  size: 280,            // taille du viewport (px), synchronisée avec le CSS
+  outputSize: 512,      // taille du canvas de sortie
+  resolve: null         // callback Promise en cours
+};
+
+function openCropper(file) {
+  return new Promise((resolve) => {
+    cropper.resolve = resolve;
+    const modal = document.getElementById('cropModal');
+    const img = document.getElementById('cropImage');
+    const stage = document.getElementById('cropStage');
+    const zoom = document.getElementById('cropZoom');
+
+    cropper.scale = 1;
+    cropper.pos = { x: 0, y: 0 };
+    cropper.natural = null;
+    cropper.size = stage.clientWidth || 280;
+    zoom.value = '1';
+
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      img.onload = () => {
+        cropper.natural = { w: img.naturalWidth, h: img.naturalHeight };
+        cropper.base = Math.max(
+          cropper.size / cropper.natural.w,
+          cropper.size / cropper.natural.h
+        );
+        const dispW = cropper.natural.w * cropper.base;
+        const dispH = cropper.natural.h * cropper.base;
+        cropper.pos.x = (cropper.size - dispW) / 2;
+        cropper.pos.y = (cropper.size - dispH) / 2;
+        applyCropTransform();
+      };
+      img.src = ev.target.result;
+    };
+    reader.onerror = () => closeCropper(null);
+    reader.readAsDataURL(file);
+
+    modal.hidden = false;
+    document.body.classList.add('no-scroll');
+  });
+}
+
+function applyCropTransform() {
+  if (!cropper.natural) return;
+  const img = document.getElementById('cropImage');
+  const dispW = cropper.natural.w * cropper.base * cropper.scale;
+  const dispH = cropper.natural.h * cropper.base * cropper.scale;
+  // Borne la position pour que l'image couvre toujours le viewport
+  const minX = cropper.size - dispW;
+  const minY = cropper.size - dispH;
+  cropper.pos.x = Math.min(0, Math.max(minX, cropper.pos.x));
+  cropper.pos.y = Math.min(0, Math.max(minY, cropper.pos.y));
+  img.style.width = dispW + 'px';
+  img.style.height = dispH + 'px';
+  img.style.transform = `translate(${cropper.pos.x}px, ${cropper.pos.y}px)`;
+}
+
+function closeCropper(blob) {
+  const modal = document.getElementById('cropModal');
+  modal.hidden = true;
+  document.body.classList.remove('no-scroll');
+  document.getElementById('cropImage').removeAttribute('src');
+  const cb = cropper.resolve;
+  cropper.resolve = null;
+  if (cb) cb(blob);
+}
+
+function renderCropToBlob() {
+  return new Promise((resolve) => {
+    if (!cropper.natural) { resolve(null); return; }
+    const img = document.getElementById('cropImage');
+    const totalScale = cropper.base * cropper.scale;
+    const sx = -cropper.pos.x / totalScale;
+    const sy = -cropper.pos.y / totalScale;
+    const sSize = cropper.size / totalScale;
+    const out = cropper.outputSize;
+    const canvas = document.createElement('canvas');
+    canvas.width = out; canvas.height = out;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(img, sx, sy, sSize, sSize, 0, 0, out, out);
+    canvas.toBlob((b) => resolve(b), 'image/jpeg', 0.92);
+  });
+}
+
+let _cropperBound = false;
+function bindCropper() {
+  if (_cropperBound) return;
+  _cropperBound = true;
+  const stage = document.getElementById('cropStage');
+  const zoom = document.getElementById('cropZoom');
+
+  // Drag (pointer events = souris + tactile)
+  let drag = null;
+  stage.addEventListener('pointerdown', (e) => {
+    drag = { x: e.clientX, y: e.clientY, ox: cropper.pos.x, oy: cropper.pos.y };
+    try { stage.setPointerCapture(e.pointerId); } catch {}
+  });
+  stage.addEventListener('pointermove', (e) => {
+    if (!drag) return;
+    cropper.pos.x = drag.ox + (e.clientX - drag.x);
+    cropper.pos.y = drag.oy + (e.clientY - drag.y);
+    applyCropTransform();
+  });
+  const endDrag = () => { drag = null; };
+  stage.addEventListener('pointerup', endDrag);
+  stage.addEventListener('pointercancel', endDrag);
+
+  // Zoom slider — garde le centre du viewport pointé sur le même pixel source
+  zoom.addEventListener('input', (e) => {
+    if (!cropper.natural) return;
+    const newScale = parseFloat(e.target.value) || 1;
+    const cx = cropper.size / 2, cy = cropper.size / 2;
+    const tBefore = cropper.base * cropper.scale;
+    const sxBefore = (cx - cropper.pos.x) / tBefore;
+    const syBefore = (cy - cropper.pos.y) / tBefore;
+    cropper.scale = newScale;
+    const tAfter = cropper.base * cropper.scale;
+    cropper.pos.x = cx - sxBefore * tAfter;
+    cropper.pos.y = cy - syBefore * tAfter;
+    applyCropTransform();
+  });
+
+  // Wheel = zoom (desktop)
+  stage.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    const delta = -e.deltaY * 0.0015;
+    const ns = Math.max(1, Math.min(4, cropper.scale + delta));
+    zoom.value = String(ns);
+    zoom.dispatchEvent(new Event('input'));
+  }, { passive: false });
+
+  document.getElementById('cropCancel').addEventListener('click', () => closeCropper(null));
+  document.getElementById('cropApply').addEventListener('click', async () => {
+    const blob = await renderCropToBlob();
+    closeCropper(blob);
+  });
+  document.getElementById('cropModal').addEventListener('click', (e) => {
+    if (e.target.id === 'cropModal') closeCropper(null);
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !document.getElementById('cropModal').hidden) closeCropper(null);
+  });
 }
 })();

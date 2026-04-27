@@ -177,7 +177,10 @@ function renderFolderContent() {
   const filesHtml = filesHere.map(file => {
     const uploader = state.profilesById[file.uploaded_by]?.full_name || '—';
     const when = new Date(file.created_at).toLocaleDateString('fr-FR');
-    const isImage = (file.mime_type || '').startsWith('image/');
+    const mime = file.mime_type || '';
+    const isImage = mime.startsWith('image/');
+    const isPdf = mime.includes('pdf') || /\.pdf$/i.test(file.name || '');
+    const canPreview = isImage || isPdf;
     const canDelete = file.uploaded_by === state.me?.id || state.me?.role === 'admin';
     const iconHtml = isImage
       ? `<img class="item-thumb" data-thumb-id="${file.id}" alt="" loading="lazy">`
@@ -189,6 +192,7 @@ function renderFolderContent() {
           <div class="item-name">${escapeHtml(file.name)}</div>
           <div class="item-meta">${formatBytes(file.size_bytes)} · ${escapeHtml(uploader)} · ${when}</div>
         </div>
+        ${canPreview ? `<button class="item-preview" data-file-id="${file.id}" title="Aperçu">👁</button>` : ''}
         <button class="item-download" data-file-id="${file.id}" title="Télécharger">⬇</button>
         ${canDelete ? `<button class="item-delete" data-file-id="${file.id}" title="Supprimer">×</button>` : ''}
       </div>`;
@@ -279,14 +283,20 @@ function bindUI() {
     renderAll();
   });
 
-  // Folder content click (open folder, download, delete)
+  // Folder content click (open folder, preview, download, delete)
   document.getElementById('folderContent').addEventListener('click', async (e) => {
     const folderItem = e.target.closest('.item-folder');
+    const previewBtn = e.target.closest('.item-preview');
     const downloadBtn = e.target.closest('.item-download');
     const deleteBtn = e.target.closest('.item-delete');
     if (deleteBtn) {
       e.stopPropagation();
       await handleDelete(deleteBtn);
+      return;
+    }
+    if (previewBtn) {
+      e.stopPropagation();
+      await handlePreview(previewBtn.dataset.fileId);
       return;
     }
     if (downloadBtn) {
@@ -315,6 +325,12 @@ function bindUI() {
   document.getElementById('configServerBtn').addEventListener('click', configServer);
   document.getElementById('cleanupOrphansBtn').addEventListener('click', cleanupOrphans);
   document.getElementById('reorganizeBtn').addEventListener('click', reorganize);
+
+  // Aperçu : fermeture (bouton ✕, clic sur la barre, Escape)
+  document.getElementById('filePreviewClose').addEventListener('click', closeFilePreview);
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !document.getElementById('filePreview').hidden) closeFilePreview();
+  });
 
   // Upload
   const dropzone = document.getElementById('dropzone');
@@ -606,6 +622,64 @@ async function handleDelete(btn) {
     });
     if (!r.ok) alert('Erreur de suppression : ' + (await r.text()));
   }
+}
+
+// Aperçu PDF/image plein écran. Stream avec Bearer → blob → iframe ou img.
+async function handlePreview(fileId) {
+  if (!state.serverUrl) { alert('Serveur non configuré'); return; }
+  const file = state.files.find(f => f.id === fileId);
+  if (!file) return;
+  const modal = document.getElementById('filePreview');
+  const frame = document.getElementById('filePreviewFrame');
+  const img   = document.getElementById('filePreviewImg');
+  const title = document.getElementById('filePreviewName');
+  const dl    = document.getElementById('filePreviewDl');
+  title.textContent = file.name;
+
+  try {
+    const token = (await sb.auth.getSession()).data.session?.access_token;
+    if (!token) throw new Error('Session expirée');
+    const r = await fetch(`${state.serverUrl}/stream/${fileId}`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const blob = await r.blob();
+    const url = URL.createObjectURL(blob);
+
+    // Nettoyer l'éventuelle blob URL précédente
+    if (modal.dataset.blobUrl) URL.revokeObjectURL(modal.dataset.blobUrl);
+    modal.dataset.blobUrl = url;
+
+    dl.href = url;
+    dl.download = file.name;
+
+    if ((file.mime_type || '').startsWith('image/')) {
+      frame.removeAttribute('src'); frame.hidden = true;
+      img.src = url; img.hidden = false;
+    } else {
+      img.removeAttribute('src'); img.hidden = true;
+      frame.src = url; frame.hidden = false;
+    }
+    modal.hidden = false;
+    document.body.classList.add('no-scroll');
+  } catch (e) {
+    alert('Aperçu impossible : ' + e.message);
+  }
+}
+
+function closeFilePreview() {
+  const modal = document.getElementById('filePreview');
+  if (!modal || modal.hidden) return;
+  const frame = document.getElementById('filePreviewFrame');
+  const img   = document.getElementById('filePreviewImg');
+  frame.removeAttribute('src'); frame.hidden = true;
+  img.removeAttribute('src'); img.hidden = true;
+  if (modal.dataset.blobUrl) {
+    URL.revokeObjectURL(modal.dataset.blobUrl);
+    delete modal.dataset.blobUrl;
+  }
+  modal.hidden = true;
+  document.body.classList.remove('no-scroll');
 }
 
 async function handleDownload(fileId) {

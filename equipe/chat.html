@@ -102,6 +102,8 @@
       <div class="chat-input-wrap">
         <button type="button" id="attachBtn" class="btn-inline" title="Joindre image/vidéo/audio">📎</button>
         <input type="file" id="attachInput" accept="image/*,video/*,audio/*,application/pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.zip" hidden>
+        <button type="button" id="cameraBtn" class="btn-inline btn-camera" title="Prendre une photo">📷</button>
+        <input type="file" id="cameraInput" accept="image/*" capture="environment" hidden>
         <textarea id="chatInput" placeholder="Écris un message…" rows="1" maxlength="2000"></textarea>
         <button type="button" id="recBtn" class="btn-inline" title="Message vocal">🎤</button>
       </div>
@@ -139,6 +141,6 @@
 <script src="js/auth.js?v=25"></script>
 <script src="js/pwa.js?v=11"></script>
 <script src="js/push.js?v=23"></script>
-<script src="js/chat.js?v=25"></script>
+<script src="js/chat.js?v=26"></script>
 </body>
 </html>

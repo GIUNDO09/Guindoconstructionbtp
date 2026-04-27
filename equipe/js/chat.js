@@ -527,6 +527,19 @@ function bindUI() {
     showAttachmentPreview();
   });
 
+  // Photo directe via la caméra (ouvre l'app caméra sur mobile, le picker sur desktop)
+  document.getElementById('cameraBtn').addEventListener('click', () => {
+    document.getElementById('cameraInput').click();
+  });
+  document.getElementById('cameraInput').addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    if (file.size > 100 * 1024 * 1024) { alert('Photo trop volumineuse (max 100 Mo)'); return; }
+    pendingAttachment = { file, type: 'image' };
+    showAttachmentPreview();
+    e.target.value = '';
+  });
+
   // Téléchargement document (clic tuile)
   document.getElementById('messagesList').addEventListener('click', async (e) => {
     const a = e.target.closest('.msg-doc');
