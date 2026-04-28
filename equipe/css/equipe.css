@@ -1,12 +1,25 @@
 :root {
-  /* ---- Couleurs (identité GCBTP) ---- */
-  --orange: #e87722;
-  --orange-dark: #c05e15;
-  --orange-soft: #fff4e6;
-  --blue: #1e3a5f;
-  --blue-dark: #0f2542;
-  --blue-soft: #eef3fa;
-  --gray-50: #f8f9fa;
+  /* ---- Identité GCBTP — couleurs du logo ----
+     Primaire = bleu marine du logo (boutons d'action, send, bulles miennes…)
+     Accent   = doré du logo      (focus, badges, hover, états actifs)
+     Note : les anciens tokens --orange* sont conservés en alias pour
+     éviter de casser tous les sélecteurs existants — ils pointent
+     maintenant vers le doré. */
+  --blue:        #1f4e8b;       /* bleu marine vif (logo) */
+  --blue-dark:   #0f2c52;       /* bleu profond (logo) */
+  --blue-darker: #0a1d36;
+  --blue-bright: #2196f3;       /* bleu lumineux des barres du logo */
+  --blue-soft:   #e8eff8;
+  --gold:        #f0b441;       /* doré du logo (chaleureux) */
+  --gold-dark:   #c89020;
+  --gold-soft:   #fff5dc;
+
+  /* Aliases legacy : --orange* = --gold* pour ne pas casser les ~120 usages */
+  --orange:      var(--gold);
+  --orange-dark: var(--gold-dark);
+  --orange-soft: var(--gold-soft);
+
+  --gray-50:  #f8f9fa;
   --gray-100: #f1f3f5;
   --gray-200: #e9ecef;
   --gray-300: #dee2e6;
@@ -15,12 +28,12 @@
   --gray-600: #6c757d;
   --gray-700: #495057;
   --gray-900: #212529;
-  --green: #2f9e44;
+  --green:      #2f9e44;
   --green-soft: #e6f7ea;
-  --yellow: #f59f00;
-  --yellow-soft: #fff8e6;
-  --red: #e03131;
-  --red-soft: #ffe8e8;
+  --yellow:     #f59f00;
+  --yellow-soft:#fff8e6;
+  --red:        #e03131;
+  --red-soft:   #ffe8e8;
 
   /* ---- Typographie ---- */
   --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, Roboto, 'Helvetica Neue', Arial, sans-serif;
@@ -65,7 +78,9 @@
   --shadow:    0 4px 12px rgba(15, 37, 66, .08), 0 2px 4px rgba(15, 37, 66, .04);
   --shadow-md: 0 8px 20px rgba(15, 37, 66, .10), 0 3px 6px rgba(15, 37, 66, .05);
   --shadow-lg: 0 16px 40px rgba(15, 37, 66, .14), 0 6px 12px rgba(15, 37, 66, .06);
-  --shadow-orange: 0 4px 14px rgba(232, 119, 34, .35);
+  --shadow-blue:   0 4px 14px rgba(31, 78, 139, .32);
+  --shadow-gold:   0 4px 14px rgba(240, 180, 65, .42);
+  --shadow-orange: var(--shadow-blue); /* alias legacy → bleu marine */
 
   /* ---- Transitions ---- */
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
@@ -74,8 +89,8 @@
   --t-base: 180ms;
   --t-slow: 280ms;
 
-  /* ---- Focus ring (accessibilité) ---- */
-  --ring: 0 0 0 3px rgba(232, 119, 34, .35);
+  /* ---- Focus ring (accessibilité) — doré pour visibilité haute ---- */
+  --ring: 0 0 0 3px rgba(240, 180, 65, .55);
   --ring-offset: 2px;
 }
 
@@ -198,19 +213,20 @@ button [data-lucide], a [data-lucide] { display: inline-block; vertical-align: m
   font-size: 15px;
   transition: border-color .15s;
 }
-.auth-form input:focus { outline: none; border-color: var(--orange); }
+.auth-form input:focus { outline: none; border-color: var(--gold); box-shadow: 0 0 0 3px rgba(240, 180, 65, .25); }
 .auth-form button {
   margin-top: 8px;
   padding: 12px;
-  background: var(--orange);
+  background: linear-gradient(135deg, var(--blue) 0%, var(--blue-dark) 100%);
   color: #fff;
   border: none;
-  border-radius: 8px;
-  font-size: 15px;
-  font-weight: 600;
-  transition: background .15s;
+  border-radius: var(--r-sm);
+  font-size: var(--text-md);
+  font-weight: var(--fw-semibold);
+  box-shadow: var(--shadow-blue);
+  transition: filter var(--t-fast), box-shadow var(--t-fast);
 }
-.auth-form button:hover:not(:disabled) { background: var(--orange-dark); }
+.auth-form button:hover:not(:disabled) { filter: brightness(1.1); box-shadow: 0 6px 18px rgba(31, 78, 139, .42); }
 .auth-form button:disabled { opacity: .6; cursor: wait; }
 .auth-error {
   color: var(--red);
@@ -402,15 +418,18 @@ button [data-lucide], a [data-lucide] { display: inline-block; vertical-align: m
   -webkit-tap-highlight-color: transparent;
 }
 .btn-primary {
-  background: var(--orange);
+  background: linear-gradient(135deg, var(--blue) 0%, var(--blue-dark) 100%);
   color: #fff;
-  border: 1px solid var(--orange);
+  border: 1px solid var(--blue-dark);
   padding: 10px 18px;
-  box-shadow: var(--shadow-orange);
+  box-shadow: var(--shadow-blue);
 }
-.btn-primary:hover { background: var(--orange-dark); border-color: var(--orange-dark); }
+.btn-primary:hover {
+  filter: brightness(1.1);
+  box-shadow: 0 6px 18px rgba(31, 78, 139, .42);
+}
 .btn-primary:active { transform: scale(.97); }
-.btn-primary:disabled { opacity: .5; cursor: not-allowed; box-shadow: none; }
+.btn-primary:disabled { opacity: .5; cursor: not-allowed; box-shadow: none; filter: none; }
 
 .btn-ghost {
   background: transparent;
@@ -643,11 +662,11 @@ button [data-lucide], a [data-lucide] { display: inline-block; vertical-align: m
 }
 .nav-pill:hover { background: var(--gray-100); color: var(--gray-900); }
 .nav-pill-active {
-  background: var(--orange);
+  background: linear-gradient(135deg, var(--blue) 0%, var(--blue-dark) 100%);
   color: #fff;
-  box-shadow: var(--shadow-orange);
+  box-shadow: var(--shadow-blue);
 }
-.nav-pill-active:hover { background: var(--orange-dark); color: #fff; }
+.nav-pill-active:hover { filter: brightness(1.08); color: #fff; }
 
 /* =========================================================
    CHAT
@@ -710,7 +729,7 @@ button [data-lucide], a [data-lucide] { display: inline-block; vertical-align: m
 }
 .conv-avatar img { width: 100%; height: 100%; object-fit: cover; }
 .conv-avatar-channel {
-  background: linear-gradient(135deg, var(--orange) 0%, var(--orange-dark) 100%);
+  background: linear-gradient(135deg, var(--blue-bright) 0%, var(--blue) 100%);
 }
 .conv-avatar-channel [data-lucide] { width: 20px; height: 20px; }
 .conv-body { flex: 1; min-width: 0; }
@@ -1210,14 +1229,14 @@ button [data-lucide], a [data-lucide] { display: inline-block; vertical-align: m
 }
 .msg:not(.msg-mine) .msg-bubble { border-bottom-left-radius: var(--r-sm); }
 .msg-mine .msg-bubble {
-  background: linear-gradient(135deg, var(--orange) 0%, var(--orange-dark) 100%);
+  background: linear-gradient(135deg, var(--blue) 0%, var(--blue-dark) 100%);
   color: #fff;
   border-color: transparent;
   border-bottom-right-radius: var(--r-sm);
-  box-shadow: var(--shadow-orange);
+  box-shadow: var(--shadow-blue);
 }
 .msg-bubble:hover { box-shadow: var(--shadow-sm); }
-.msg-mine .msg-bubble:hover { box-shadow: 0 6px 18px rgba(232, 119, 34, .45); }
+.msg-mine .msg-bubble:hover { box-shadow: 0 6px 18px rgba(31, 78, 139, .45); }
 
 .msg-head {
   display: flex;
@@ -1344,21 +1363,21 @@ button [data-lucide], a [data-lucide] { display: inline-block; vertical-align: m
   height: 48px;
   border-radius: var(--r-full);
   border: none;
-  background: linear-gradient(135deg, var(--orange) 0%, var(--orange-dark) 100%);
+  background: linear-gradient(135deg, var(--blue) 0%, var(--blue-dark) 100%);
   color: #fff;
   cursor: pointer;
   flex-shrink: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  box-shadow: var(--shadow-orange);
+  box-shadow: var(--shadow-blue);
   transition: transform var(--t-fast) var(--ease-out),
               box-shadow var(--t-fast) var(--ease-out),
               filter var(--t-fast) var(--ease-out);
   -webkit-tap-highlight-color: transparent;
 }
 .btn-send [data-lucide] { width: 20px; height: 20px; }
-.btn-send:hover { filter: brightness(1.08); box-shadow: 0 6px 18px rgba(232, 119, 34, .45); }
+.btn-send:hover { filter: brightness(1.12); box-shadow: 0 6px 18px rgba(31, 78, 139, .5); }
 .btn-send:active { transform: scale(.92); }
 
 /* =========================================================
@@ -2719,7 +2738,7 @@ body.no-scroll { overflow: hidden; }
   overflow: hidden;
   display: flex; align-items: center; justify-content: center;
   border: 4px solid #fff;
-  box-shadow: var(--shadow-md), 0 0 0 4px var(--orange);
+  box-shadow: var(--shadow-md), 0 0 0 4px var(--blue);
 }
 .pp-avatar img { width: 100%; height: 100%; object-fit: cover; }
 .pp-avatar .avatar-initials-lg { font-size: var(--text-3xl); color: var(--gray-500); font-weight: var(--fw-bold); }
@@ -2790,9 +2809,10 @@ body.no-scroll { overflow: hidden; }
   padding: var(--s-5);
   box-shadow: var(--shadow-sm);
   text-align: center;
-  border-top: 4px solid var(--orange);
+  border-top: 4px solid var(--blue);
   transition: transform var(--t-base), box-shadow var(--t-base);
 }
+.pp-stat-card:nth-child(2n) { border-top-color: var(--gold); }
 .pp-stat-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
 .pp-stat-label {
   display: inline-flex;
