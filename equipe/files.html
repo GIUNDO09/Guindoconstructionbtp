@@ -15,7 +15,7 @@
 <link rel="icon" href="../favicon.ico">
 <link rel="apple-touch-icon" href="../Images/LOGO-1.png">
 <link rel="manifest" href="manifest.json">
-<link rel="stylesheet" href="css/equipe.css?v=26">
+<link rel="stylesheet" href="css/equipe.css?v=29">
 </head>
 <body class="app-body">
 
@@ -26,7 +26,7 @@
   </a>
   <nav class="app-nav">
     <a href="dashboard.html" class="nav-pill">Tâches</a>
-    <a href="calendar.html" class="nav-pill">📅 Calendrier</a>
+    <a href="calendar.html" class="nav-pill"><i data-lucide="calendar"></i> Calendrier</a>
     <a href="chat.html" class="nav-pill">Chat</a>
     <a href="files.html" class="nav-pill nav-pill-active">Fichiers</a>
     <a href="profil.html" class="nav-pill">Mon profil</a>
@@ -34,7 +34,7 @@
   <div class="app-user">
     <a id="headerAvatar" class="header-avatar" href="profil.html" title="Mon profil"></a>
     <span id="userName">…</span>
-    <button data-install-app class="btn-ghost btn-install" hidden title="Installer l'app">📥 Installer</button>
+    <button data-install-app class="btn-ghost btn-install" hidden title="Installer l'app"><i data-lucide="download"></i> Installer</button>
     <button id="logoutBtn" class="btn-ghost">Déconnexion</button>
   </div>
 </header>
@@ -42,12 +42,12 @@
 <main class="files-main">
 
   <div class="files-toolbar">
-    <span id="serverStatus" class="server-status">🔴 Serveur non configuré</span>
+    <span id="serverStatus" class="server-status"><span class="status-dot status-dot-off"></span> Serveur non configuré</span>
     <div style="flex:1"></div>
-    <button id="reorganizeBtn" class="btn-ghost" hidden title="Range les médias chat/avatars/couvertures dans leurs sous-dossiers">📦 Réorganiser</button>
-    <button id="cleanupOrphansBtn" class="btn-ghost" hidden title="Supprime les entrées DB sans fichier sur le disque">🧹 Orphelins</button>
-    <button id="configServerBtn" class="btn-ghost" hidden>⚙️ Config serveur</button>
-    <button id="newRootFolderBtn" class="btn-primary" hidden>+ Nouveau dossier</button>
+    <button id="reorganizeBtn" class="btn-ghost" hidden title="Range les médias chat/avatars/couvertures dans leurs sous-dossiers"><i data-lucide="folder-tree"></i> Réorganiser</button>
+    <button id="cleanupOrphansBtn" class="btn-ghost" hidden title="Supprime les entrées DB sans fichier sur le disque"><i data-lucide="trash-2"></i> Orphelins</button>
+    <button id="configServerBtn" class="btn-ghost" hidden><i data-lucide="settings"></i> Config serveur</button>
+    <button id="newRootFolderBtn" class="btn-primary" hidden><i data-lucide="folder-plus"></i> Nouveau dossier</button>
   </div>
 
   <div class="files-layout">
@@ -70,12 +70,12 @@
               <option value="done">Terminé</option>
             </select>
           </label>
-          <button id="newSubFolderBtn" class="btn-ghost">+ Sous-dossier</button>
+          <button id="newSubFolderBtn" class="btn-ghost"><i data-lucide="folder-plus"></i> Sous-dossier</button>
         </div>
       </div>
 
       <div class="files-controls">
-        <input type="search" id="searchFiles" class="search-input" placeholder="🔍 Rechercher dans le dossier…" autocomplete="off">
+        <input type="search" id="searchFiles" class="search-input" placeholder="Rechercher dans le dossier…" autocomplete="off">
         <select id="sortFiles" class="select">
           <option value="recent">Trier : récents</option>
           <option value="name">Trier : nom A-Z</option>
@@ -85,11 +85,11 @@
 
       <div id="dropzone" class="dropzone">
         <div class="dropzone-inner">
-          <div class="dropzone-icon">📤</div>
+          <div class="dropzone-icon"><i data-lucide="upload-cloud"></i></div>
           <p>Glisse <strong>fichiers ou dossiers</strong> ici, ou choisis ci-dessous :</p>
           <div class="dropzone-actions">
-            <button type="button" id="pickFilesBtn" class="btn-ghost">📄 Choisir des fichiers</button>
-            <button type="button" id="pickFolderBtn" class="btn-ghost">📂 Importer un dossier</button>
+            <button type="button" id="pickFilesBtn" class="btn-ghost"><i data-lucide="file"></i> Choisir des fichiers</button>
+            <button type="button" id="pickFolderBtn" class="btn-ghost"><i data-lucide="folder-open"></i> Importer un dossier</button>
           </div>
         </div>
         <input type="file" id="fileInput" multiple hidden>
@@ -108,8 +108,8 @@
 <div id="filePreview" class="file-preview" hidden role="dialog" aria-modal="true" aria-label="Aperçu du fichier">
   <div class="file-preview-bar">
     <span id="filePreviewName" class="file-preview-title">…</span>
-    <a id="filePreviewDl" class="btn-ghost" href="#" download title="Télécharger">⬇ Télécharger</a>
-    <button type="button" id="filePreviewClose" class="btn-ghost" aria-label="Fermer">✕</button>
+    <a id="filePreviewDl" class="btn-ghost" href="#" download title="Télécharger"><i data-lucide="download"></i> Télécharger</a>
+    <button type="button" id="filePreviewClose" class="btn-ghost" aria-label="Fermer"><i data-lucide="x"></i></button>
   </div>
   <div class="file-preview-body">
     <iframe id="filePreviewFrame" class="file-preview-frame" title="Aperçu" hidden></iframe>
@@ -118,9 +118,10 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
 <script src="js/supabase.js?v=24"></script>
-<script src="js/auth.js?v=25"></script>
+<script src="js/auth.js?v=26"></script>
 <script src="js/pwa.js?v=22"></script>
-<script src="js/files.js?v=27"></script>
+<script src="js/files.js?v=28"></script>
 </body>
 </html>

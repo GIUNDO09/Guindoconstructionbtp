@@ -15,7 +15,7 @@
 <link rel="icon" href="../favicon.ico">
 <link rel="apple-touch-icon" href="../Images/LOGO-1.png">
 <link rel="manifest" href="manifest.json">
-<link rel="stylesheet" href="css/equipe.css?v=26">
+<link rel="stylesheet" href="css/equipe.css?v=29">
 </head>
 <body class="app-body">
 
@@ -26,7 +26,7 @@
   </a>
   <nav class="app-nav">
     <a href="dashboard.html" class="nav-pill">Tâches</a>
-    <a href="calendar.html" class="nav-pill">📅 Calendrier</a>
+    <a href="calendar.html" class="nav-pill"><i data-lucide="calendar"></i> Calendrier</a>
     <a href="chat.html" class="nav-pill">Chat</a>
     <a href="files.html" class="nav-pill">Fichiers</a>
     <a href="profil.html" class="nav-pill nav-pill-active">Mon profil</a>
@@ -34,7 +34,7 @@
   <div class="app-user">
     <a id="headerAvatar" class="header-avatar" href="profil.html" title="Mon profil"></a>
     <span id="userName">…</span>
-    <button data-install-app class="btn-ghost btn-install" hidden title="Installer l'app">📥 Installer</button>
+    <button data-install-app class="btn-ghost btn-install" hidden title="Installer l'app"><i data-lucide="download"></i> Installer</button>
     <button id="logoutBtn" class="btn-ghost">Déconnexion</button>
   </div>
 </header>
@@ -101,7 +101,7 @@
         </label>
 
         <hr class="profil-sep">
-        <h4 class="profil-section-title">📝 Présentation publique</h4>
+        <h4 class="profil-section-title"><i data-lucide="file-text"></i> Présentation publique</h4>
 
         <label>
           <span>Bio courte (2-3 phrases, affichée en tête de profil)</span>
@@ -114,7 +114,7 @@
         </label>
 
         <hr class="profil-sep">
-        <h4 class="profil-section-title">🔗 Liens externes</h4>
+        <h4 class="profil-section-title"><i data-lucide="link"></i> Liens externes</h4>
 
         <label>
           <span>Portfolio</span>
@@ -134,7 +134,7 @@
         </label>
 
         <div class="profil-actions">
-          <button type="submit" class="btn-primary">💾 Enregistrer</button>
+          <button type="submit" class="btn-primary"><i data-lucide="save"></i> Enregistrer</button>
           <span id="saveStatus" class="form-hint"></span>
         </div>
       </form>
@@ -145,11 +145,11 @@
 
     <!-- Notifications push -->
     <section class="profil-push">
-      <h3>🔔 Notifications push (hors-onglet)</h3>
+      <h3><i data-lucide="bell"></i> Notifications push (hors-onglet)</h3>
       <p class="form-hint">Reçois les nouveaux messages et tâches même quand l'app est fermée. Fonctionne sur Chrome, Edge, Firefox et Safari (iOS 16.4+).</p>
       <div class="profil-actions">
-        <button type="button" id="pushSubscribeBtn" class="btn-primary" hidden>🔔 Activer les notifications push</button>
-        <button type="button" id="pushUnsubscribeBtn" class="btn-ghost" hidden>🔕 Désactiver les notifications push</button>
+        <button type="button" id="pushSubscribeBtn" class="btn-primary" hidden><i data-lucide="bell"></i> Activer les notifications push</button>
+        <button type="button" id="pushUnsubscribeBtn" class="btn-ghost" hidden><i data-lucide="bell-off"></i> Désactiver les notifications push</button>
         <span id="pushStatus" class="form-hint"></span>
       </div>
     </section>
@@ -158,7 +158,7 @@
 
     <!-- Changement de mot de passe -->
     <section class="profil-password">
-      <h3>🔒 Changer mon mot de passe</h3>
+      <h3><i data-lucide="lock"></i> Changer mon mot de passe</h3>
       <form id="passwordForm" class="profil-form" action="javascript:void(0);">
         <label>
           <span>Nouveau mot de passe *</span>
@@ -169,7 +169,7 @@
           <input name="confirm_password" type="password" required minlength="8" maxlength="100" autocomplete="new-password">
         </label>
         <div class="profil-actions">
-          <button type="submit" class="btn-primary">🔐 Mettre à jour le mot de passe</button>
+          <button type="submit" class="btn-primary"><i data-lucide="key-round"></i> Mettre à jour le mot de passe</button>
           <span id="passwordStatus" class="form-hint"></span>
         </div>
       </form>
@@ -201,8 +201,9 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
 <script src="js/supabase.js?v=24"></script>
-<script src="js/auth.js?v=25"></script>
+<script src="js/auth.js?v=26"></script>
 <script src="js/pwa.js?v=23"></script>
 <script src="js/push.js?v=23"></script>
 <script src="js/profil.js?v=25"></script>

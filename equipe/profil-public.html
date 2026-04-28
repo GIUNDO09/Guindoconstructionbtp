@@ -15,7 +15,7 @@
 <link rel="icon" href="../favicon.ico">
 <link rel="apple-touch-icon" href="../Images/LOGO-1.png">
 <link rel="manifest" href="manifest.json">
-<link rel="stylesheet" href="css/equipe.css?v=25">
+<link rel="stylesheet" href="css/equipe.css?v=29">
 </head>
 <body class="app-body">
 
@@ -26,7 +26,7 @@
   </a>
   <nav class="app-nav">
     <a href="dashboard.html" class="nav-pill">Tâches</a>
-    <a href="calendar.html" class="nav-pill">📅 Calendrier</a>
+    <a href="calendar.html" class="nav-pill"><i data-lucide="calendar"></i> Calendrier</a>
     <a href="chat.html" class="nav-pill">Chat</a>
     <a href="files.html" class="nav-pill">Fichiers</a>
     <a href="profil.html" class="nav-pill">Mon profil</a>
@@ -34,7 +34,7 @@
   <div class="app-user">
     <a id="headerAvatar" class="header-avatar" href="profil.html" title="Mon profil"></a>
     <span id="userName">…</span>
-    <button data-install-app class="btn-ghost btn-install" hidden title="Installer l'app">📥 Installer</button>
+    <button data-install-app class="btn-ghost btn-install" hidden title="Installer l'app"><i data-lucide="download"></i> Installer</button>
     <button id="logoutBtn" class="btn-ghost">Déconnexion</button>
   </div>
 </header>
@@ -56,32 +56,32 @@
         <div id="ppLinks" class="pp-links"></div>
       </div>
       <div id="ppEditBtn" class="pp-edit-btn" hidden>
-        <a href="profil.html" class="btn-ghost">✏️ Éditer mon profil</a>
+        <a href="profil.html" class="btn-ghost"><i data-lucide="pen"></i> Éditer mon profil</a>
       </div>
       <div id="ppDmBtn" class="pp-edit-btn" hidden>
-        <a id="ppDmLink" href="#" class="btn-primary">💬 Envoyer un message</a>
+        <a id="ppDmLink" href="#" class="btn-primary"><i data-lucide="message-circle"></i> Envoyer un message</a>
       </div>
     </section>
 
     <!-- Stats principales -->
     <section class="pp-stats">
       <div class="pp-stat-card">
-        <div class="pp-stat-label">📊 Score travail</div>
+        <div class="pp-stat-label"><i data-lucide="bar-chart-3"></i> Score travail</div>
         <div class="pp-stat-value" id="ppWorkScore">—</div>
         <div class="pp-stat-sub">/ 100</div>
       </div>
       <div class="pp-stat-card">
-        <div class="pp-stat-label">📅 Assiduité</div>
+        <div class="pp-stat-label"><i data-lucide="calendar-check"></i> Assiduité</div>
         <div class="pp-stat-value" id="ppAttendance">—</div>
         <div class="pp-stat-sub">/ 100</div>
       </div>
       <div class="pp-stat-card">
-        <div class="pp-stat-label">💰 Gains</div>
+        <div class="pp-stat-label"><i data-lucide="coins"></i> Gains</div>
         <div class="pp-stat-value" id="ppEarnings">—</div>
         <div class="pp-stat-sub">FCFA</div>
       </div>
       <div class="pp-stat-card">
-        <div class="pp-stat-label">✅ Tâches</div>
+        <div class="pp-stat-label"><i data-lucide="check-circle-2"></i> Tâches</div>
         <div class="pp-stat-value" id="ppTasksDone">—</div>
         <div class="pp-stat-sub" id="ppTasksTotal">terminées</div>
       </div>
@@ -89,7 +89,7 @@
 
     <!-- Évolution dans le temps -->
     <section class="panel">
-      <h3>📈 Évolution sur 12 semaines</h3>
+      <h3><i data-lucide="trending-up"></i> Évolution sur 12 semaines</h3>
       <div id="ppHistory" class="pp-history">
         <p class="empty">Aucun historique encore. Les snapshots sont enregistrés chaque lundi.</p>
       </div>
@@ -97,13 +97,13 @@
 
     <!-- Description longue -->
     <section class="panel" id="ppDescriptionSection" hidden>
-      <h3>📝 À propos</h3>
+      <h3><i data-lucide="file-text"></i> À propos</h3>
       <p id="ppDescription" class="pp-description"></p>
     </section>
 
     <!-- Édition admin (visible seulement si je suis admin et pas en train de regarder mon propre profil) -->
     <section class="panel pp-admin-edit" id="adminEditSection" hidden>
-      <h3>👑 Édition admin (scores et gains)</h3>
+      <h3><i data-lucide="crown"></i> Édition admin (scores et gains)</h3>
       <p class="form-hint">Ces valeurs ne peuvent être modifiées que par un admin.</p>
       <form id="adminScoreForm" class="profil-form" action="javascript:void(0);">
         <div class="form-row">
@@ -125,7 +125,7 @@
           <input name="notes" type="text" maxlength="200" placeholder="Ex : bonus chantier Wassado">
         </label>
         <div class="profil-actions">
-          <button type="submit" class="btn-primary">💾 Enregistrer + snapshot</button>
+          <button type="submit" class="btn-primary"><i data-lucide="save"></i> Enregistrer + snapshot</button>
           <span id="adminScoreStatus" class="form-hint"></span>
         </div>
       </form>
@@ -136,8 +136,9 @@
 </main>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
 <script src="js/supabase.js?v=24"></script>
-<script src="js/auth.js?v=25"></script>
+<script src="js/auth.js?v=26"></script>
 <script src="js/pwa.js?v=23"></script>
 <script src="js/profil-public.js?v=24"></script>
 </body>

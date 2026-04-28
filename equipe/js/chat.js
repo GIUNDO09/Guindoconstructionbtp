@@ -101,7 +101,7 @@ let participantsByConv = {};           // conv_id → [user_id, ...]
           if (m.pinned_at && !flag) {
             const span = document.createElement('span');
             span.className = 'msg-pinned-flag';
-            span.textContent = '📌 Épinglé';
+            span.innerHTML = '<i data-lucide="pin"></i> Épinglé';
             el.prepend(span);
           } else if (!m.pinned_at && flag) {
             flag.remove();
@@ -109,10 +109,11 @@ let participantsByConv = {};           // conv_id → [user_id, ...]
           // Met à jour le bouton pin (icône + état)
           const btn = el.querySelector('.msg-act-pin');
           if (btn) {
-            btn.textContent = m.pinned_at ? '📍' : '📌';
+            btn.innerHTML = `<i data-lucide="${m.pinned_at ? 'pin-off' : 'pin'}"></i>`;
             btn.title = m.pinned_at ? 'Désépingler' : 'Épingler';
             btn.dataset.pinned = m.pinned_at ? '1' : '0';
           }
+          window.gcbtp?.renderIcons?.();
         }
         loadPinnedForCurrentConv();
       }
@@ -250,6 +251,7 @@ function renderConvSidebar() {
       loadAvatarThumb(el, profile.avatar_file_id);
     }
   });
+  window.gcbtp?.renderIcons?.();
 }
 
 async function loadAvatarThumb(slot, fileId) {
@@ -344,6 +346,7 @@ function renderNewConvMembers(query) {
     const profile = profilesById[el.dataset.avatarUser];
     if (profile?.avatar_file_id && serverUrl) loadAvatarThumb(el, profile.avatar_file_id);
   });
+  window.gcbtp?.renderIcons?.();
 }
 
 async function startDmWith(userId) {
@@ -397,7 +400,7 @@ function renderPinned(items) {
     const author = profilesById[m.user_id]?.full_name || 'Inconnu';
     const preview = previewText(m).slice(0, 200) || '—';
     const unpinBtn = canUnpin
-      ? `<button type="button" class="pinned-item-unpin" data-unpin-id="${m.id}" title="Désépingler">✕</button>`
+      ? `<button type="button" class="pinned-item-unpin" data-unpin-id="${m.id}" title="Désépingler"><i data-lucide="x"></i></button>`
       : '';
     return `
       <div class="pinned-item" data-jump-id="${m.id}">
@@ -410,6 +413,7 @@ function renderPinned(items) {
   }).join('');
   // Mémorise pour les realtime UPDATE
   items.forEach(m => messageCache.set(m.id, m));
+  window.gcbtp?.renderIcons?.();
 }
 
 async function togglePin(messageId, doPin) {
@@ -498,7 +502,7 @@ function appendMessage(m, animate) {
     } else if (m.attachment_type === 'audio') {
       attachmentHtml = `
         <div class="msg-audio-player">
-          <button type="button" class="msa-play" aria-label="Lire">▶</button>
+          <button type="button" class="msa-play" aria-label="Lire"><i data-lucide="play"></i></button>
           <div class="msa-track" role="slider" aria-label="Position de lecture" tabindex="0">
             <div class="msa-progress"></div>
           </div>
@@ -516,7 +520,7 @@ function appendMessage(m, animate) {
             <span class="msg-doc-name">${name}</span>
             <span class="msg-doc-meta">${size}</span>
           </span>
-          <span class="msg-doc-dl">⬇</span>
+          <span class="msg-doc-dl"><i data-lucide="download"></i></span>
         </a>`;
     }
   }
@@ -544,10 +548,12 @@ function appendMessage(m, animate) {
     ? `<div class="msg-content">${renderMessageContent(m.content)}</div>`
     : '';
 
-  const pinnedFlag = m.pinned_at ? `<span class="msg-pinned-flag">📌 Épinglé</span>` : '';
+  const pinnedFlag = m.pinned_at
+    ? `<span class="msg-pinned-flag"><i data-lucide="pin"></i> Épinglé</span>`
+    : '';
   const canPin = canPinHere();
   const pinBtn = canPin
-    ? `<button type="button" class="msg-act msg-act-pin" title="${m.pinned_at ? 'Désépingler' : 'Épingler'}" data-id="${m.id}" data-pinned="${m.pinned_at ? '1' : '0'}">${m.pinned_at ? '📍' : '📌'}</button>`
+    ? `<button type="button" class="msg-act msg-act-pin" title="${m.pinned_at ? 'Désépingler' : 'Épingler'}" data-id="${m.id}" data-pinned="${m.pinned_at ? '1' : '0'}"><i data-lucide="${m.pinned_at ? 'pin-off' : 'pin'}"></i></button>`
     : '';
 
   div.innerHTML = `
@@ -562,13 +568,13 @@ function appendMessage(m, animate) {
       ${contentHtml}
       <div class="msg-footer">
         <div class="msg-reactions" data-msg="${m.id}"></div>
-        ${mine ? `<span class="msg-ticks" data-msg="${m.id}">✓</span>` : ''}
+        ${mine ? `<span class="msg-ticks" data-msg="${m.id}"><i data-lucide="check"></i></span>` : ''}
       </div>
       <div class="msg-actions">
-        <button type="button" class="msg-act msg-act-react" title="Réagir" data-id="${m.id}">😊</button>
-        <button type="button" class="msg-act msg-act-reply" title="Répondre" data-id="${m.id}">↩</button>
+        <button type="button" class="msg-act msg-act-react" title="Réagir" data-id="${m.id}"><i data-lucide="smile-plus"></i></button>
+        <button type="button" class="msg-act msg-act-reply" title="Répondre" data-id="${m.id}"><i data-lucide="reply"></i></button>
         ${pinBtn}
-        ${mine ? `<button class="msg-act msg-delete" title="Supprimer" data-id="${m.id}">🗑</button>` : ''}
+        ${mine ? `<button class="msg-act msg-delete" title="Supprimer" data-id="${m.id}"><i data-lucide="trash-2"></i></button>` : ''}
       </div>
     </div>`;
   list.appendChild(div);
@@ -580,6 +586,7 @@ function appendMessage(m, animate) {
   // Réactions et accusés de lecture
   renderReactionsFor(m.id);
   if (mine) renderTicksFor(m.id);
+  window.gcbtp?.renderIcons?.();
   scrollToBottom();
 }
 
@@ -606,14 +613,16 @@ function setupAudioPlayer(player) {
   audio.addEventListener('loadedmetadata', render);
   audio.addEventListener('timeupdate', render);
   audio.addEventListener('play', () => {
-    playBtn.textContent = '⏸';
+    playBtn.innerHTML = '<i data-lucide="pause"></i>';
     playBtn.setAttribute('aria-label', 'Pause');
     player.classList.add('msa-playing');
+    window.gcbtp?.renderIcons?.();
   });
   audio.addEventListener('pause', () => {
-    playBtn.textContent = '▶';
+    playBtn.innerHTML = '<i data-lucide="play"></i>';
     playBtn.setAttribute('aria-label', 'Lire');
     player.classList.remove('msa-playing');
+    window.gcbtp?.renderIcons?.();
   });
   audio.addEventListener('ended', () => {
     audio.currentTime = 0;

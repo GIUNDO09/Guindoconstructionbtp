@@ -15,7 +15,7 @@
 <link rel="icon" href="../favicon.ico">
 <link rel="apple-touch-icon" href="../Images/LOGO-1.png">
 <link rel="manifest" href="manifest.json">
-<link rel="stylesheet" href="css/equipe.css?v=28">
+<link rel="stylesheet" href="css/equipe.css?v=29">
 </head>
 <body class="app-body">
 
@@ -26,7 +26,7 @@
   </a>
   <nav class="app-nav">
     <a href="dashboard.html" class="nav-pill">Tâches</a>
-    <a href="calendar.html" class="nav-pill">📅 Calendrier</a>
+    <a href="calendar.html" class="nav-pill"><i data-lucide="calendar"></i> Calendrier</a>
     <a href="chat.html" class="nav-pill nav-pill-active">Chat</a>
     <a href="files.html" class="nav-pill">Fichiers</a>
     <a href="profil.html" class="nav-pill">Mon profil</a>
@@ -34,7 +34,7 @@
   <div class="app-user">
     <a id="headerAvatar" class="header-avatar" href="profil.html" title="Mon profil"></a>
     <span id="userName">…</span>
-    <button data-install-app class="btn-ghost btn-install" hidden title="Installer l'app">📥 Installer</button>
+    <button data-install-app class="btn-ghost btn-install" hidden title="Installer l'app"><i data-lucide="download"></i> Installer</button>
     <button id="logoutBtn" class="btn-ghost">Déconnexion</button>
   </div>
 </header>
@@ -44,11 +44,11 @@
   <aside class="conv-sidebar" id="convSidebar">
     <div class="conv-sidebar-head">
       <h3>Conversations</h3>
-      <button type="button" id="newConvBtn" class="btn-ghost" title="Nouvelle conversation privée">✏️</button>
+      <button type="button" id="newConvBtn" class="btn-ghost" title="Nouvelle conversation privée"><i data-lucide="plus"></i></button>
     </div>
     <div id="convList" class="conv-list">
       <button type="button" class="conv-item conv-item-active" data-conv-id="">
-        <div class="conv-avatar conv-avatar-channel">💬</div>
+        <div class="conv-avatar conv-avatar-channel"><i data-lucide="hash"></i></div>
         <div class="conv-body">
           <div class="conv-name">Canal général</div>
           <div class="conv-sub">Toute l'équipe</div>
@@ -60,9 +60,9 @@
   <section class="chat-panel">
     <div class="chat-header">
       <div class="chat-header-row">
-        <button type="button" id="convBackBtn" class="btn-icon-bubble conv-back-btn" title="Conversations">☰</button>
+        <button type="button" id="convBackBtn" class="btn-icon-bubble conv-back-btn" title="Conversations"><i data-lucide="menu"></i></button>
         <div>
-          <h2 id="chatTitle">💬 Canal général</h2>
+          <h2 id="chatTitle"><i data-lucide="hash"></i> Canal général</h2>
           <p class="chat-sub">
             <span id="onlineIndicator" class="online-indicator" title="Personnes connectées">
               <span class="online-dot"></span>
@@ -72,20 +72,20 @@
             <span id="chatSubText">Discussion en temps réel avec toute l'équipe</span>
           </p>
         </div>
-        <button type="button" id="searchToggleBtn" class="btn-icon-bubble" title="Rechercher">🔍</button>
+        <button type="button" id="searchToggleBtn" class="btn-icon-bubble" title="Rechercher"><i data-lucide="search"></i></button>
       </div>
       <div id="searchBar" class="search-bar" hidden>
         <input type="search" id="searchInput" placeholder="Rechercher dans les messages…" autocomplete="off">
         <span id="searchCount" class="search-count"></span>
-        <button type="button" id="searchClose" class="btn-inline" aria-label="Fermer la recherche">✕</button>
+        <button type="button" id="searchClose" class="btn-inline" aria-label="Fermer la recherche"><i data-lucide="x"></i></button>
       </div>
     </div>
 
     <!-- Barre des messages épinglés (max 3 par conversation) -->
     <div id="pinnedBar" class="pinned-bar" hidden>
       <div class="pinned-bar-head">
-        <span class="pinned-bar-title">📌 <span id="pinnedCount">0</span> épinglé(s)</span>
-        <button type="button" id="pinnedToggle" class="btn-inline pinned-toggle" title="Réduire/Déplier" aria-expanded="true">▾</button>
+        <span class="pinned-bar-title"><i data-lucide="pin"></i> <span id="pinnedCount">0</span> épinglé(s)</span>
+        <button type="button" id="pinnedToggle" class="btn-inline pinned-toggle" title="Réduire/Déplier" aria-expanded="true"><i data-lucide="chevron-down"></i></button>
       </div>
       <div id="pinnedList" class="pinned-list"></div>
     </div>
@@ -105,13 +105,13 @@
         <span class="reply-author" id="replyAuthor"></span>
         <span class="reply-text" id="replyText"></span>
       </div>
-      <button type="button" id="cancelReply" class="btn-inline" title="Annuler la réponse">✕</button>
+      <button type="button" id="cancelReply" class="btn-inline" title="Annuler la réponse"><i data-lucide="x"></i></button>
     </div>
 
     <!-- Aperçu du fichier sélectionné avant envoi -->
     <div id="attachmentPreview" class="attachment-preview" hidden>
       <span id="attachmentName" class="attachment-name"></span>
-      <button type="button" id="cancelAttachment" class="btn-ghost" title="Retirer">✖</button>
+      <button type="button" id="cancelAttachment" class="btn-ghost" title="Retirer"><i data-lucide="x"></i></button>
     </div>
 
     <!-- État d'enregistrement vocal -->
@@ -124,16 +124,16 @@
     </div>
 
     <form id="chatForm" class="chat-form" action="javascript:void(0);">
-      <button type="button" id="enableNotifBtn" class="btn-icon-bubble" hidden title="Activer les notifications">🔔</button>
+      <button type="button" id="enableNotifBtn" class="btn-icon-bubble" hidden title="Activer les notifications"><i data-lucide="bell"></i></button>
       <div class="chat-input-wrap">
-        <button type="button" id="attachBtn" class="btn-inline" title="Joindre image/vidéo/audio">📎</button>
+        <button type="button" id="attachBtn" class="btn-inline" title="Joindre image/vidéo/audio"><i data-lucide="paperclip"></i></button>
         <input type="file" id="attachInput" accept="image/*,video/*,audio/*,application/pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.zip" hidden>
-        <button type="button" id="cameraBtn" class="btn-inline btn-camera" title="Prendre une photo">📷</button>
+        <button type="button" id="cameraBtn" class="btn-inline btn-camera" title="Prendre une photo"><i data-lucide="camera"></i></button>
         <input type="file" id="cameraInput" accept="image/*" capture="environment" hidden>
         <textarea id="chatInput" placeholder="Écris un message…" rows="1" maxlength="2000"></textarea>
-        <button type="button" id="recBtn" class="btn-inline" title="Message vocal">🎤</button>
+        <button type="button" id="recBtn" class="btn-inline" title="Message vocal"><i data-lucide="mic"></i></button>
       </div>
-      <button type="submit" class="btn-send" aria-label="Envoyer">➤</button>
+      <button type="submit" class="btn-send" aria-label="Envoyer"><i data-lucide="send"></i></button>
     </form>
   </section>
 
@@ -156,10 +156,10 @@
 <!-- Modal "Nouvelle conversation privée" -->
 <div id="newConvModal" class="modal" hidden role="dialog" aria-modal="true" aria-label="Nouvelle conversation">
   <div class="modal-content">
-    <button type="button" class="modal-close" id="newConvClose" aria-label="Fermer">×</button>
+    <button type="button" class="modal-close" id="newConvClose" aria-label="Fermer"><i data-lucide="x"></i></button>
     <h3>Nouvelle conversation privée</h3>
     <p class="form-hint">Choisis un membre de l'équipe pour commencer une discussion privée.</p>
-    <input type="search" id="newConvSearch" class="search-input" placeholder="🔍 Rechercher un membre…" autocomplete="off">
+    <input type="search" id="newConvSearch" class="search-input" placeholder="Rechercher un membre…" autocomplete="off">
     <div id="newConvMembers" class="new-conv-members"></div>
   </div>
 </div>
@@ -174,10 +174,11 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
 <script src="js/supabase.js?v=24"></script>
-<script src="js/auth.js?v=25"></script>
+<script src="js/auth.js?v=26"></script>
 <script src="js/pwa.js?v=11"></script>
 <script src="js/push.js?v=23"></script>
-<script src="js/chat.js?v=28"></script>
+<script src="js/chat.js?v=29"></script>
 </body>
 </html>

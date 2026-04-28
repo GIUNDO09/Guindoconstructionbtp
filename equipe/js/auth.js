@@ -146,9 +146,27 @@
     } catch {}
   }
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', mountHeaderAvatar);
-  } else {
-    mountHeaderAvatar();
+  // -----------------------------------------------------------
+  // Helper : convertit les <i data-lucide="name"> en SVG Lucide.
+  // À appeler après chaque rendu de contenu dynamique.
+  // -----------------------------------------------------------
+  function renderIcons(root) {
+    if (!window.lucide) return;
+    try {
+      // Lucide UMD expose createIcons() ; il agit sur tout le document si pas de root.
+      window.lucide.createIcons({ nameAttr: 'data-lucide' });
+    } catch (e) { /* silencieux : pas critique */ }
   }
+  window.gcbtp.renderIcons = renderIcons;
+
+  function init() {
+    mountHeaderAvatar();
+    renderIcons();
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+
 })();

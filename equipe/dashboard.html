@@ -15,7 +15,7 @@
 <link rel="icon" href="../favicon.ico">
 <link rel="apple-touch-icon" href="../Images/LOGO-1.png">
 <link rel="manifest" href="manifest.json">
-<link rel="stylesheet" href="css/equipe.css?v=25">
+<link rel="stylesheet" href="css/equipe.css?v=29">
 </head>
 <body class="app-body">
 
@@ -36,7 +36,7 @@ window.__hideModal = function(id) {
   </a>
   <nav class="app-nav">
     <a href="dashboard.html" class="nav-pill nav-pill-active">Tâches</a>
-    <a href="calendar.html" class="nav-pill">📅 Calendrier</a>
+    <a href="calendar.html" class="nav-pill"><i data-lucide="calendar"></i> Calendrier</a>
     <a href="chat.html" class="nav-pill">Chat</a>
     <a href="files.html" class="nav-pill">Fichiers</a>
     <a href="profil.html" class="nav-pill">Mon profil</a>
@@ -44,7 +44,7 @@ window.__hideModal = function(id) {
   <div class="app-user">
     <a id="headerAvatar" class="header-avatar" href="profil.html" title="Mon profil"></a>
     <span id="userName">…</span>
-    <button data-install-app class="btn-ghost btn-install" hidden title="Installer l'app">📥 Installer</button>
+    <button data-install-app class="btn-ghost btn-install" hidden title="Installer l'app"><i data-lucide="download"></i> Installer</button>
     <button id="logoutBtn" class="btn-ghost">Déconnexion</button>
   </div>
 </header>
@@ -79,7 +79,7 @@ window.__hideModal = function(id) {
     <div class="panel-head">
       <h2>Tâches</h2>
       <div class="toolbar">
-        <input type="search" id="searchTasks" class="search-input" placeholder="🔍 Rechercher (titre, projet, description)…" autocomplete="off">
+        <input type="search" id="searchTasks" class="search-input" placeholder="Rechercher (titre, projet, description)…" autocomplete="off">
         <select id="filterAssignee" class="select">
           <option value="all">Tous les membres</option>
         </select>
@@ -95,7 +95,7 @@ window.__hideModal = function(id) {
           <option value="created">Trier : date de création</option>
           <option value="title">Trier : titre A-Z</option>
         </select>
-        <button id="exportPdfBtn" class="btn-ghost" title="Exporter la liste filtrée en PDF">📄 Export PDF</button>
+        <button id="exportPdfBtn" class="btn-ghost" title="Exporter la liste filtrée en PDF"><i data-lucide="file-text"></i> Export PDF</button>
         <button id="newTaskBtn" class="btn-primary" hidden>+ Nouvelle tâche</button>
       </div>
     </div>
@@ -107,10 +107,10 @@ window.__hideModal = function(id) {
 <!-- Modal détail tâche + commentaires -->
 <div id="taskDetailModal" class="modal" hidden>
   <div class="modal-content modal-wide">
-    <button class="modal-close" id="detailClose" aria-label="Fermer" onclick="window.__hideModal('taskDetailModal')">×</button>
+    <button class="modal-close" id="detailClose" aria-label="Fermer" onclick="window.__hideModal('taskDetailModal')"><i data-lucide="x"></i></button>
     <div id="taskDetailHead"></div>
     <section class="comments-section">
-      <h4>💬 Discussion</h4>
+      <h4><i data-lucide="message-square"></i> Discussion</h4>
       <div id="commentsList" class="comments-list"></div>
       <form id="commentForm" class="comment-form" action="javascript:void(0);">
         <textarea id="commentInput" rows="2" maxlength="2000" placeholder="Ajouter un commentaire…" required></textarea>
@@ -187,9 +187,10 @@ window.__hideModal = function(id) {
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.1/jspdf.plugin.autotable.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
 <script src="js/supabase.js?v=24"></script>
-<script src="js/auth.js?v=25"></script>
+<script src="js/auth.js?v=26"></script>
 <script src="js/pwa.js?v=23"></script>
-<script src="js/dashboard.js?v=23"></script>
+<script src="js/dashboard.js?v=24"></script>
 </body>
 </html>

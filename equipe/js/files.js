@@ -41,7 +41,9 @@ const thumbFailCache = new Set(); // file_id en échec (404/erreur disque) pour 
     })
     .on('postgres_changes', { event: '*', schema: 'public', table: 'app_settings' }, async () => {
       state.serverUrl = await window.gcbtp.cache.getServerUrl({ refresh: true });
-      document.getElementById('serverStatus').textContent = state.serverUrl ? `🟢 Serveur : ${state.serverUrl}` : '🔴 Serveur non configuré';
+      document.getElementById('serverStatus').innerHTML = state.serverUrl
+        ? `<span class="status-dot status-dot-on"></span> Serveur : ${escapeHtml(state.serverUrl)}`
+        : '<span class="status-dot status-dot-off"></span> Serveur non configuré';
     })
     .subscribe();
 })();
@@ -72,10 +74,13 @@ async function loadFiles() {
 
 // ---------- Render ----------
 function renderAll() {
-  document.getElementById('serverStatus').textContent = state.serverUrl ? `🟢 Serveur : ${state.serverUrl}` : '🔴 Serveur non configuré';
+  document.getElementById('serverStatus').innerHTML = state.serverUrl
+        ? `<span class="status-dot status-dot-on"></span> Serveur : ${escapeHtml(state.serverUrl)}`
+        : '<span class="status-dot status-dot-off"></span> Serveur non configuré';
   renderBreadcrumb();
   renderTree();
   renderFolderContent();
+  window.gcbtp?.renderIcons?.();
 }
 
 function renderBreadcrumb() {
@@ -171,7 +176,7 @@ function renderFolderContent() {
           <div class="item-name">${escapeHtml(f.name)}</div>
           <div class="item-meta"><span class="badge ${st.cls}">${st.label}</span></div>
         </div>
-        ${state.me?.role === 'admin' ? `<button class="item-delete" data-folder-id="${f.id}" title="Supprimer">×</button>` : ''}
+        ${state.me?.role === 'admin' ? `<button class="item-delete" data-folder-id="${f.id}" title="Supprimer"><i data-lucide="x"></i></button>` : ''}
       </div>`;
   }).join('');
 
@@ -193,9 +198,9 @@ function renderFolderContent() {
           <div class="item-name">${escapeHtml(file.name)}</div>
           <div class="item-meta">${formatBytes(file.size_bytes)} · ${escapeHtml(uploader)} · ${when}</div>
         </div>
-        ${canPreview ? `<button class="item-preview" data-file-id="${file.id}" title="Aperçu">👁</button>` : ''}
-        <button class="item-download" data-file-id="${file.id}" title="Télécharger">⬇</button>
-        ${canDelete ? `<button class="item-delete" data-file-id="${file.id}" title="Supprimer">×</button>` : ''}
+        ${canPreview ? `<button class="item-preview" data-file-id="${file.id}" title="Aperçu"><i data-lucide="eye"></i></button>` : ''}
+        <button class="item-download" data-file-id="${file.id}" title="Télécharger"><i data-lucide="download"></i></button>
+        ${canDelete ? `<button class="item-delete" data-file-id="${file.id}" title="Supprimer"><i data-lucide="x"></i></button>` : ''}
       </div>`;
   }).join('');
 
@@ -244,15 +249,16 @@ function formatBytes(n) {
 }
 function fileIcon(name) {
   const ext = (name || '').toLowerCase().split('.').pop();
-  if (ext === 'pdf') return '📕';
-  if (['doc', 'docx'].includes(ext)) return '📘';
-  if (['xls', 'xlsx', 'csv'].includes(ext)) return '📗';
-  if (['ppt', 'pptx'].includes(ext)) return '📙';
-  if (['zip', 'rar', '7z'].includes(ext)) return '🗜️';
-  if (['mp4', 'mov', 'webm', 'avi'].includes(ext)) return '🎞️';
-  if (['mp3', 'wav', 'm4a', 'webm', 'ogg'].includes(ext)) return '🎵';
-  if (['txt', 'md'].includes(ext)) return '📄';
-  return '📄';
+  let lucide = 'file';
+  let cls = '';
+  if (ext === 'pdf') { lucide = 'file-text'; cls = 'fi-pdf'; }
+  else if (['doc', 'docx'].includes(ext))            { lucide = 'file-text'; cls = 'fi-doc'; }
+  else if (['xls', 'xlsx', 'csv'].includes(ext))     { lucide = 'sheet';     cls = 'fi-xls'; }
+  else if (['ppt', 'pptx'].includes(ext))            { lucide = 'presentation'; cls = 'fi-ppt'; }
+  else if (['zip', 'rar', '7z'].includes(ext))       { lucide = 'archive';   cls = 'fi-zip'; }
+  else if (['mp4', 'mov', 'webm', 'avi'].includes(ext)) { lucide = 'film';   cls = 'fi-vid'; }
+  else if (['mp3', 'wav', 'm4a', 'ogg'].includes(ext))  { lucide = 'music';  cls = 'fi-aud'; }
+  return `<i data-lucide="${lucide}" class="file-type-icon ${cls}"></i>`;
 }
 
 // ---------- UI ----------

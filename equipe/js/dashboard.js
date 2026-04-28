@@ -114,6 +114,7 @@ function renderAll() {
   renderStats();
   renderTeamProgress();
   renderTasks();
+  window.gcbtp?.renderIcons?.();
 }
 
 function renderAssigneeFilter() {
@@ -218,7 +219,7 @@ function renderTasks() {
     const overdue = dueDate && t.status !== 'done' && dueDate < today;
     const dueSoon = dueDate && t.status !== 'done' && !overdue && dDays !== null && dDays <= 3;
     const dueChipCls = overdue ? 'chip-danger' : dueSoon ? 'chip-warn' : '';
-    const dueLabel  = overdue ? `⚠️ ${due}` : dueSoon ? `🟠 ${due}` : `📅 ${due}`;
+    const dueLabel  = overdue ? `<i data-lucide="alert-triangle"></i> ${due}` : dueSoon ? `<i data-lucide="clock"></i> ${due}` : `<i data-lucide="calendar"></i> ${due}`;
     const hasCover = t.cover_file_id && state.serverUrl;
 
     const assigneesHtml = taskAssignees.length === 0
@@ -231,7 +232,7 @@ function renderTasks() {
         <div class="row-cover">
           ${hasCover
             ? `<img alt="" loading="lazy" data-cover-id="${t.cover_file_id}">`
-            : `<span class="row-cover-icon">📋</span>`}
+            : `<span class="row-cover-icon"><i data-lucide="clipboard-list"></i></span>`}
         </div>
         <div class="row-main">
           <div class="row-title-line">
@@ -240,7 +241,7 @@ function renderTasks() {
           </div>
           <div class="row-meta">
             <span class="badge ${pr.cls}">${pr.label}</span>
-            ${t.project ? `<span class="chip">🏗️ ${escapeHtml(t.project)}</span>` : ''}
+            ${t.project ? `<span class="chip"><i data-lucide="hard-hat"></i> ${escapeHtml(t.project)}</span>` : ''}
             ${due ? `<span class="chip ${dueChipCls}">${dueLabel}</span>` : ''}
           </div>
         </div>
@@ -448,9 +449,9 @@ async function openTaskDetail(taskId) {
       <h3>${escapeHtml(task.title)}</h3>
       <div class="detail-chips">
         <span class="badge ${pr.cls}">${pr.label}</span>
-        ${task.project ? `<span class="chip">🏗️ ${escapeHtml(task.project)}</span>` : ''}
-        ${folder ? `<a class="chip chip-folder" href="files.html">📁 ${escapeHtml(folder.name)}</a>` : ''}
-        ${due ? `<span class="chip ${overdue ? 'chip-danger' : ''}">📅 ${due}${overdue ? ' (en retard)' : ''}</span>` : ''}
+        ${task.project ? `<span class="chip"><i data-lucide="hard-hat"></i> ${escapeHtml(task.project)}</span>` : ''}
+        ${folder ? `<a class="chip chip-folder" href="files.html"><i data-lucide="folder"></i> ${escapeHtml(folder.name)}</a>` : ''}
+        ${due ? `<span class="chip ${overdue ? 'chip-danger' : ''}"><i data-lucide="calendar"></i> ${due}${overdue ? ' (en retard)' : ''}</span>` : ''}
       </div>
 
       <div class="detail-section">
@@ -462,7 +463,7 @@ async function openTaskDetail(taskId) {
         <div class="status-buttons" data-task-id="${task.id}">
           <button class="status-btn ${task.status==='todo'?'status-btn-active':''}" data-status="todo">📝 À faire</button>
           <button class="status-btn ${task.status==='in_progress'?'status-btn-active':''}" data-status="in_progress">⚙️ En cours</button>
-          <button class="status-btn ${task.status==='done'?'status-btn-active':''}" data-status="done">✅ Terminée</button>
+          <button class="status-btn ${task.status==='done'?'status-btn-active':''}" data-status="done"><i data-lucide="check-circle-2"></i> Terminée</button>
         </div>
       </div>
 
@@ -482,19 +483,20 @@ async function openTaskDetail(taskId) {
         <ul class="timeline">
           ${created ? `<li><span class="tl-icon">🟢</span><span class="tl-text"><strong>Créée</strong> par ${escapeHtml(creatorName)} le ${created.toLocaleDateString('fr-FR')} à ${created.toLocaleTimeString('fr-FR', {hour:'2-digit',minute:'2-digit'})}</span></li>` : ''}
           ${updated && created && updated.getTime() !== created.getTime() ? `<li><span class="tl-icon">🔄</span><span class="tl-text"><strong>Dernière modification</strong> le ${updated.toLocaleDateString('fr-FR')} à ${updated.toLocaleTimeString('fr-FR', {hour:'2-digit',minute:'2-digit'})}</span></li>` : ''}
-          ${due ? `<li><span class="tl-icon">${overdue ? '⚠️' : '📅'}</span><span class="tl-text"><strong>Échéance</strong> ${due}${overdue ? ' — <span class="tl-overdue">en retard</span>' : ''}</span></li>` : ''}
-          ${task.status === 'done' && updated ? `<li><span class="tl-icon">✅</span><span class="tl-text"><strong>Marquée terminée</strong> le ${updated.toLocaleDateString('fr-FR')}</span></li>` : ''}
+          ${due ? `<li><span class="tl-icon">${overdue ? "<i data-lucide=\"alert-triangle\"></i>" : "<i data-lucide=\"calendar\"></i>"}</span><span class="tl-text"><strong>Échéance</strong> ${due}${overdue ? ' — <span class="tl-overdue">en retard</span>' : ''}</span></li>` : ''}
+          ${task.status === 'done' && updated ? `<li><span class="tl-icon"><i data-lucide="check-circle-2"></i></span><span class="tl-text"><strong>Marquée terminée</strong> le ${updated.toLocaleDateString('fr-FR')}</span></li>` : ''}
         </ul>
       </div>
 
       <div class="detail-actions">
-        <button class="btn-ghost" id="detailEdit">✏️ Modifier</button>
-        ${isAdmin ? `<button class="btn-ghost btn-danger" id="detailDelete">🗑 Supprimer</button>` : ''}
+        <button class="btn-ghost" id="detailEdit"><i data-lucide="pen"></i> Modifier</button>
+        ${isAdmin ? `<button class="btn-ghost btn-danger" id="detailDelete"><i data-lucide="trash-2"></i> Supprimer</button>` : ''}
       </div>
     </div>`;
 
   const detailHead = document.getElementById('taskDetailHead');
   hydrateCoverImages(detailHead);
+  window.gcbtp?.renderIcons?.();
 
   // Lier les nouveaux boutons
   detailHead.querySelectorAll('.status-btn').forEach(btn => {
@@ -581,7 +583,7 @@ function appendComment(c, animate) {
     <div class="comment-head">
       <span class="comment-author">${escapeHtml(author)}</span>
       <span class="comment-time">${when}</span>
-      ${mine ? `<button class="comment-delete" data-id="${c.id}" title="Supprimer">×</button>` : ''}
+      ${mine ? `<button class="comment-delete" data-id="${c.id}" title="Supprimer"><i data-lucide="x"></i></button>` : ''}
     </div>
     <div class="comment-content">${escapeHtml(c.content).replace(/\n/g, '<br>')}</div>`;
   list.appendChild(div);
@@ -630,7 +632,7 @@ function openTaskModal(task = null) {
   // Hint cover
   const hint = document.getElementById('coverHint');
   if (!state.serverUrl) {
-    hint.textContent = '⚠️ Serveur PC non configuré — l\'image de couverture sera ignorée.';
+    hint.innerHTML = '<i data-lucide="alert-triangle"></i> Serveur PC non configuré — l\'image de couverture sera ignorée.';
     hint.className = 'form-hint form-hint-warn';
   } else if (task?.cover_file_id) {
     hint.textContent = 'Une image est déjà définie. Sélectionne un nouveau fichier pour la remplacer.';
