@@ -32,6 +32,16 @@ export function startNotifier(opts) {
       { event: 'UPDATE', schema: 'public', table: 'tasks' },
       (p) => safeRun('task_updated', () => onTaskUpdated(ctx, p)))
     .on('postgres_changes',
+      { event: 'INSERT', schema: 'public', table: 'tasks' },
+      (p) => safeRun('task_inserted', () => {
+        if (p.new?.project) checkProjectCompletion(ctx, p.new.project);
+      }))
+    .on('postgres_changes',
+      { event: 'DELETE', schema: 'public', table: 'tasks' },
+      (p) => safeRun('task_deleted', () => {
+        if (p.old?.project) checkProjectCompletion(ctx, p.old.project);
+      }))
+    .on('postgres_changes',
       { event: 'INSERT', schema: 'public', table: 'messages' },
       (p) => safeRun('new_message', () => onNewMessage(ctx, p)))
     .subscribe((status) => console.log(`📧 Notifier: ${status}`));
@@ -105,32 +115,114 @@ async function onTaskUpdated(ctx, payload) {
   // Récupérer les assignés
   const { data: rows } = await ctx.sb
     .from('task_assignees').select('user_id').eq('task_id', newT.id);
-  if (!rows?.length) return;
 
-  for (const r of rows) {
-    const profile = await getProfile(ctx, r.user_id);
-    if (!profile?.notification_email) continue;
+  if (rows?.length) {
+    for (const r of rows) {
+      const profile = await getProfile(ctx, r.user_id);
+      if (!profile?.notification_email) continue;
 
-    const subject = newT.status === 'done'
-      ? `✅ Tâche terminée : ${newT.title}`
-      : `🔄 Tâche modifiée : ${newT.title}`;
+      const subject = newT.status === 'done'
+        ? `✅ Tâche terminée : ${newT.title}`
+        : `🔄 Tâche modifiée : ${newT.title}`;
 
-    await ctx.resend.emails.send({
-      from: ctx.from,
-      to: profile.notification_email,
-      subject,
-      html: emailTemplate(ctx, {
-        title: newT.status === 'done' ? 'Tâche marquée terminée' : 'Statut de tâche modifié',
-        bodyHtml: `
-          <p>Bonjour ${escapeHtml(profile.full_name)},</p>
-          <p>La tâche <strong>${escapeHtml(newT.title)}</strong> est passée à :</p>
-          <p style="font-size: 20px; color: #e87722; margin: 14px 0;"><strong>${newLabel}</strong></p>`,
-        cta: 'Voir la tâche',
-        ctaUrl: ctx.siteUrl + 'dashboard.html'
-      })
-    });
-    console.log(`📧 → ${profile.notification_email} : statut "${newT.title}" → ${newLabel}`);
+      await ctx.resend.emails.send({
+        from: ctx.from,
+        to: profile.notification_email,
+        subject,
+        html: emailTemplate(ctx, {
+          title: newT.status === 'done' ? 'Tâche marquée terminée' : 'Statut de tâche modifié',
+          bodyHtml: `
+            <p>Bonjour ${escapeHtml(profile.full_name)},</p>
+            <p>La tâche <strong>${escapeHtml(newT.title)}</strong> est passée à :</p>
+            <p style="font-size: 20px; color: #e87722; margin: 14px 0;"><strong>${newLabel}</strong></p>`,
+          cta: 'Voir la tâche',
+          ctaUrl: ctx.siteUrl + 'dashboard.html'
+        })
+      });
+      console.log(`📧 → ${profile.notification_email} : statut "${newT.title}" → ${newLabel}`);
+    }
   }
+
+  // 🎉 Vérifier si la dernière tâche d'un projet vient de basculer
+  if (newT.project) {
+    safeRun('project_completion_check', () => checkProjectCompletion(ctx, newT.project));
+  }
+}
+
+// =========================================================
+// Célébration automatique de fin de projet
+// =========================================================
+const CELEBRATION_TEMPLATES = [
+  '🎉 BRAVO À TOUTE L\'ÉQUIPE ! Le chantier **{project}** est terminé à 100% — {count} tâche(s) accomplie(s). Vous êtes une équipe en or 💪',
+  '🏆 Mission accomplie ! Le projet **{project}** est officiellement bouclé : {count} tâche(s) validée(s). Quel travail collectif ! 👏',
+  '✨ Le chantier **{project}** vient d\'être finalisé, {count}/{count} tâches terminées. Félicitations à toutes et tous, on passe au suivant ! 🚀',
+  '🎊 100% de réussite sur **{project}** ! L\'équipe a bouclé les {count} tâche(s). Bravo, vous gérez ! 🔥',
+  '🛠️ Chantier **{project}** : c\'est plié ! {count} tâche(s) terminée(s) grâce au sérieux de l\'équipe. Respect 🙌',
+  '👏 Toutes les tâches du chantier **{project}** sont validées ({count} au total). Belle énergie collective, continuez comme ça !'
+];
+
+async function checkProjectCompletion(ctx, project) {
+  if (!project) return;
+
+  // 1) Récupérer toutes les tâches du projet
+  const { data: tasks } = await ctx.sb
+    .from('tasks').select('id, status').eq('project', project);
+  const total = tasks?.length || 0;
+  if (total === 0) return;
+
+  const allDone = tasks.every(t => t.status === 'done');
+
+  // 2) Si pas 100% : retire la trace pour ré-armer une future célébration
+  if (!allDone) {
+    await ctx.sb.from('project_celebrations').delete().eq('project', project);
+    return;
+  }
+
+  // 3) Tentative d'INSERT atomique (anti-doublon)
+  const { data: inserted, error } = await ctx.sb
+    .from('project_celebrations')
+    .insert({ project, task_count: total })
+    .select()
+    .single();
+
+  // PG error 23505 = unique_violation → déjà célébré, on n'en fait rien
+  if (error) {
+    if (error.code === '23505') return;
+    console.warn('🎉 project_celebrations insert :', error.message);
+    return;
+  }
+  if (!inserted) return;
+
+  // 4) Choisir un message + l'envoyer dans le canal général
+  const tpl = CELEBRATION_TEMPLATES[Math.floor(Math.random() * CELEBRATION_TEMPLATES.length)];
+  const content = tpl.replaceAll('{project}', project).replaceAll('{count}', String(total));
+
+  // Auteur : un admin (n'importe lequel) — sinon on saute
+  const { data: admin } = await ctx.sb
+    .from('profiles').select('id, full_name').eq('role', 'admin').limit(1).maybeSingle();
+  if (!admin) {
+    console.log(`🎉 Projet ${project} terminé mais aucun admin pour poster la célébration`);
+    return;
+  }
+
+  const { error: msgErr } = await ctx.sb.from('messages').insert({
+    user_id: admin.id,
+    content,
+    conversation_id: null   // canal général
+  });
+  if (msgErr) {
+    console.warn('🎉 message insert :', msgErr.message);
+    return;
+  }
+  console.log(`🎉 Célébration postée dans le canal général : "${project}" (${total} tâches)`);
+
+  // 5) Push à tous les membres (l'auteur inclus, c'est une fête collective)
+  await sendPushToAllExcept(ctx, '00000000-0000-0000-0000-000000000000', {
+    title: `🎉 Chantier ${project} terminé !`,
+    body: `Toutes les ${total} tâches sont validées. Bravo l'équipe !`,
+    url: '/equipe/chat.html',
+    tag: `gcbtp-celebration-${project.slice(0, 30)}`
+  });
 }
 
 async function onNewMessage(ctx, payload) {
