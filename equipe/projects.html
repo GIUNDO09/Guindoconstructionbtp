@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<meta name="theme-color" content="#0f2c52">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="GCBTP Équipe">
+<title>Projets — Espace équipe GCBTP</title>
+<link rel="icon" href="../favicon.ico">
+<link rel="apple-touch-icon" href="../Images/LOGO-1.png">
+<link rel="manifest" href="manifest.json">
+<link rel="stylesheet" href="css/equipe.css?v=34">
+</head>
+<body class="app-body">
+
+<header class="app-header">
+  <a href="../index.html" class="brand">
+    <img src="../Images/LOGO-1.png" alt="GCBTP">
+    <span>Espace équipe</span>
+  </a>
+  <nav class="app-nav">
+    <a href="dashboard.html" class="nav-pill">Tâches</a>
+    <a href="projects.html" class="nav-pill nav-pill-active"><i data-lucide="hard-hat"></i> Projets</a>
+    <a href="chat.html" class="nav-pill">Chat</a>
+    <a href="files.html" class="nav-pill">Fichiers</a>
+    <a href="profil.html" class="nav-pill">Mon profil</a>
+  </nav>
+  <div class="app-user">
+    <a id="headerAvatar" class="header-avatar" href="profil.html" title="Mon profil"></a>
+    <span id="userName">…</span>
+    <button data-install-app class="btn-ghost btn-install" hidden title="Installer l'app"><i data-lucide="download"></i> Installer</button>
+    <button id="logoutBtn" class="btn-ghost">Déconnexion</button>
+  </div>
+</header>
+
+<main class="projects-main">
+
+  <div class="projects-toolbar">
+    <input type="search" id="projSearch" class="search-input" placeholder="Rechercher un projet…">
+    <select id="projStatus" class="select">
+      <option value="active" selected>Actifs</option>
+      <option value="done">Terminés</option>
+      <option value="on_hold">En pause</option>
+      <option value="cancelled">Annulés</option>
+      <option value="all">Tous</option>
+    </select>
+    <div style="flex:1"></div>
+    <button id="newProjBtn" class="btn-primary" hidden><i data-lucide="plus"></i> Nouveau projet</button>
+  </div>
+
+  <div id="projectsList" class="projects-list">
+    <p class="empty">Chargement…</p>
+  </div>
+
+</main>
+
+<!-- Modal nouveau projet -->
+<div id="newProjModal" class="modal" hidden role="dialog" aria-modal="true" aria-label="Nouveau projet">
+  <div class="modal-content">
+    <button type="button" class="modal-close" id="newProjClose" aria-label="Fermer"><i data-lucide="x"></i></button>
+    <h3>Nouveau projet</h3>
+    <p class="form-hint">À la création : un dossier de fichiers + une conversation d'équipe sont créés automatiquement.</p>
+    <form id="newProjForm" class="task-form" action="javascript:void(0);" novalidate>
+      <label>
+        <span>Nom du chantier *</span>
+        <input name="name" type="text" required maxlength="200" placeholder="Ex : Hôtel Wassado">
+      </label>
+      <label>
+        <span>Description</span>
+        <textarea name="description" rows="2" maxlength="1000" placeholder="Brève description du chantier…"></textarea>
+      </label>
+      <div class="form-row">
+        <label>
+          <span>Client</span>
+          <input name="client" type="text" maxlength="200" placeholder="Ex : SARL Wassado">
+        </label>
+        <label>
+          <span>Localisation</span>
+          <input name="location" type="text" maxlength="200" placeholder="Ex : Cap Skirring">
+        </label>
+      </div>
+      <div class="form-row">
+        <label>
+          <span>Date de début</span>
+          <input name="start_date" type="date">
+        </label>
+        <label>
+          <span>Date de fin prévue</span>
+          <input name="end_date" type="date">
+        </label>
+      </div>
+      <div class="modal-actions">
+        <button type="button" id="newProjCancel" class="btn-ghost">Annuler</button>
+        <button type="submit" class="btn-primary"><i data-lucide="check"></i> Créer le projet</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+<script src="js/supabase.js?v=24"></script>
+<script src="js/auth.js?v=26"></script>
+<script src="js/pwa.js?v=23"></script>
+<script src="js/projects.js?v=1"></script>
+</body>
+</html>
