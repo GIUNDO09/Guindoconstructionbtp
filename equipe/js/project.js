@@ -13,6 +13,7 @@ const state = {
   members: [],         // [user_id, ...]
   files: [],
   profilesById: {},
+  allProjects: [],     // [{id, name, status}, ...] pour dropdown "déplacer"
   serverUrl: null,
   conversationId: null,
   currentTab: 'tasks',
@@ -33,7 +34,7 @@ const state = {
   }
 
   bindUI();
-  await Promise.all([loadProfiles(), loadServerUrl(), loadProject(), loadTasks(), loadAssignees(), loadMembers(), loadFiles(), loadConversation()]);
+  await Promise.all([loadProfiles(), loadServerUrl(), loadProject(), loadAllProjects(), loadTasks(), loadAssignees(), loadMembers(), loadFiles(), loadConversation()]);
 
   if (!state.project) {
     document.getElementById('projectLoading').textContent = '❌ Projet introuvable ou accès refusé.';
@@ -84,6 +85,10 @@ async function loadServerUrl() {
 async function loadProject() {
   const { data } = await sb.from('projects').select('*').eq('id', state.projectId).maybeSingle();
   state.project = data;
+}
+async function loadAllProjects() {
+  const { data } = await sb.from('projects').select('id, name, status').order('name');
+  state.allProjects = data || [];
 }
 async function loadTasks() {
   const { data } = await sb.from('tasks').select('*').eq('project_id', state.projectId);
@@ -462,7 +467,13 @@ function openTaskModal(task = null) {
     form.status.value = task.status || 'todo';
   }
 
-  // Liste des assignés possibles : membres du projet OU tous les profils
+  // Dropdown "Chantier / Projet" : tous les projets, par défaut celui ouvert
+  const projSel = form.project_id;
+  const currentProjId = task?.project_id || state.projectId;
+  projSel.innerHTML = '<option value="">— Aucun —</option>' +
+    state.allProjects.map(p => `<option value="${p.id}" ${currentProjId === p.id ? 'selected' : ''}>${escapeHtml(p.name)}${p.status !== 'active' ? ' · ' + p.status : ''}</option>`).join('');
+
+  // Liste des assignés possibles : tous les profils
   const assigneeBox = document.getElementById('assigneeList');
   const allProfiles = Object.values(state.profilesById)
     .sort((a, b) => (a.full_name || '').localeCompare(b.full_name || ''));
@@ -489,14 +500,18 @@ async function onTaskSubmit(e) {
   submit.disabled = true;
   try {
     const selectedAssignees = [...f.querySelectorAll('input[name="assignee"]:checked')].map(c => c.value);
+    const targetProjectId = f.project_id.value || null;
+    const targetProject = targetProjectId
+      ? state.allProjects.find(p => p.id === targetProjectId)
+      : null;
     const payload = {
       title: f.title.value.trim(),
       description: f.description.value.trim() || null,
       due_date: f.due_date.value || null,
       priority: f.priority.value,
       status: f.status.value,
-      project_id: state.projectId,
-      project: state.project.name  // denormalised pour compat legacy
+      project_id: targetProjectId,                     // permet le déplacement
+      project: targetProject?.name || null             // denormalised legacy
     };
     if (!payload.title) throw new Error('Titre requis');
 
