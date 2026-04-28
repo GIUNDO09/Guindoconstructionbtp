@@ -19,6 +19,7 @@ let state = {
   tasks: [],
   assigneesByTask: {},  // { taskId: [userId, userId, ...] }
   folders: [],
+  projects: [],         // [{id, name, ...}]  (vague 5)
   serverUrl: null,
   // Vue par membre : null = grille, sinon user_id du membre affiché
   viewMember: null,
@@ -47,7 +48,7 @@ let state = {
     if (mntb) mntb.hidden = false;
   }
 
-  await Promise.all([loadProfiles(), loadTasks(), loadAssignees(), loadFolders(), loadServerUrl()]);
+  await Promise.all([loadProfiles(), loadTasks(), loadAssignees(), loadFolders(), loadServerUrl(), loadProjects()]);
 
   // Si non-admin → on entre direct sur sa propre vue (pas la grille)
   if (!isAdmin && state.me?.id) state.viewMember = state.me.id;
@@ -69,6 +70,11 @@ let state = {
     })
     .subscribe();
 })();
+
+async function loadProjects() {
+  const { data, error } = await sb.from('projects').select('id, name, status').order('name');
+  if (!error) state.projects = data || [];
+}
 
 async function loadAssignees() {
   const { data, error } = await sb.from('task_assignees').select('*');
@@ -1048,11 +1054,16 @@ function openTaskModal(task = null) {
   f.dataset.id = task?.id || '';
   f.title.value       = task?.title || '';
   f.description.value = task?.description || '';
-  f.project.value     = task?.project || '';
   f.priority.value    = task?.priority || 'medium';
   f.status.value      = task?.status || 'todo';
   f.due_date.value    = task?.due_date || '';
   f.cover_file.value  = '';
+
+  // Dropdown projets : peuplé depuis state.projects
+  const projSel = f.project_id;
+  const currentProjId = task?.project_id || (task?.project ? state.projects.find(p => p.name === task.project)?.id : '') || '';
+  projSel.innerHTML = '<option value="">— Aucun —</option>' +
+    state.projects.map(p => `<option value="${p.id}" ${currentProjId === p.id ? 'selected' : ''}>${escapeHtml(p.name)}</option>`).join('');
 
   // Dossier lié
   f.folder_id.innerHTML = '<option value="">— Aucun —</option>' +
@@ -1090,10 +1101,13 @@ function closeTaskModal() {
 async function onTaskSubmit(e) {
   e.preventDefault();
   const f = e.currentTarget;
+  const projectId = f.project_id.value || null;
+  const projectName = projectId ? (state.projects.find(p => p.id === projectId)?.name || null) : null;
   const payload = {
     title:       f.title.value.trim(),
     description: f.description.value.trim() || null,
-    project:     f.project.value.trim() || null,
+    project_id:  projectId,
+    project:     projectName,  // denormalised pour compat legacy + Gantt
     priority:    f.priority.value,
     status:      f.status.value,
     due_date:    f.due_date.value || null,

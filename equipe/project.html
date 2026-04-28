@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<meta name="theme-color" content="#0f2c52">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="GCBTP Équipe">
+<title>Projet — Espace équipe GCBTP</title>
+<link rel="icon" href="../favicon.ico">
+<link rel="apple-touch-icon" href="../Images/LOGO-1.png">
+<link rel="manifest" href="manifest.json">
+<link rel="stylesheet" href="css/equipe.css?v=35">
+</head>
+<body class="app-body">
+
+<header class="app-header">
+  <a href="../index.html" class="brand">
+    <img src="../Images/LOGO-1.png" alt="GCBTP">
+    <span>Espace équipe</span>
+  </a>
+  <nav class="app-nav">
+    <a href="dashboard.html" class="nav-pill">Tâches</a>
+    <a href="projects.html" class="nav-pill nav-pill-active"><i data-lucide="hard-hat"></i> Projets</a>
+    <a href="chat.html" class="nav-pill">Chat</a>
+    <a href="files.html" class="nav-pill">Fichiers</a>
+    <a href="profil.html" class="nav-pill">Mon profil</a>
+  </nav>
+  <div class="app-user">
+    <a id="headerAvatar" class="header-avatar" href="profil.html" title="Mon profil"></a>
+    <span id="userName">…</span>
+    <button data-install-app class="btn-ghost btn-install" hidden title="Installer l'app"><i data-lucide="download"></i> Installer</button>
+    <button id="logoutBtn" class="btn-ghost">Déconnexion</button>
+  </div>
+</header>
+
+<main class="project-main">
+  <div id="projectLoading" class="empty">Chargement…</div>
+
+  <article id="projectContent" hidden>
+
+    <!-- Hero -->
+    <section class="project-hero">
+      <a href="projects.html" class="btn-ghost btn-back"><i data-lucide="arrow-left"></i> Tous les projets</a>
+      <div class="project-hero-row">
+        <div class="project-hero-info">
+          <h1 id="projectName">…</h1>
+          <div class="project-hero-meta">
+            <span id="projectStatus" class="proj-card-status"></span>
+            <span id="projectClient" class="proj-card-meta-item" hidden><i data-lucide="user"></i> <span></span></span>
+            <span id="projectLocation" class="proj-card-meta-item" hidden><i data-lucide="map-pin"></i> <span></span></span>
+            <span id="projectDates" class="proj-card-meta-item" hidden><i data-lucide="calendar"></i> <span></span></span>
+          </div>
+        </div>
+        <div class="project-hero-actions">
+          <button id="projEditBtn" class="btn-ghost" hidden><i data-lucide="pen"></i> Modifier</button>
+          <button id="projChatBtn" class="btn-ghost"><i data-lucide="message-circle"></i> Conversation</button>
+        </div>
+      </div>
+      <div class="project-hero-progress">
+        <div class="proj-gauge"><div class="proj-gauge-fill" id="projGaugeFill" style="width:0%"></div></div>
+        <span id="projProgressText">0/0 · 0%</span>
+      </div>
+    </section>
+
+    <!-- Onglets -->
+    <nav class="project-tabs">
+      <button type="button" class="project-tab project-tab-active" data-tab="tasks"><i data-lucide="list-checks"></i> Tâches <span id="tabTasksCount" class="tab-count">0</span></button>
+      <button type="button" class="project-tab" data-tab="files"><i data-lucide="folder"></i> Fichiers</button>
+      <button type="button" class="project-tab" data-tab="team"><i data-lucide="users"></i> Équipe <span id="tabTeamCount" class="tab-count">0</span></button>
+      <button type="button" class="project-tab" data-tab="info"><i data-lucide="info"></i> Infos</button>
+    </nav>
+
+    <!-- Onglet Tâches -->
+    <section id="tabTasks" class="project-tab-pane">
+      <div class="project-tab-toolbar">
+        <h3>Tâches du projet</h3>
+        <div style="flex:1"></div>
+        <button id="newProjectTaskBtn" class="btn-primary" hidden><i data-lucide="plus"></i> Nouvelle tâche</button>
+      </div>
+      <div id="projectGantt" class="project-gantt"></div>
+      <div id="projectTaskList" class="project-task-list"></div>
+    </section>
+
+    <!-- Onglet Fichiers -->
+    <section id="tabFiles" class="project-tab-pane" hidden>
+      <p class="form-hint">Les fichiers du projet sont stockés dans le dossier <strong id="folderName"></strong>. Tu peux y déposer plans, photos, devis, contrats…</p>
+      <div class="project-file-actions">
+        <a id="openFolderLink" class="btn-primary" href="files.html" target="_blank"><i data-lucide="folder-open"></i> Ouvrir le dossier dans Fichiers</a>
+        <button id="quickUploadBtn" class="btn-ghost" hidden><i data-lucide="upload-cloud"></i> Upload rapide</button>
+        <input type="file" id="quickUploadInput" multiple hidden>
+      </div>
+      <div id="projectFiles" class="project-files-grid"></div>
+      <div id="quickUploadProgress" class="form-hint" hidden></div>
+    </section>
+
+    <!-- Onglet Équipe -->
+    <section id="tabTeam" class="project-tab-pane" hidden>
+      <p class="form-hint">Membres de l'équipe ayant au moins une tâche sur ce projet (ajoutés automatiquement à la conversation).</p>
+      <div id="projectTeam" class="project-team-grid"></div>
+    </section>
+
+    <!-- Onglet Infos -->
+    <section id="tabInfo" class="project-tab-pane" hidden>
+      <dl class="project-info-list">
+        <div class="project-info-row">
+          <dt>Description</dt>
+          <dd id="infoDescription">—</dd>
+        </div>
+        <div class="project-info-row">
+          <dt>Client</dt>
+          <dd id="infoClient">—</dd>
+        </div>
+        <div class="project-info-row">
+          <dt>Localisation</dt>
+          <dd id="infoLocation">—</dd>
+        </div>
+        <div class="project-info-row">
+          <dt>Dates</dt>
+          <dd id="infoDates">—</dd>
+        </div>
+        <div class="project-info-row">
+          <dt>Statut</dt>
+          <dd id="infoStatus">—</dd>
+        </div>
+        <div class="project-info-row">
+          <dt>Créé par</dt>
+          <dd id="infoCreator">—</dd>
+        </div>
+      </dl>
+    </section>
+
+  </article>
+</main>
+
+<!-- Modal "Nouvelle tâche" (réutilisé du dashboard) -->
+<div id="taskModal" class="modal" hidden>
+  <div class="modal-content">
+    <h3 id="modalTitle">Nouvelle tâche</h3>
+    <form id="taskForm" class="task-form" action="javascript:void(0);" novalidate>
+      <label>
+        <span>Titre *</span>
+        <input name="title" type="text" required maxlength="200">
+      </label>
+      <label>
+        <span>Description</span>
+        <textarea name="description" rows="3"></textarea>
+      </label>
+      <label>
+        <span>Échéance</span>
+        <input name="due_date" type="date">
+      </label>
+      <label>
+        <span>Assignées à (plusieurs possibles)</span>
+        <div id="assigneeList" class="checkbox-list"></div>
+      </label>
+      <div class="form-row">
+        <label>
+          <span>Priorité</span>
+          <select name="priority">
+            <option value="low">Basse</option>
+            <option value="medium" selected>Moyenne</option>
+            <option value="high">Haute</option>
+          </select>
+        </label>
+        <label>
+          <span>Statut</span>
+          <select name="status">
+            <option value="todo">À faire</option>
+            <option value="in_progress">En cours</option>
+            <option value="done">Terminée</option>
+          </select>
+        </label>
+      </div>
+      <div class="modal-actions">
+        <button type="button" id="modalCancel" class="btn-ghost">Annuler</button>
+        <button type="submit" class="btn-primary"><i data-lucide="check"></i> Enregistrer</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal édition projet (admin) -->
+<div id="projEditModal" class="modal" hidden>
+  <div class="modal-content">
+    <button type="button" class="modal-close" id="projEditClose"><i data-lucide="x"></i></button>
+    <h3>Modifier le projet</h3>
+    <form id="projEditForm" class="task-form" action="javascript:void(0);">
+      <label><span>Nom *</span><input name="name" type="text" required maxlength="200"></label>
+      <label><span>Description</span><textarea name="description" rows="2" maxlength="1000"></textarea></label>
+      <div class="form-row">
+        <label><span>Client</span><input name="client" type="text" maxlength="200"></label>
+        <label><span>Localisation</span><input name="location" type="text" maxlength="200"></label>
+      </div>
+      <div class="form-row">
+        <label><span>Date début</span><input name="start_date" type="date"></label>
+        <label><span>Date fin</span><input name="end_date" type="date"></label>
+      </div>
+      <label>
+        <span>Statut</span>
+        <select name="status">
+          <option value="active">Actif</option>
+          <option value="on_hold">En pause</option>
+          <option value="done">Terminé</option>
+          <option value="cancelled">Annulé</option>
+        </select>
+      </label>
+      <div class="modal-actions">
+        <button type="button" id="projEditCancel" class="btn-ghost">Annuler</button>
+        <button type="submit" class="btn-primary"><i data-lucide="check"></i> Enregistrer</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+<script src="js/supabase.js?v=24"></script>
+<script src="js/auth.js?v=26"></script>
+<script src="js/pwa.js?v=23"></script>
+<script src="js/project.js?v=1"></script>
+</body>
+</html>

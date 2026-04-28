@@ -2860,6 +2860,316 @@ body.no-scroll { overflow: hidden; }
 }
 
 /* =====================================================================
+   DÉTAIL PROJET (vague 5 part 2)
+   ===================================================================== */
+.project-main {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--s-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-5);
+}
+
+.project-hero {
+  background: linear-gradient(135deg, #fff 0%, var(--blue-soft) 100%);
+  border-radius: var(--r-lg);
+  padding: var(--s-6);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+  position: relative;
+  overflow: hidden;
+}
+.project-hero::before {
+  content: '';
+  position: absolute;
+  top: -60px; right: -60px;
+  width: 180px; height: 180px;
+  background: radial-gradient(circle, var(--gold-soft), transparent 70%);
+  pointer-events: none;
+}
+.btn-back { align-self: flex-start; padding: 6px 12px; font-size: var(--text-xs); }
+.project-hero-row {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--s-4);
+  flex-wrap: wrap;
+  position: relative;
+  z-index: 1;
+}
+.project-hero-info { flex: 1; min-width: 0; }
+.project-hero-info h1 {
+  margin: 0 0 var(--s-2);
+  font-size: var(--text-3xl);
+  color: var(--blue-dark);
+  font-weight: var(--fw-bold);
+  letter-spacing: -.02em;
+  line-height: 1.1;
+}
+.project-hero-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-3);
+  align-items: center;
+  font-size: var(--text-sm);
+  color: var(--gray-700);
+}
+.project-hero-actions { display: flex; gap: var(--s-2); flex-wrap: wrap; }
+.project-hero-progress {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  position: relative;
+  z-index: 1;
+}
+.project-hero-progress .proj-gauge { flex: 1; height: 12px; }
+.project-hero-progress span {
+  font-size: var(--text-sm);
+  font-weight: var(--fw-semibold);
+  color: var(--blue-dark);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* ----- Onglets ----- */
+.project-tabs {
+  display: flex;
+  gap: 2px;
+  border-bottom: 2px solid var(--gray-200);
+  overflow-x: auto;
+}
+.project-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  padding: var(--s-3) var(--s-4);
+  background: transparent;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  font-size: var(--text-sm);
+  font-weight: var(--fw-medium);
+  color: var(--gray-700);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color var(--t-fast), border-color var(--t-fast);
+}
+.project-tab:hover { color: var(--blue-dark); }
+.project-tab-active {
+  color: var(--blue);
+  border-bottom-color: var(--blue);
+  font-weight: var(--fw-semibold);
+}
+.project-tab [data-lucide] { width: 16px; height: 16px; }
+.tab-count {
+  font-size: var(--text-xs);
+  background: var(--gray-100);
+  color: var(--gray-700);
+  padding: 1px 7px;
+  border-radius: var(--r-full);
+  font-weight: var(--fw-semibold);
+  font-variant-numeric: tabular-nums;
+}
+.project-tab-active .tab-count { background: var(--blue-soft); color: var(--blue-dark); }
+
+.project-tab-pane {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+}
+.project-tab-toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  flex-wrap: wrap;
+}
+.project-tab-toolbar h3 {
+  margin: 0;
+  font-size: var(--text-md);
+  color: var(--blue-dark);
+  font-weight: var(--fw-semibold);
+}
+
+.project-gantt { background: #fff; border-radius: var(--r-md); box-shadow: var(--shadow-xs); }
+.project-task-list { background: #fff; border-radius: var(--r-md); box-shadow: var(--shadow-xs); overflow: hidden; }
+
+/* Liste des tâches du projet */
+.proj-task-list {
+  list-style: none; margin: 0; padding: 0;
+  display: flex; flex-direction: column;
+}
+.proj-task {
+  display: grid;
+  grid-template-columns: 110px 1fr auto auto auto;
+  align-items: center;
+  gap: var(--s-3);
+  padding: var(--s-3) var(--s-4);
+  border-bottom: 1px solid var(--gray-100);
+  transition: background var(--t-fast);
+}
+.proj-task:last-child { border-bottom: none; }
+.proj-task:hover { background: var(--gray-50); }
+.proj-task-status {
+  font-size: var(--text-xs);
+  font-weight: var(--fw-semibold);
+  padding: 3px 10px;
+  border-radius: var(--r-full);
+  text-transform: uppercase;
+  letter-spacing: .4px;
+  text-align: center;
+}
+.proj-task-status-todo        { background: var(--gray-100); color: var(--gray-700); }
+.proj-task-status-in_progress { background: var(--gold-soft); color: var(--gold-dark); }
+.proj-task-status-done        { background: var(--green-soft); color: var(--green); }
+.proj-task-status-overdue     { background: var(--red-soft); color: var(--red); }
+.proj-task-title {
+  font-weight: var(--fw-medium);
+  color: var(--gray-900);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.proj-task-assignees { display: flex; }
+.proj-task-due {
+  font-size: var(--text-xs);
+  color: var(--gray-600);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.proj-task-actions { display: flex; gap: 2px; }
+.proj-task-actions .msg-act { color: var(--gray-500); }
+.proj-task-actions .proj-task-delete:hover { background: var(--red-soft); color: var(--red); }
+
+/* ----- Onglet Fichiers ----- */
+.project-file-actions {
+  display: flex;
+  gap: var(--s-2);
+  flex-wrap: wrap;
+}
+.project-files-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: var(--s-3);
+}
+.proj-file-card {
+  background: #fff;
+  border: 1px solid var(--gray-200);
+  border-radius: var(--r-md);
+  overflow: hidden;
+  box-shadow: var(--shadow-xs);
+  display: flex;
+  flex-direction: column;
+  cursor: pointer;
+  transition: transform var(--t-base), box-shadow var(--t-base);
+}
+.proj-file-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-sm); }
+.proj-file-card img {
+  width: 100%; aspect-ratio: 4 / 3;
+  object-fit: cover;
+  background: var(--gray-100);
+}
+.proj-file-icon {
+  width: 100%; aspect-ratio: 4 / 3;
+  background: var(--gray-100);
+  color: var(--gray-500);
+  display: flex; align-items: center; justify-content: center;
+}
+.proj-file-icon[data-lucide] { width: auto; height: auto; }
+.proj-file-icon { padding: var(--s-4); }
+.proj-file-card .proj-file-icon [data-lucide], .proj-file-card > .proj-file-icon { width: 36px; height: 36px; }
+.proj-file-info {
+  padding: var(--s-2) var(--s-3);
+  border-top: 1px solid var(--gray-100);
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.proj-file-name {
+  font-size: var(--text-sm);
+  font-weight: var(--fw-medium);
+  color: var(--gray-900);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.proj-file-meta { font-size: var(--text-xs); color: var(--gray-500); }
+
+/* ----- Onglet Équipe ----- */
+.project-team-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: var(--s-3);
+}
+.proj-team-card {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  padding: var(--s-3);
+  background: #fff;
+  border: 1px solid var(--gray-200);
+  border-radius: var(--r-md);
+  text-decoration: none;
+  color: inherit;
+  transition: transform var(--t-base), box-shadow var(--t-base), border-color var(--t-base);
+}
+.proj-team-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-sm); border-color: var(--blue); }
+.proj-team-card .member-avatar { width: 44px; height: 44px; }
+.proj-team-info { flex: 1; min-width: 0; }
+.proj-team-name {
+  font-weight: var(--fw-semibold);
+  color: var(--gray-900);
+  font-size: var(--text-sm);
+}
+.proj-team-sub { font-size: var(--text-xs); color: var(--gray-500); }
+
+/* ----- Onglet Infos ----- */
+.project-info-list {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  background: #fff;
+  border-radius: var(--r-md);
+  box-shadow: var(--shadow-xs);
+  overflow: hidden;
+}
+.project-info-row {
+  display: grid;
+  grid-template-columns: 180px 1fr;
+  padding: var(--s-3) var(--s-4);
+  border-bottom: 1px solid var(--gray-100);
+  gap: var(--s-3);
+}
+.project-info-row:last-child { border-bottom: none; }
+.project-info-row dt {
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  color: var(--gray-500);
+  font-weight: var(--fw-semibold);
+  align-self: center;
+}
+.project-info-row dd {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--gray-900);
+  white-space: pre-wrap;
+}
+
+@media (max-width: 720px) {
+  .project-main { padding: var(--s-3); gap: var(--s-3); }
+  .project-hero { padding: var(--s-4); }
+  .project-hero-info h1 { font-size: var(--text-xl); }
+  .proj-task { grid-template-columns: 1fr auto; gap: var(--s-2); padding: var(--s-3); }
+  .proj-task-status, .proj-task-assignees, .proj-task-due { display: none; }
+  .project-info-row { grid-template-columns: 1fr; }
+  .project-info-row dt { padding-bottom: 0; }
+}
+
+/* =====================================================================
    PROJETS (vague 5) — liste + cards + modal nouveau projet
    ===================================================================== */
 .projects-main {

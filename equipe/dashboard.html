@@ -15,7 +15,7 @@
 <link rel="icon" href="../favicon.ico">
 <link rel="apple-touch-icon" href="../Images/LOGO-1.png">
 <link rel="manifest" href="manifest.json">
-<link rel="stylesheet" href="css/equipe.css?v=34">
+<link rel="stylesheet" href="css/equipe.css?v=35">
 </head>
 <body class="app-body">
 
@@ -145,7 +145,9 @@ window.__hideModal = function(id) {
       <div class="form-row">
         <label>
           <span>Chantier / Projet</span>
-          <input name="project" type="text" placeholder="Ex: Hôtel Wassado">
+          <select name="project_id">
+            <option value="">— Aucun —</option>
+          </select>
         </label>
         <label>
           <span>Échéance</span>
@@ -200,6 +202,6 @@ window.__hideModal = function(id) {
 <script src="js/supabase.js?v=24"></script>
 <script src="js/auth.js?v=26"></script>
 <script src="js/pwa.js?v=23"></script>
-<script src="js/dashboard.js?v=26"></script>
+<script src="js/dashboard.js?v=27"></script>
 </body>
 </html>
