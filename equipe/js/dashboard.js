@@ -330,6 +330,236 @@ function renderMemberTaskRow(t, today, canToggle) {
 
 function todayIso() { return new Date().toISOString().slice(0, 10); }
 
+// ----------------------------------------------------------
+// Vague 3 : preuve obligatoire pour valider une tâche
+// ----------------------------------------------------------
+let proofState = { taskId: null, files: [], originalCheckbox: null };
+
+async function handleTaskCheckbox(cb) {
+  const taskId = cb.dataset.taskId;
+  if (!cb.checked) {
+    // Décocher (revenir en "todo") : pas de modal, juste persister
+    cb.disabled = true;
+    const { error } = await sb.from('tasks').update({ status: 'todo' }).eq('id', taskId);
+    cb.disabled = false;
+    if (error) {
+      alert('Erreur : ' + error.message);
+      cb.checked = true;
+    }
+    return;
+  }
+  // Cocher : on n'enregistre pas tout de suite, on demande la preuve
+  proofState = { taskId, files: [], originalCheckbox: cb };
+  openProofModal(taskId);
+}
+
+function openProofModal(taskId) {
+  const task = state.tasks.find(t => t.id === taskId);
+  if (!task) return;
+  document.getElementById('proofTaskTitle').textContent = task.title;
+  document.getElementById('proofList').innerHTML = '';
+  document.getElementById('proofProgress').hidden = true;
+  document.getElementById('proofValidate').disabled = true;
+
+  // Bouton "Valider sans preuve" : admin uniquement
+  const force = document.getElementById('proofForce');
+  if (force) force.hidden = state.me?.role !== 'admin';
+
+  document.getElementById('proofModal').hidden = false;
+}
+
+function closeProofModal({ revert = true } = {}) {
+  document.getElementById('proofModal').hidden = true;
+  if (revert && proofState.originalCheckbox) {
+    proofState.originalCheckbox.checked = false;
+  }
+  proofState = { taskId: null, files: [], originalCheckbox: null };
+}
+
+function setupProofDropzone() {
+  const drop = document.getElementById('proofDrop');
+  const input = document.getElementById('proofInput');
+  const pick = document.getElementById('proofPick');
+  if (!drop || !input || !pick) return;
+
+  pick.addEventListener('click', () => input.click());
+  input.addEventListener('change', (e) => {
+    addProofFiles(Array.from(e.target.files));
+    input.value = '';
+  });
+  drop.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    drop.classList.add('proof-drop-active');
+  });
+  drop.addEventListener('dragleave', () => drop.classList.remove('proof-drop-active'));
+  drop.addEventListener('drop', (e) => {
+    e.preventDefault();
+    drop.classList.remove('proof-drop-active');
+    addProofFiles(Array.from(e.dataTransfer.files));
+  });
+}
+
+function addProofFiles(files) {
+  for (const f of files) {
+    if (f.size > 100 * 1024 * 1024) {
+      alert(`${f.name} dépasse 100 Mo`);
+      continue;
+    }
+    proofState.files.push(f);
+  }
+  renderProofList();
+}
+
+function renderProofList() {
+  const list = document.getElementById('proofList');
+  if (!list) return;
+  list.innerHTML = proofState.files.map((f, i) => {
+    const icon = f.type.startsWith('image/') ? 'image'
+               : f.type.startsWith('video/') ? 'film'
+               : f.type.includes('pdf') ? 'file-text'
+               : 'file';
+    return `
+      <li class="proof-item">
+        <i data-lucide="${icon}"></i>
+        <span class="proof-item-name">${escapeHtml(f.name)}</span>
+        <span class="proof-item-size">${formatBytesShort(f.size)}</span>
+        <button type="button" class="proof-item-rm" data-idx="${i}" title="Retirer"><i data-lucide="x"></i></button>
+      </li>`;
+  }).join('');
+  document.getElementById('proofValidate').disabled = proofState.files.length === 0;
+  window.gcbtp?.renderIcons?.();
+}
+
+async function validateProof(force) {
+  const taskId = proofState.taskId;
+  if (!taskId) return;
+  const validate = document.getElementById('proofValidate');
+  const forceBtn = document.getElementById('proofForce');
+  const cancelBtn = document.getElementById('proofCancel');
+  const closeBtn  = document.getElementById('proofClose');
+  const progress  = document.getElementById('proofProgress');
+
+  if (!force && proofState.files.length === 0) {
+    alert('Ajoute au moins un fichier de preuve.');
+    return;
+  }
+
+  // Verrouille le modal pendant l'upload
+  [validate, forceBtn, cancelBtn, closeBtn].forEach(b => b && (b.disabled = true));
+  progress.hidden = false;
+  progress.textContent = 'Upload en cours…';
+
+  try {
+    if (!force && proofState.files.length > 0) {
+      if (!state.serverUrl) throw new Error('Serveur PC non configuré — impossible d\'uploader');
+      const token = (await sb.auth.getSession()).data.session?.access_token;
+      if (!token) throw new Error('Session expirée');
+      for (let i = 0; i < proofState.files.length; i++) {
+        const f = proofState.files[i];
+        progress.textContent = `Upload ${i + 1} / ${proofState.files.length} : ${f.name}`;
+        const fd = new FormData();
+        fd.append('file', f);
+        fd.append('context', 'task_proof');
+        fd.append('task_proof_id', taskId);
+        const r = await fetch(`${state.serverUrl}/upload`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${token}` },
+          body: fd
+        });
+        if (!r.ok) throw new Error('Échec upload : ' + await r.text());
+      }
+    }
+
+    progress.textContent = 'Validation de la tâche…';
+    const { error } = await sb.from('tasks').update({ status: 'done' }).eq('id', taskId);
+    if (error) throw error;
+
+    closeProofModal({ revert: false });
+  } catch (e) {
+    alert('Erreur : ' + e.message);
+    [validate, forceBtn, cancelBtn, closeBtn].forEach(b => b && (b.disabled = false));
+    progress.hidden = true;
+  }
+}
+
+function formatBytesShort(n) {
+  if (!n) return '';
+  if (n < 1024) return `${n} o`;
+  if (n < 1024 * 1024) return `${(n / 1024).toFixed(0)} Ko`;
+  return `${(n / 1024 / 1024).toFixed(1)} Mo`;
+}
+
+// Galerie des preuves dans le détail tâche
+async function loadAndRenderProofs(taskId, isAdmin) {
+  const box = document.getElementById('detailProofs');
+  if (!box) return;
+  const { data: proofs, error } = await sb.from('files')
+    .select('*')
+    .eq('task_proof_id', taskId)
+    .order('created_at', { ascending: true });
+  if (error) { console.warn('proofs load:', error.message); return; }
+  if (!proofs || proofs.length === 0) {
+    box.hidden = true;
+    return;
+  }
+  box.hidden = false;
+  const items = proofs.map(p => {
+    const isImage = (p.mime_type || '').startsWith('image/');
+    const uploader = state.profilesById[p.uploaded_by]?.full_name || 'Inconnu';
+    const date = new Date(p.created_at).toLocaleDateString('fr-FR');
+    const tooltip = `${p.name}\n${uploader} · ${date}`;
+    if (isImage) {
+      return `<a class="proof-thumb" data-proof-id="${p.id}" title="${escapeAttr(tooltip)}">
+        <img data-proof-img="${p.id}" alt="${escapeAttr(p.name)}">
+      </a>`;
+    }
+    const isPdf = (p.mime_type || '').includes('pdf');
+    const isVid = (p.mime_type || '').startsWith('video/');
+    const icon = isPdf ? 'file-text' : isVid ? 'film' : 'file';
+    return `<a class="proof-thumb proof-thumb-doc" data-proof-id="${p.id}" title="${escapeAttr(tooltip)}">
+      <i data-lucide="${icon}"></i>
+      <span class="proof-thumb-doc-name">${escapeHtml(p.name)}</span>
+    </a>`;
+  }).join('');
+  const rejectBtn = isAdmin
+    ? `<button type="button" id="proofReject" class="btn-ghost btn-danger"><i data-lucide="rotate-ccw"></i> Rejeter & remettre en cours</button>`
+    : '';
+  box.innerHTML = `
+    <h4><i data-lucide="paperclip"></i> Preuve(s) de réalisation (${proofs.length})</h4>
+    <div class="proof-gallery">${items}</div>
+    ${rejectBtn ? `<div class="profil-actions" style="margin-top:12px">${rejectBtn}</div>` : ''}`;
+  // Hydrate les images authentifiées
+  box.querySelectorAll('img[data-proof-img]').forEach(img => {
+    loadAuthedImage(img, img.dataset.proofImg);
+  });
+  // Téléchargement / aperçu au clic sur une vignette
+  box.querySelectorAll('[data-proof-id]').forEach(el => {
+    el.addEventListener('click', async (e) => {
+      e.preventDefault();
+      const id = el.dataset.proofId;
+      const proof = proofs.find(p => p.id === id);
+      if (!proof || !state.serverUrl) return;
+      const token = (await sb.auth.getSession()).data.session?.access_token;
+      if (!token) return;
+      const r = await fetch(`${state.serverUrl}/stream/${id}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!r.ok) { alert('Aperçu indisponible'); return; }
+      const blob = await r.blob();
+      const url = URL.createObjectURL(blob);
+      window.open(url, '_blank');
+      setTimeout(() => URL.revokeObjectURL(url), 60000);
+    });
+  });
+  // Rejet (admin)
+  document.getElementById('proofReject')?.addEventListener('click', async () => {
+    if (!confirm('Rejeter la preuve et remettre la tâche "en cours" ?\nLe membre devra refaire l\'upload.')) return;
+    const { error } = await sb.from('tasks').update({ status: 'in_progress' }).eq('id', taskId);
+    if (error) alert('Erreur : ' + error.message);
+    else openTaskDetail(taskId);
+  });
+}
+
 function renderAssigneeFilter() {
   const sel = document.getElementById('filterAssignee');
   const current = sel.value || 'all';
@@ -544,17 +774,7 @@ function bindUI() {
     projects.addEventListener('change', async (e) => {
       const cb = e.target.closest('.mt-check');
       if (!cb) return;
-      const taskId = cb.dataset.taskId;
-      const newStatus = cb.checked ? 'done' : 'todo';
-      // Optimisme : la jauge bouge avant la confirmation serveur
-      cb.disabled = true;
-      const { error } = await sb.from('tasks').update({ status: newStatus }).eq('id', taskId);
-      cb.disabled = false;
-      if (error) {
-        alert('Erreur : ' + error.message);
-        cb.checked = !cb.checked;  // rollback visuel
-      }
-      // Le realtime déclenchera renderAll() qui mettra à jour la jauge
+      await handleTaskCheckbox(cb);
     });
     // Clic sur le titre de tâche → ouvre le détail
     projects.addEventListener('click', (e) => {
@@ -562,6 +782,29 @@ function bindUI() {
       if (titleBtn) openTaskDetail(titleBtn.dataset.openId);
     });
   }
+
+  // ----- Modal preuve de réalisation -----
+  const proofClose  = document.getElementById('proofClose');
+  const proofCancel = document.getElementById('proofCancel');
+  const proofForce  = document.getElementById('proofForce');
+  const proofValid  = document.getElementById('proofValidate');
+  const proofModal  = document.getElementById('proofModal');
+  if (proofClose)  proofClose.addEventListener('click',  () => closeProofModal({ revert: true }));
+  if (proofCancel) proofCancel.addEventListener('click', () => closeProofModal({ revert: true }));
+  if (proofForce)  proofForce.addEventListener('click',  () => validateProof(true));
+  if (proofValid)  proofValid.addEventListener('click',  () => validateProof(false));
+  if (proofModal) {
+    proofModal.addEventListener('click', (e) => {
+      if (e.target.id === 'proofModal') closeProofModal({ revert: true });
+    });
+  }
+  setupProofDropzone();
+  document.getElementById('proofList')?.addEventListener('click', (e) => {
+    const rm = e.target.closest('.proof-item-rm');
+    if (!rm) return;
+    proofState.files.splice(parseInt(rm.dataset.idx, 10), 1);
+    renderProofList();
+  });
 
   // Boutons "+ Nouvelle tâche" (admin uniquement)
   const ntb = document.getElementById('newTaskBtn');
@@ -683,10 +926,13 @@ async function openTaskDetail(taskId) {
         <button class="btn-ghost" id="detailEdit"><i data-lucide="pen"></i> Modifier</button>
         ${isAdmin ? `<button class="btn-ghost btn-danger" id="detailDelete"><i data-lucide="trash-2"></i> Supprimer</button>` : ''}
       </div>
+      <div id="detailProofs" class="detail-proofs" hidden></div>
     </div>`;
 
   const detailHead = document.getElementById('taskDetailHead');
   hydrateCoverImages(detailHead);
+  // Charge la galerie des preuves de réalisation (si tâche terminée)
+  if (task.status === 'done') loadAndRenderProofs(task.id, isAdmin);
   window.gcbtp?.renderIcons?.();
 
   // Lier les nouveaux boutons
@@ -1003,4 +1249,5 @@ function escapeHtml(s) {
   return String(s ?? '').replace(/[&<>"']/g, c =>
     ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
 }
+function escapeAttr(s) { return escapeHtml(s); }
 })();

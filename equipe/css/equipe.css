@@ -2860,6 +2860,117 @@ body.no-scroll { overflow: hidden; }
 }
 
 /* =====================================================================
+   PREUVE DE RÉALISATION (vague 3) — modal d'upload
+   ===================================================================== */
+.proof-dropzone {
+  border: 2px dashed var(--gray-300);
+  border-radius: var(--r-md);
+  padding: var(--s-6);
+  text-align: center;
+  margin: var(--s-4) 0;
+  background: var(--gray-50);
+  transition: border-color var(--t-fast), background var(--t-fast);
+}
+.proof-dropzone p { margin: var(--s-2) 0; color: var(--gray-700); font-size: var(--text-sm); }
+.proof-drop-active {
+  border-color: var(--blue);
+  background: var(--blue-soft);
+}
+.proof-drop-icon { width: 36px; height: 36px; color: var(--blue); }
+
+.proof-list {
+  list-style: none;
+  margin: 0 0 var(--s-3);
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+  max-height: 220px;
+  overflow-y: auto;
+}
+.proof-item {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  padding: var(--s-2) var(--s-3);
+  background: var(--gray-50);
+  border: 1px solid var(--gray-200);
+  border-radius: var(--r-sm);
+  font-size: var(--text-sm);
+}
+.proof-item [data-lucide]:first-child { width: 18px; height: 18px; color: var(--blue); flex-shrink: 0; }
+.proof-item-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--gray-900);
+}
+.proof-item-size { font-size: var(--text-xs); color: var(--gray-500); font-variant-numeric: tabular-nums; }
+.proof-item-rm {
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: var(--r-sm);
+  color: var(--gray-500);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.proof-item-rm:hover { background: var(--red-soft); color: var(--red); }
+.proof-item-rm [data-lucide] { width: 14px; height: 14px; }
+
+/* Section "Preuves" dans le détail tâche (admin / consultation) */
+.detail-proofs {
+  margin-top: var(--s-4);
+  padding-top: var(--s-4);
+  border-top: 1px solid var(--gray-200);
+}
+.detail-proofs h4 {
+  margin: 0 0 var(--s-3);
+  font-size: var(--text-sm);
+  color: var(--blue-dark);
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+}
+.detail-proofs h4 [data-lucide] { width: 16px; height: 16px; color: var(--gold-dark); }
+.proof-gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: var(--s-2);
+}
+.proof-thumb {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  background: var(--gray-100);
+  border-radius: var(--r-sm);
+  overflow: hidden;
+  border: 1px solid var(--gray-200);
+  cursor: pointer;
+  transition: transform var(--t-fast), box-shadow var(--t-fast);
+}
+.proof-thumb:hover { transform: scale(1.03); box-shadow: var(--shadow-sm); z-index: 1; }
+.proof-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.proof-thumb-doc {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--s-2);
+  text-align: center;
+}
+.proof-thumb-doc [data-lucide] { width: 32px; height: 32px; color: var(--gray-500); margin-bottom: 4px; }
+.proof-thumb-doc-name { font-size: 10px; color: var(--gray-700); overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+
+/* =====================================================================
    AVANCEMENT (Gantt par projet) — remplace l'ancien calendrier
    ===================================================================== */
 .progress-main {

@@ -139,18 +139,25 @@ app.get('/health', (req, res) => {
   res.json({ ok: true, time: new Date().toISOString() });
 });
 
-// Upload : multipart/form-data avec "file", "folder_id" (optionnel), "context" (optionnel)
-// context = 'chat' | 'avatar' | 'task' → range automatiquement le fichier dans
-// le sous-dossier système approprié (sans folder_id).
+// Upload : multipart/form-data avec "file", "folder_id" (optionnel), "context"
+// (optionnel), "task_proof_id" (optionnel, requis si context='task_proof').
+// context = 'chat' | 'avatar' | 'task' | 'task_proof' → range automatiquement
+// dans le sous-dossier système approprié (sans folder_id).
 app.post('/upload', requireAuth, upload.single('file'), async (req, res) => {
   const { folder_id } = req.body;
-  const context = req.body.context && ['chat', 'avatar', 'task'].includes(req.body.context)
+  const validContexts = ['chat', 'avatar', 'task', 'task_proof'];
+  const context = req.body.context && validContexts.includes(req.body.context)
     ? req.body.context : null;
+  const task_proof_id = (req.body.task_proof_id || '').trim() || null;
   const file = req.file;
   if (!file) return res.status(400).json({ error: 'No file' });
+  if (context === 'task_proof' && !task_proof_id) {
+    if (file.path) fs.unlink(file.path, () => {});
+    return res.status(400).json({ error: 'task_proof_id requis pour context=task_proof' });
+  }
 
   try {
-    // 1) Calcul du sous-chemin selon priorité : folder_id > context > racine
+    // 1) Sous-chemin selon priorité : folder_id > context > racine
     let subPath = '';
     if (folder_id) {
       subPath = await folderRelPath(req.sb, folder_id);
@@ -164,6 +171,9 @@ app.post('/upload', requireAuth, upload.single('file'), async (req, res) => {
       subPath = '_avatars';
     } else if (context === 'task') {
       subPath = '_taches';
+    } else if (context === 'task_proof') {
+      // Une preuve par tâche dans son propre dossier
+      subPath = path.join('_taches', 'proofs', task_proof_id);
     }
     const targetDir = path.join(FILES_DIR, subPath);
     fs.mkdirSync(targetDir, { recursive: true });
@@ -178,7 +188,7 @@ app.post('/upload', requireAuth, upload.single('file'), async (req, res) => {
     // 4) Chemin relatif (POSIX) stocké en DB
     const relDisk = path.join(subPath, finalName).split(path.sep).join('/');
 
-    const { data, error } = await req.sb.from('files').insert({
+    const insertData = {
       folder_id: folder_id || null,
       context: context,
       name: file.originalname,
@@ -186,7 +196,10 @@ app.post('/upload', requireAuth, upload.single('file'), async (req, res) => {
       size_bytes: file.size,
       mime_type: file.mimetype,
       uploaded_by: req.user.id
-    }).select().single();
+    };
+    if (task_proof_id) insertData.task_proof_id = task_proof_id;
+
+    const { data, error } = await req.sb.from('files').insert(insertData).select().single();
 
     if (error) {
       fs.unlink(finalAbs, () => {});

@@ -15,7 +15,7 @@
 <link rel="icon" href="../favicon.ico">
 <link rel="apple-touch-icon" href="../Images/LOGO-1.png">
 <link rel="manifest" href="manifest.json">
-<link rel="stylesheet" href="css/equipe.css?v=32">
+<link rel="stylesheet" href="css/equipe.css?v=33">
 </head>
 <body class="app-body">
 
@@ -104,6 +104,31 @@ window.__hideModal = function(id) {
   </div>
 </div>
 
+<!-- Modal "Soumettre une preuve de réalisation" -->
+<div id="proofModal" class="modal" hidden role="dialog" aria-modal="true" aria-label="Soumettre une preuve">
+  <div class="modal-content">
+    <button type="button" class="modal-close" id="proofClose" aria-label="Fermer"><i data-lucide="x"></i></button>
+    <h3>Valider la tâche</h3>
+    <p class="form-hint">
+      Joins une preuve (photo, PDF ou vidéo) pour valider <strong id="proofTaskTitle">…</strong>.
+      Sans preuve, la tâche ne peut pas être marquée terminée.
+    </p>
+    <div class="proof-dropzone" id="proofDrop">
+      <i data-lucide="upload-cloud" class="proof-drop-icon"></i>
+      <p>Glisse tes fichiers ici, ou choisis :</p>
+      <button type="button" id="proofPick" class="btn-ghost"><i data-lucide="paperclip"></i> Choisir des fichiers</button>
+      <input type="file" id="proofInput" accept="image/*,video/*,application/pdf" multiple hidden>
+    </div>
+    <ul id="proofList" class="proof-list"></ul>
+    <div id="proofProgress" class="form-hint" hidden></div>
+    <div class="modal-actions">
+      <button type="button" id="proofCancel" class="btn-ghost">Annuler</button>
+      <button type="button" id="proofForce" class="btn-ghost" hidden title="Réservé aux admins"><i data-lucide="zap"></i> Valider sans preuve</button>
+      <button type="button" id="proofValidate" class="btn-primary" disabled><i data-lucide="check"></i> Valider la tâche</button>
+    </div>
+  </div>
+</div>
+
 <!-- Modal nouvelle/édition tâche -->
 <div id="taskModal" class="modal" hidden>
   <div class="modal-content">
@@ -175,6 +200,6 @@ window.__hideModal = function(id) {
 <script src="js/supabase.js?v=24"></script>
 <script src="js/auth.js?v=26"></script>
 <script src="js/pwa.js?v=23"></script>
-<script src="js/dashboard.js?v=25"></script>
+<script src="js/dashboard.js?v=26"></script>
 </body>
 </html>
