@@ -543,9 +543,24 @@ async function walkEntry(entry, basePath, out) {
 
 async function createFolder(parentId) {
   const name = prompt(parentId ? 'Nom du sous-dossier :' : 'Nom du nouveau dossier :');
-  if (!name?.trim()) return;
+  const trimmed = name?.trim();
+  if (!trimmed) return;
+
+  // Détecte les doublons (insensibles à la casse) dans le même dossier parent.
+  // Sinon Windows/Mac créent deux entrées DB qui pointent au même dossier disque
+  // → empêche tout move/delete cohérent (cf. bug "Cadex" vs "CADEX").
+  const lc = trimmed.toLowerCase();
+  const dup = state.folders.find(f =>
+    (f.parent_id || null) === (parentId || null) &&
+    (f.name || '').toLowerCase() === lc
+  );
+  if (dup) {
+    alert(`Un dossier du même nom existe déjà à cet emplacement : "${dup.name}".\nLes systèmes Windows/Mac ne distinguent pas les majuscules — choisis un nom vraiment différent.`);
+    return;
+  }
+
   const { error } = await sb.from('folders').insert({
-    name: name.trim(),
+    name: trimmed,
     parent_id: parentId,
     created_by: state.me.id,
     status: 'todo'

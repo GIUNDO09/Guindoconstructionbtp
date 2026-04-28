@@ -390,8 +390,23 @@ app.post('/move', requireAuth, async (req, res) => {
       const newSubPath = path.join(newParentSubPath, sanitizeName(folder.name));
       const newAbs = path.join(FILES_DIR, newSubPath);
 
+      // Sur Windows (NTFS) le système est insensible à la casse : "Cadex" et
+      // "CADEX" sont le même dossier sur disque. Détecter cette collision
+      // AVANT de tenter le rename qui échoue avec EINVAL.
+      const isCaseInsensitiveFs = process.platform === 'win32' || process.platform === 'darwin';
+      const norm = (p) => isCaseInsensitiveFs ? path.resolve(p).toLowerCase() : path.resolve(p);
+      const oldNorm = norm(oldAbs);
+      const newNorm = norm(newAbs);
+      if (oldNorm === newNorm || (newNorm + path.sep).startsWith(oldNorm + path.sep)) {
+        return res.status(409).json({
+          error: `Conflit de noms : "${folder.name}" et le dossier cible se confondent (différence de casse uniquement sur Windows/Mac). Renomme l'un des deux pour les distinguer.`
+        });
+      }
+
       fs.mkdirSync(path.dirname(newAbs) || FILES_DIR, { recursive: true });
-      if (fs.existsSync(newAbs)) {
+      // existsSync est aussi insensible à la casse sur ces FS, donc cette
+      // vérification couvre déjà le cas "un dossier avec ce nom existe déjà".
+      if (fs.existsSync(newAbs) && oldNorm !== newNorm) {
         return res.status(409).json({ error: 'Un dossier du même nom existe déjà à la destination' });
       }
 
