@@ -112,7 +112,7 @@ function renderBranch(folder) {
   return `
     <li>
       <div class="tree-item ${active ? 'tree-active' : ''}" data-folder-id="${folder.id}">
-        <span class="tree-icon">📁</span>
+        <span class="tree-icon"><i data-lucide="folder"></i></span>
         <span class="tree-name">${escapeHtml(folder.name)}</span>
         <span class="badge ${st.cls}">${st.label}</span>
       </div>
@@ -171,7 +171,7 @@ function renderFolderContent() {
     const st = STATUS_MAP[f.status];
     return `
       <div class="item item-folder" draggable="true" data-folder-id="${f.id}" data-drop-target="folder">
-        <div class="item-icon">📁</div>
+        <div class="item-icon"><i data-lucide="folder"></i></div>
         <div class="item-body">
           <div class="item-name">${escapeHtml(f.name)}</div>
           <div class="item-meta"><span class="badge ${st.cls}">${st.label}</span></div>
