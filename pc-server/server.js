@@ -416,7 +416,31 @@ app.post('/move', requireAuth, async (req, res) => {
           fs.renameSync(oldAbs, newAbs);
           movedOnDisk = true;
         } catch (e) {
-          return res.status(500).json({ error: 'Échec déplacement disque : ' + e.message });
+          // Fallback Windows : EPERM/EXDEV/EBUSY → copie récursive + suppression
+          // Utile quand un fichier du dossier est ouvert (Word, PDF…) ou que
+          // l'antivirus le scanne au moment du rename.
+          try {
+            fs.cpSync(oldAbs, newAbs, { recursive: true, force: true });
+            try {
+              fs.rmSync(oldAbs, { recursive: true, force: true });
+            } catch (rmErr) {
+              // Copie OK mais source non supprimable : rollback la copie pour
+              // éviter d'avoir le contenu en double sur disque.
+              try { fs.rmSync(newAbs, { recursive: true, force: true }); } catch {}
+              return res.status(500).json({
+                error: `Impossible de supprimer le dossier source après copie : ${rmErr.message}. ` +
+                       `Un fichier est probablement ouvert (Word, Excel, PDF, Explorateur). ` +
+                       `Ferme tout, attends quelques secondes puis réessaie.`
+              });
+            }
+            movedOnDisk = true;
+          } catch (e2) {
+            return res.status(500).json({
+              error: `Échec déplacement disque : ${e2.message}. ` +
+                     `Sur Windows : ferme tout fichier ouvert (Word/Excel/PDF) dans ce dossier, ` +
+                     `vérifie qu'aucune fenêtre Explorateur n'est sur ce dossier, puis réessaie.`
+            });
+          }
         }
       }
 
