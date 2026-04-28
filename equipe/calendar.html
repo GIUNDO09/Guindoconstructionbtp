@@ -11,11 +11,11 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="GCBTP Équipe">
-<title>Calendrier — Espace équipe GCBTP</title>
+<title>Avancement — Espace équipe GCBTP</title>
 <link rel="icon" href="../favicon.ico">
 <link rel="apple-touch-icon" href="../Images/LOGO-1.png">
 <link rel="manifest" href="manifest.json">
-<link rel="stylesheet" href="css/equipe.css?v=31">
+<link rel="stylesheet" href="css/equipe.css?v=32">
 </head>
 <body class="app-body">
 
@@ -26,7 +26,7 @@
   </a>
   <nav class="app-nav">
     <a href="dashboard.html" class="nav-pill">Tâches</a>
-    <a href="calendar.html" class="nav-pill nav-pill-active"><i data-lucide="calendar"></i> Calendrier</a>
+    <a href="calendar.html" class="nav-pill nav-pill-active"><i data-lucide="bar-chart-3"></i> Avancement</a>
     <a href="chat.html" class="nav-pill">Chat</a>
     <a href="files.html" class="nav-pill">Fichiers</a>
     <a href="profil.html" class="nav-pill">Mon profil</a>
@@ -39,37 +39,24 @@
   </div>
 </header>
 
-<main class="cal-main">
+<main class="progress-main">
 
-  <section class="panel">
-    <div class="cal-toolbar">
-      <button type="button" id="calPrev" class="btn-ghost" aria-label="Mois précédent">‹</button>
-      <h2 id="calTitle" class="cal-title">…</h2>
-      <button type="button" id="calNext" class="btn-ghost" aria-label="Mois suivant">›</button>
-      <button type="button" id="calToday" class="btn-ghost">Aujourd'hui</button>
-      <select id="calFilter" class="select">
-        <option value="all">Toutes les tâches</option>
-        <option value="me">Mes tâches</option>
-      </select>
-    </div>
+  <div class="progress-toolbar">
+    <select id="progressFilter" class="select">
+      <option value="all">Tous les chantiers</option>
+      <option value="active">Avec tâches en cours</option>
+      <option value="late">Avec tâches en retard</option>
+    </select>
+    <select id="progressMember" class="select">
+      <option value="all">Toute l'équipe</option>
+    </select>
+    <div style="flex:1"></div>
+    <span id="progressUpdated" class="form-hint"></span>
+  </div>
 
-    <div class="cal-weekdays">
-      <span>Lun</span><span>Mar</span><span>Mer</span><span>Jeu</span><span>Ven</span><span>Sam</span><span>Dim</span>
-    </div>
-    <div id="calGrid" class="cal-grid"></div>
-
-    <div class="cal-legend">
-      <span class="cal-legend-item"><span class="dot dot-todo"></span> À faire</span>
-      <span class="cal-legend-item"><span class="dot dot-progress"></span> En cours</span>
-      <span class="cal-legend-item"><span class="dot dot-done"></span> Terminé</span>
-      <span class="cal-legend-item"><span class="dot dot-overdue"></span> En retard</span>
-    </div>
-  </section>
-
-  <section class="panel" id="dayPanel" hidden>
-    <h3 id="dayTitle">…</h3>
-    <div id="dayTasks" class="cal-day-tasks"></div>
-  </section>
+  <div id="progressList" class="progress-list">
+    <p class="empty">Chargement…</p>
+  </div>
 
 </main>
 
@@ -78,6 +65,6 @@
 <script src="js/supabase.js?v=24"></script>
 <script src="js/auth.js?v=26"></script>
 <script src="js/pwa.js?v=19"></script>
-<script src="js/calendar.js?v=19"></script>
+<script src="js/calendar.js?v=20"></script>
 </body>
 </html>

@@ -15,7 +15,7 @@
 <link rel="icon" href="../favicon.ico">
 <link rel="apple-touch-icon" href="../Images/LOGO-1.png">
 <link rel="manifest" href="manifest.json">
-<link rel="stylesheet" href="css/equipe.css?v=31">
+<link rel="stylesheet" href="css/equipe.css?v=32">
 </head>
 <body class="app-body">
 
@@ -36,7 +36,7 @@ window.__hideModal = function(id) {
   </a>
   <nav class="app-nav">
     <a href="dashboard.html" class="nav-pill nav-pill-active">Tâches</a>
-    <a href="calendar.html" class="nav-pill"><i data-lucide="calendar"></i> Calendrier</a>
+    <a href="calendar.html" class="nav-pill"><i data-lucide="bar-chart-3"></i> Avancement</a>
     <a href="chat.html" class="nav-pill">Chat</a>
     <a href="files.html" class="nav-pill">Fichiers</a>
     <a href="profil.html" class="nav-pill">Mon profil</a>
@@ -49,57 +49,41 @@ window.__hideModal = function(id) {
   </div>
 </header>
 
-<main class="app-main">
+<main class="app-main app-main-compact">
 
-  <section class="stats">
-    <div class="stat-card">
-      <span class="stat-label">Total</span>
-      <span class="stat-value" id="statTotal">0</span>
-    </div>
-    <div class="stat-card stat-todo">
-      <span class="stat-label">À faire</span>
-      <span class="stat-value" id="statTodo">0</span>
-    </div>
-    <div class="stat-card stat-progress">
-      <span class="stat-label">En cours</span>
-      <span class="stat-value" id="statProg">0</span>
-    </div>
-    <div class="stat-card stat-done">
-      <span class="stat-label">Terminées</span>
-      <span class="stat-value" id="statDone">0</span>
-    </div>
-  </section>
+  <!-- Mini-stats inline (1 ligne, sobre) -->
+  <div id="miniStats" class="mini-stats" hidden>
+    <span class="mini-stat"><strong id="miStInProgress">0</strong> en cours</span>
+    <span class="mini-stat-sep"></span>
+    <span class="mini-stat mini-stat-warn"><strong id="miStOverdue">0</strong> en retard</span>
+    <span class="mini-stat-sep"></span>
+    <span class="mini-stat mini-stat-ok"><strong id="miStDoneWeek">0</strong> terminées cette semaine</span>
+  </div>
 
-  <section class="panel">
-    <h2>Progression de l'équipe</h2>
-    <div id="teamProgress" class="team-progress"></div>
-  </section>
-
-  <section class="panel">
+  <!-- Vue grille des membres (admin only) -->
+  <section id="membersGridView" class="panel" hidden>
     <div class="panel-head">
-      <h2>Tâches</h2>
-      <div class="toolbar">
-        <input type="search" id="searchTasks" class="search-input" placeholder="Rechercher (titre, projet, description)…" autocomplete="off">
-        <select id="filterAssignee" class="select">
-          <option value="all">Tous les membres</option>
-        </select>
-        <select id="filterStatus" class="select">
-          <option value="all">Tous les statuts</option>
-          <option value="todo">À faire</option>
-          <option value="in_progress">En cours</option>
-          <option value="done">Terminées</option>
-        </select>
-        <select id="sortTasks" class="select">
-          <option value="due">Trier : échéance</option>
-          <option value="priority">Trier : priorité</option>
-          <option value="created">Trier : date de création</option>
-          <option value="title">Trier : titre A-Z</option>
-        </select>
-        <button id="exportPdfBtn" class="btn-ghost" title="Exporter la liste filtrée en PDF"><i data-lucide="file-text"></i> Export PDF</button>
-        <button id="newTaskBtn" class="btn-primary" hidden>+ Nouvelle tâche</button>
-      </div>
+      <h2>Tâches par membre</h2>
+      <button id="newTaskBtn" class="btn-primary" hidden><i data-lucide="plus"></i> Nouvelle tâche</button>
     </div>
-    <div id="tasksList" class="tasks-list"></div>
+    <div id="membersGrid" class="members-grid"></div>
+  </section>
+
+  <!-- Vue d'un membre (tâches groupées par projet, avec cases à cocher) -->
+  <section id="memberView" class="panel" hidden>
+    <div class="member-view-head">
+      <button id="memberBackBtn" class="btn-ghost" hidden><i data-lucide="arrow-left"></i> Membres</button>
+      <div class="member-view-id">
+        <div id="memberViewAvatar" class="member-avatar"></div>
+        <div>
+          <h2 id="memberViewName">Membre</h2>
+          <p id="memberViewSub" class="form-hint"></p>
+        </div>
+      </div>
+      <div style="flex:1"></div>
+      <button id="memberNewTaskBtn" class="btn-primary" hidden><i data-lucide="plus"></i> Tâche</button>
+    </div>
+    <div id="memberProjects" class="mt-projects"></div>
   </section>
 
 </main>
@@ -191,6 +175,6 @@ window.__hideModal = function(id) {
 <script src="js/supabase.js?v=24"></script>
 <script src="js/auth.js?v=26"></script>
 <script src="js/pwa.js?v=23"></script>
-<script src="js/dashboard.js?v=24"></script>
+<script src="js/dashboard.js?v=25"></script>
 </body>
 </html>

@@ -20,6 +20,9 @@ let state = {
   assigneesByTask: {},  // { taskId: [userId, userId, ...] }
   folders: [],
   serverUrl: null,
+  // Vue par membre : null = grille, sinon user_id du membre affiché
+  viewMember: null,
+  // Conservés pour la compat (ne sont plus exposés en UI dans cette vague)
   filters: { assignee: 'all', status: 'all', search: '', sort: 'due' },
   openTaskId: null,
   commentsChannel: null
@@ -36,9 +39,18 @@ let state = {
 
   state.me = await currentProfile();
   document.getElementById('userName').textContent = state.me?.full_name || session.user.email;
-  if (state.me?.role === 'admin') document.getElementById('newTaskBtn').hidden = false;
+  const isAdmin = state.me?.role === 'admin';
+  if (isAdmin) {
+    const ntb = document.getElementById('newTaskBtn');
+    if (ntb) ntb.hidden = false;
+    const mntb = document.getElementById('memberNewTaskBtn');
+    if (mntb) mntb.hidden = false;
+  }
 
   await Promise.all([loadProfiles(), loadTasks(), loadAssignees(), loadFolders(), loadServerUrl()]);
+
+  // Si non-admin → on entre direct sur sa propre vue (pas la grille)
+  if (!isAdmin && state.me?.id) state.viewMember = state.me.id;
   renderAll();
 
   // Realtime : rafraîchir à chaque changement
@@ -110,12 +122,213 @@ async function loadTasks() {
 
 // ---------- Render ----------
 function renderAll() {
-  renderAssigneeFilter();
-  renderStats();
-  renderTeamProgress();
-  renderTasks();
+  renderMiniStats();
+  if (state.viewMember) {
+    showOnly('memberView');
+    renderMemberView(state.viewMember);
+  } else {
+    showOnly('membersGridView');
+    renderMembersGrid();
+  }
   window.gcbtp?.renderIcons?.();
 }
+
+function showOnly(id) {
+  const grid = document.getElementById('membersGridView');
+  const member = document.getElementById('memberView');
+  if (grid)   grid.hidden   = (id !== 'membersGridView');
+  if (member) member.hidden = (id !== 'memberView');
+  // Mini-stats visibles seulement en vue grille (sinon redondant)
+  const mini = document.getElementById('miniStats');
+  if (mini) mini.hidden = (id !== 'membersGridView') || !state.profiles.length;
+}
+
+// ----------------------------------------------------------
+// Mini-stats inline (1 ligne)
+// ----------------------------------------------------------
+function renderMiniStats() {
+  const today = todayIso();
+  const inProgress = state.tasks.filter(t => t.status === 'in_progress').length;
+  const overdue    = state.tasks.filter(t => t.status !== 'done' && t.due_date && t.due_date < today).length;
+  // Terminées cette semaine = updated_at dans les 7 derniers jours et status=done
+  const weekAgo = new Date(); weekAgo.setDate(weekAgo.getDate() - 7);
+  const weekAgoIso = weekAgo.toISOString();
+  const doneWeek = state.tasks.filter(t => t.status === 'done' && t.updated_at && t.updated_at >= weekAgoIso).length;
+
+  const ip = document.getElementById('miStInProgress');
+  const od = document.getElementById('miStOverdue');
+  const dw = document.getElementById('miStDoneWeek');
+  if (ip) ip.textContent = inProgress;
+  if (od) od.textContent = overdue;
+  if (dw) dw.textContent = doneWeek;
+}
+
+// ----------------------------------------------------------
+// Grille des membres (vue admin par défaut)
+// ----------------------------------------------------------
+function renderMembersGrid() {
+  const box = document.getElementById('membersGrid');
+  if (!box) return;
+  const today = todayIso();
+  const cards = state.profiles
+    .slice()
+    .sort((a, b) => (a.full_name || '').localeCompare(b.full_name || ''))
+    .map(p => {
+      const taskIds = Object.entries(state.assigneesByTask)
+        .filter(([_, uids]) => uids.includes(p.id))
+        .map(([tid]) => tid);
+      const tasks = taskIds.map(id => state.tasks.find(t => t.id === id)).filter(Boolean);
+      const total = tasks.length;
+      const done = tasks.filter(t => t.status === 'done').length;
+      const active = tasks.filter(t => t.status !== 'done').length;
+      const overdue = tasks.filter(t => t.status !== 'done' && t.due_date && t.due_date < today).length;
+      const pct = total ? Math.round((done / total) * 100) : 0;
+      return `
+        <button type="button" class="member-card" data-user-id="${p.id}">
+          <div class="member-avatar" data-avatar-user="${p.id}">${escapeHtml(initials(p.full_name))}</div>
+          <div class="member-card-body">
+            <div class="member-name">${escapeHtml(p.full_name || 'Sans nom')}</div>
+            <div class="member-card-sub">${escapeHtml(p.title || (p.role === 'admin' ? 'Admin' : 'Membre'))}</div>
+            <div class="member-card-stats">
+              <span class="chip">${active} active${active > 1 ? 's' : ''}</span>
+              ${overdue ? `<span class="chip chip-danger"><i data-lucide="alert-triangle"></i> ${overdue}</span>` : ''}
+            </div>
+          </div>
+          <div class="member-card-progress" style="--p:${pct}" title="${done} sur ${total} terminées">
+            <span class="member-card-pct">${pct}%</span>
+          </div>
+        </button>`;
+    }).join('');
+  box.innerHTML = cards || '<p class="empty">Aucun membre dans l\'équipe.</p>';
+  // Hydrate avatars
+  box.querySelectorAll('[data-avatar-user]').forEach(el => {
+    const profile = state.profilesById[el.dataset.avatarUser];
+    if (profile?.avatar_file_id && state.serverUrl) {
+      hydrateAvatar(el, profile.avatar_file_id);
+    }
+  });
+}
+
+async function hydrateAvatar(el, fileId) {
+  try {
+    const token = (await sb.auth.getSession()).data.session?.access_token;
+    if (!token) return;
+    const r = await fetch(`${state.serverUrl}/stream/${fileId}`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    if (!r.ok) return;
+    const blob = await r.blob();
+    const img = document.createElement('img');
+    img.src = URL.createObjectURL(blob);
+    img.alt = '';
+    el.textContent = '';
+    el.appendChild(img);
+  } catch {}
+}
+
+// ----------------------------------------------------------
+// Vue d'un membre : tâches groupées par projet, avec cases
+// ----------------------------------------------------------
+function renderMemberView(userId) {
+  const member = state.profilesById[userId];
+  if (!member) {
+    document.getElementById('memberProjects').innerHTML = '<p class="empty">Membre introuvable.</p>';
+    return;
+  }
+  // Header membre
+  document.getElementById('memberViewName').textContent = member.full_name || 'Sans nom';
+  document.getElementById('memberViewSub').textContent = member.title || (member.role === 'admin' ? '👑 Admin' : '👤 Membre');
+  // Avatar
+  const avBox = document.getElementById('memberViewAvatar');
+  avBox.innerHTML = '';
+  avBox.dataset.avatarUser = member.id;
+  avBox.textContent = initials(member.full_name);
+  if (member.avatar_file_id && state.serverUrl) hydrateAvatar(avBox, member.avatar_file_id);
+
+  // Bouton "back" : visible uniquement pour admin (les membres restent sur leur vue)
+  const backBtn = document.getElementById('memberBackBtn');
+  if (backBtn) backBtn.hidden = state.me?.role !== 'admin';
+
+  // Tâches du membre, groupées par projet
+  const myTaskIds = Object.entries(state.assigneesByTask)
+    .filter(([_, uids]) => uids.includes(userId))
+    .map(([tid]) => tid);
+  const myTasks = myTaskIds.map(id => state.tasks.find(t => t.id === id)).filter(Boolean);
+
+  const groups = {};
+  myTasks.forEach(t => {
+    const key = (t.project || '').trim() || '(Sans chantier)';
+    (groups[key] ||= []).push(t);
+  });
+
+  const today = todayIso();
+  const sortedGroups = Object.entries(groups).map(([project, ts]) => ({
+    project,
+    tasks: ts.slice().sort((a, b) => {
+      // À faire / en cours d'abord (par échéance), terminées en bas
+      const aDone = a.status === 'done', bDone = b.status === 'done';
+      if (aDone !== bDone) return aDone ? 1 : -1;
+      return (a.due_date || '9999').localeCompare(b.due_date || '9999');
+    }),
+    stats: ((arr) => {
+      const total = arr.length;
+      const done = arr.filter(t => t.status === 'done').length;
+      const overdue = arr.filter(t => t.status !== 'done' && t.due_date && t.due_date < today).length;
+      return { total, done, overdue, pct: total ? Math.round(done / total * 100) : 0 };
+    })(ts)
+  })).sort((a, b) => {
+    if (b.stats.overdue !== a.stats.overdue) return b.stats.overdue - a.stats.overdue;
+    return a.project.localeCompare(b.project);
+  });
+
+  const box = document.getElementById('memberProjects');
+  if (!sortedGroups.length) {
+    box.innerHTML = '<p class="empty">Aucune tâche assignée à ce membre.</p>';
+    return;
+  }
+  box.innerHTML = sortedGroups.map(g => renderMemberProject(g, userId, today)).join('');
+  window.gcbtp?.renderIcons?.();
+}
+
+function renderMemberProject(g, userId, today) {
+  const { project, tasks, stats } = g;
+  const isMe = userId === state.me?.id;
+  const isAdmin = state.me?.role === 'admin';
+  const canToggle = isMe || isAdmin;
+  return `
+    <section class="mt-project" data-project="${escapeAttr(project)}">
+      <header class="mt-project-head">
+        <div class="mt-project-title">
+          <i data-lucide="hard-hat"></i>
+          <h3>${escapeHtml(project)}</h3>
+          <span class="mt-project-count">${stats.done}/${stats.total} · ${stats.pct}%</span>
+        </div>
+        <div class="proj-gauge"><div class="proj-gauge-fill" style="width:${stats.pct}%"></div></div>
+      </header>
+      <ul class="mt-tasks">
+        ${tasks.map(t => renderMemberTaskRow(t, today, canToggle)).join('')}
+      </ul>
+    </section>`;
+}
+
+function renderMemberTaskRow(t, today, canToggle) {
+  const checked = t.status === 'done';
+  const isOverdue = !checked && t.due_date && t.due_date < today;
+  const dueLabel = t.due_date
+    ? new Date(t.due_date).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })
+    : '—';
+  return `
+    <li class="mt-task ${checked ? 'mt-task-done' : ''} ${isOverdue ? 'mt-task-overdue' : ''}">
+      <label class="mt-check-wrap">
+        <input type="checkbox" class="mt-check" data-task-id="${t.id}" ${checked ? 'checked' : ''} ${canToggle ? '' : 'disabled'}>
+        <span class="mt-check-box"><i data-lucide="check"></i></span>
+      </label>
+      <button type="button" class="mt-task-title" data-open-id="${t.id}">${escapeHtml(t.title)}</button>
+      <span class="mt-task-due ${isOverdue ? 'mt-task-due-overdue' : ''}">${escapeHtml(dueLabel)}</span>
+    </li>`;
+}
+
+function todayIso() { return new Date().toISOString().slice(0, 10); }
 
 function renderAssigneeFilter() {
   const sel = document.getElementById('filterAssignee');
@@ -310,74 +523,52 @@ function firstName(full) {
 function bindUI() {
   document.getElementById('logoutBtn').addEventListener('click', logout);
 
-  document.getElementById('filterAssignee').addEventListener('change', (e) => {
-    state.filters.assignee = e.target.value;
-    renderTasks();
-  });
-  document.getElementById('filterStatus').addEventListener('change', (e) => {
-    state.filters.status = e.target.value;
-    renderTasks();
-  });
-  document.getElementById('sortTasks').addEventListener('change', (e) => {
-    state.filters.sort = e.target.value;
-    renderTasks();
-  });
-  const search = document.getElementById('searchTasks');
-  let searchTimer;
-  search.addEventListener('input', (e) => {
-    clearTimeout(searchTimer);
-    searchTimer = setTimeout(() => {
-      state.filters.search = e.target.value.trim();
-      renderTasks();
-    }, 150);
+  // ----- Vue par membre : grille → détail membre -----
+  const grid = document.getElementById('membersGrid');
+  if (grid) grid.addEventListener('click', (e) => {
+    const card = e.target.closest('.member-card');
+    if (!card) return;
+    state.viewMember = card.dataset.userId;
+    renderAll();
   });
 
-  // Changement de statut rapide
-  document.getElementById('tasksList').addEventListener('change', async (e) => {
-    if (!e.target.classList.contains('task-status')) return;
-    const id = e.target.dataset.id;
-    const newStatus = e.target.value;
-    const { error } = await sb.from('tasks').update({ status: newStatus }).eq('id', id);
-    if (error) alert('Erreur: ' + error.message);
+  const backBtn = document.getElementById('memberBackBtn');
+  if (backBtn) backBtn.addEventListener('click', () => {
+    state.viewMember = null;
+    renderAll();
   });
 
-  // Modifier / supprimer / ouvrir détail
-  document.getElementById('tasksList').addEventListener('click', async (e) => {
-    // Cycle de statut : todo → in_progress → done → todo
-    const cycleBtn = e.target.closest('.status-cycle');
-    if (cycleBtn) {
-      e.stopPropagation();
-      const id = cycleBtn.dataset.cycle;
-      const cur = cycleBtn.dataset.status;
-      const next = cur === 'todo' ? 'in_progress' : cur === 'in_progress' ? 'done' : 'todo';
-      cycleBtn.disabled = true;
-      const { error } = await sb.from('tasks').update({ status: next }).eq('id', id);
-      if (error) { alert('Erreur: ' + error.message); cycleBtn.disabled = false; }
-      return;
-    }
-    const editBtn    = e.target.closest('.btn-edit');
-    const delBtn     = e.target.closest('.btn-delete');
-    const commentBtn = e.target.closest('.btn-comment');
-    const titleBtn   = e.target.closest('.task-open');
-    if (editBtn) {
-      const task = state.tasks.find(t => t.id === editBtn.dataset.id);
-      openTaskModal(task);
-      return;
-    }
-    if (delBtn) {
-      if (!confirm('Supprimer cette tâche ?')) return;
-      const { error } = await sb.from('tasks').delete().eq('id', delBtn.dataset.id);
-      if (error) alert('Erreur: ' + error.message);
-      return;
-    }
-    if (commentBtn || titleBtn) {
-      const id = (commentBtn || titleBtn).dataset.id;
-      openTaskDetail(id);
-    }
-  });
+  // Cocher / décocher une tâche dans la vue membre
+  const projects = document.getElementById('memberProjects');
+  if (projects) {
+    projects.addEventListener('change', async (e) => {
+      const cb = e.target.closest('.mt-check');
+      if (!cb) return;
+      const taskId = cb.dataset.taskId;
+      const newStatus = cb.checked ? 'done' : 'todo';
+      // Optimisme : la jauge bouge avant la confirmation serveur
+      cb.disabled = true;
+      const { error } = await sb.from('tasks').update({ status: newStatus }).eq('id', taskId);
+      cb.disabled = false;
+      if (error) {
+        alert('Erreur : ' + error.message);
+        cb.checked = !cb.checked;  // rollback visuel
+      }
+      // Le realtime déclenchera renderAll() qui mettra à jour la jauge
+    });
+    // Clic sur le titre de tâche → ouvre le détail
+    projects.addEventListener('click', (e) => {
+      const titleBtn = e.target.closest('.mt-task-title');
+      if (titleBtn) openTaskDetail(titleBtn.dataset.openId);
+    });
+  }
 
-  document.getElementById('newTaskBtn').addEventListener('click', () => openTaskModal());
-  document.getElementById('exportPdfBtn').addEventListener('click', exportTasksPdf);
+  // Boutons "+ Nouvelle tâche" (admin uniquement)
+  const ntb = document.getElementById('newTaskBtn');
+  if (ntb) ntb.addEventListener('click', () => openTaskModal());
+  const mntb = document.getElementById('memberNewTaskBtn');
+  if (mntb) mntb.addEventListener('click', () => openTaskModal());
+
   document.getElementById('modalCancel').addEventListener('click', closeTaskModal);
   document.getElementById('taskForm').addEventListener('submit', onTaskSubmit);
 
