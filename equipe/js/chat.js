@@ -749,6 +749,15 @@ function bindUI() {
     document.getElementById('chatMain').classList.remove('with-conv');
   });
 
+  // Démarrer une visio (Jitsi) : poste un message avec le lien dans la conv
+  document.getElementById('startVisioBtn').addEventListener('click', startVisio);
+
+  // Modal Jitsi : fermer
+  document.getElementById('jitsiCloseBtn').addEventListener('click', closeJitsiModal);
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !document.getElementById('jitsiModal').hidden) closeJitsiModal();
+  });
+
   // Barre des épinglés : toggle, clic pour sauter, désépingler
   document.getElementById('pinnedToggle').addEventListener('click', () => {
     const bar = document.getElementById('pinnedBar');
@@ -829,6 +838,15 @@ function bindUI() {
     const fid = img.dataset.mediaId;
     const src = img.src || (fid && blobUrlCache.get(fid));
     if (src) openLightbox(src);
+  });
+
+  // Clic sur "Rejoindre la réunion" dans un message → ouvre Jitsi
+  document.getElementById('messagesList').addEventListener('click', (e) => {
+    const btn = e.target.closest('.msg-jitsi-join');
+    if (!btn) return;
+    e.preventDefault();
+    e.stopPropagation();
+    openJitsiModal(btn.dataset.jitsiUrl);
   });
 
   // Clic sur le nom d'auteur ou une mention → page profil public
@@ -1299,6 +1317,52 @@ function cancelReply() {
   document.getElementById('replyPreview').hidden = true;
 }
 
+// -----------------------------------------------------------
+// Visio Jitsi : démarrage + ouverture modal
+// -----------------------------------------------------------
+async function startVisio() {
+  if (!me) return;
+  // Room ID : convId + timestamp + random pour rendre l'URL non devinable
+  const conv = currentConversationId || 'general';
+  const rand = Math.random().toString(36).slice(2, 8);
+  const roomId = `gcbtp-${conv}-${Date.now().toString(36)}-${rand}`;
+  const url = `https://meet.jit.si/${roomId}`;
+
+  // Poste un message dans la conversation pour que tout le monde voit le lien
+  const insertRow = {
+    user_id: me.id,
+    content: `🎥 Réunion en visio démarrée\n${url}`,
+    conversation_id: currentConversationId
+  };
+  const { error } = await sb.from('messages').insert(insertRow);
+  if (error) { alert('Impossible de démarrer la visio : ' + error.message); return; }
+
+  // Ouvre la visio chez l'initiateur tout de suite
+  openJitsiModal(url);
+}
+
+function openJitsiModal(url) {
+  const modal = document.getElementById('jitsiModal');
+  const frame = document.getElementById('jitsiFrame');
+  if (!modal || !frame) return;
+  // displayName + subject pour Jitsi (via URL hash, supporté par meet.jit.si)
+  const displayName = encodeURIComponent(me?.full_name || 'Invité');
+  const sep = url.includes('#') ? '&' : '#';
+  frame.src = `${url}${sep}userInfo.displayName="${displayName}"&config.prejoinPageEnabled=false`;
+  modal.hidden = false;
+  document.body.classList.add('no-scroll');
+}
+
+function closeJitsiModal() {
+  const modal = document.getElementById('jitsiModal');
+  const frame = document.getElementById('jitsiFrame');
+  if (!modal || modal.hidden) return;
+  // Recharge l'iframe vers about:blank pour libérer caméra/micro proprement
+  frame.src = 'about:blank';
+  modal.hidden = true;
+  document.body.classList.remove('no-scroll');
+}
+
 function jumpToMessage(id) {
   const target = document.querySelector(`.msg[data-id="${id}"]`);
   if (!target) return;
@@ -1417,7 +1481,7 @@ async function markVisibleAsRead() {
 // Mentions @prénom
 // -----------------------------------------------------------
 function renderMessageContent(text) {
-  // 1) escape, 2) mentions, 3) liens, 4) sauts de ligne
+  // 1) escape, 2) mentions, 3) liens (Jitsi spécial → bouton, autres → <a>), 4) sauts
   const escaped = escapeHtml(text);
   const mentioned = escaped.replace(/(^|\s)@([A-Za-zÀ-ÿ][\wÀ-ÿ-]+)/g, (full, before, name) => {
     const profile = Object.values(profilesById).find(p => {
@@ -1429,6 +1493,8 @@ function renderMessageContent(text) {
     return `${before}<span class="mention${meCls}" data-user="${profile.id}">@${escapeHtml(name)}</span>`;
   });
   return mentioned
+    .replace(/(https:\/\/meet\.jit\.si\/gcbtp-[^\s<]+)/g,
+      '<button type="button" class="msg-jitsi-join" data-jitsi-url="$1"><i data-lucide="video"></i> Rejoindre la réunion</button>')
     .replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener">$1</a>')
     .replace(/\n/g, '<br>');
 }

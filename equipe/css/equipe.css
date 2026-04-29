@@ -1260,6 +1260,67 @@ a.progress-name:hover { text-decoration: underline; }
 .msg-mine .msg-time { color: rgba(255, 255, 255, .85); }
 .msg-content { font-size: var(--text-base); line-height: 1.45; }
 .msg-content a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
+
+/* Bouton "Rejoindre la réunion" Jitsi dans un message */
+.msg-jitsi-join {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  padding: 8px 14px;
+  border: none;
+  border-radius: var(--r-md);
+  background: var(--orange);
+  color: #fff;
+  font-size: 13px;
+  font-weight: var(--fw-semibold);
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  transition: transform var(--t-fast), background var(--t-fast);
+}
+.msg-jitsi-join:hover { background: var(--orange-dark); transform: translateY(-1px); }
+.msg-jitsi-join:active { transform: translateY(0); }
+.msg-jitsi-join [data-lucide] { width: 16px; height: 16px; }
+.msg-mine .msg-jitsi-join { background: #fff; color: var(--orange); }
+.msg-mine .msg-jitsi-join:hover { background: rgba(255, 255, 255, .9); }
+
+/* Modal Jitsi plein écran */
+.jitsi-modal {
+  position: fixed;
+  inset: 0;
+  background: #1a1a1a;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+}
+.jitsi-modal[hidden] { display: none; }
+.jitsi-modal-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  background: #0f2c52;
+  color: #fff;
+}
+.jitsi-modal-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: var(--fw-semibold);
+}
+.jitsi-modal-title [data-lucide] { width: 18px; height: 18px; }
+.jitsi-modal-bar .btn-ghost {
+  color: #fff;
+  background: rgba(255, 255, 255, .12);
+}
+.jitsi-modal-bar .btn-ghost:hover { background: rgba(255, 255, 255, .22); }
+.jitsi-modal-frame {
+  flex: 1;
+  width: 100%;
+  border: 0;
+  background: #1a1a1a;
+}
 @keyframes msg-pop {
   from { opacity: 0; transform: translateY(8px) scale(.97); }
   to   { opacity: 1; transform: translateY(0) scale(1); }

@@ -18,7 +18,7 @@
 <link rel="preconnect" href="https://aqbtphtqurkunfawnvvg.supabase.co" crossorigin>
 <link rel="preconnect" href="https://unpkg.com" crossorigin>
 <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
-<link rel="stylesheet" href="css/equipe.css?v=38">
+<link rel="stylesheet" href="css/equipe.css?v=39">
 </head>
 <body class="app-body">
 
@@ -75,6 +75,7 @@
             <span id="chatSubText">Discussion en temps réel avec toute l'équipe</span>
           </p>
         </div>
+        <button type="button" id="startVisioBtn" class="btn-icon-bubble" title="Démarrer une visio"><i data-lucide="video"></i></button>
         <button type="button" id="searchToggleBtn" class="btn-icon-bubble" title="Rechercher"><i data-lucide="search"></i></button>
       </div>
       <div id="searchBar" class="search-bar" hidden>
@@ -167,6 +168,15 @@
   </div>
 </div>
 
+<!-- Modal Visio Jitsi -->
+<div id="jitsiModal" class="jitsi-modal" hidden role="dialog" aria-modal="true" aria-label="Réunion en visio">
+  <div class="jitsi-modal-bar">
+    <span id="jitsiModalTitle" class="jitsi-modal-title"><i data-lucide="video"></i> Réunion</span>
+    <button type="button" id="jitsiCloseBtn" class="btn-ghost"><i data-lucide="x"></i> Quitter</button>
+  </div>
+  <iframe id="jitsiFrame" class="jitsi-modal-frame" allow="camera; microphone; display-capture; autoplay; fullscreen; clipboard-write" allowfullscreen></iframe>
+</div>
+
 <!-- Visionneuse plein écran (image) -->
 <div id="lightbox" class="lightbox" hidden role="dialog" aria-modal="true" aria-label="Image en plein écran">
   <div class="lightbox-toolbar">
@@ -182,6 +192,6 @@
 <script src="js/auth.js?v=26"></script>
 <script src="js/pwa.js?v=11"></script>
 <script src="js/push.js?v=23"></script>
-<script src="js/chat.js?v=31"></script>
+<script src="js/chat.js?v=32"></script>
 </body>
 </html>
