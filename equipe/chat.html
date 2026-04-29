@@ -19,7 +19,7 @@
 <link rel="preconnect" href="https://unpkg.com" crossorigin>
 <link rel="preconnect" href="https://gcbtp.whereby.com" crossorigin>
 <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
-<link rel="stylesheet" href="css/equipe.css?v=40">
+<link rel="stylesheet" href="css/equipe.css?v=41">
 </head>
 <body class="app-body">
 
@@ -170,6 +170,39 @@
   </div>
 </div>
 
+<!-- Modal "Appel entrant" (chez le destinataire qui reçoit) -->
+<div id="incomingCallModal" class="call-modal" hidden role="dialog" aria-modal="true" aria-label="Appel entrant">
+  <div class="call-modal-card call-modal-incoming">
+    <div class="call-modal-pulse"></div>
+    <div class="call-modal-avatar" id="incomingCallAvatar">?</div>
+    <div class="call-modal-name" id="incomingCallName">…</div>
+    <div class="call-modal-sub" id="incomingCallSub">Appel entrant</div>
+    <div class="call-modal-actions">
+      <button type="button" id="incomingCallDecline" class="call-btn call-btn-decline" aria-label="Refuser">
+        <i data-lucide="phone-off"></i>
+      </button>
+      <button type="button" id="incomingCallAccept" class="call-btn call-btn-accept" aria-label="Accepter">
+        <i data-lucide="phone"></i>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal "Appel sortant" (chez l'appelant qui attend) -->
+<div id="outgoingCallModal" class="call-modal" hidden role="dialog" aria-modal="true" aria-label="Appel sortant">
+  <div class="call-modal-card">
+    <div class="call-modal-pulse"></div>
+    <div class="call-modal-avatar" id="outgoingCallAvatar">?</div>
+    <div class="call-modal-name" id="outgoingCallName">…</div>
+    <div class="call-modal-sub">Appel en cours…</div>
+    <div class="call-modal-actions">
+      <button type="button" id="outgoingCallCancel" class="call-btn call-btn-decline" aria-label="Annuler">
+        <i data-lucide="phone-off"></i>
+      </button>
+    </div>
+  </div>
+</div>
+
 <!-- Modal Visio Jitsi -->
 <div id="jitsiModal" class="jitsi-modal" hidden role="dialog" aria-modal="true" aria-label="Réunion en visio">
   <div class="jitsi-modal-bar">
@@ -194,6 +227,6 @@
 <script src="js/auth.js?v=26"></script>
 <script src="js/pwa.js?v=11"></script>
 <script src="js/push.js?v=23"></script>
-<script src="js/chat.js?v=35"></script>
+<script src="js/chat.js?v=36"></script>
 </body>
 </html>

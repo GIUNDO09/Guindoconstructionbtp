@@ -1287,6 +1287,118 @@ a.progress-name:hover { text-decoration: underline; }
 .msg-jitsi-join.msg-jitsi-call:hover { background: #15803d; }
 .msg-mine .msg-jitsi-join.msg-jitsi-call { background: #fff; color: #16a34a; }
 
+/* ===== Modals d'appel (style WhatsApp) ===== */
+.call-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 37, 66, .94);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  backdrop-filter: blur(6px);
+}
+.call-modal[hidden] { display: none; }
+
+.call-modal-card {
+  position: relative;
+  background: #fff;
+  border-radius: 24px;
+  padding: 40px 32px 32px;
+  max-width: 360px;
+  width: 100%;
+  text-align: center;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, .4);
+  animation: callPop .25s var(--ease-out);
+}
+@keyframes callPop {
+  from { opacity: 0; transform: scale(.9) translateY(20px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.call-modal-pulse {
+  position: absolute;
+  top: 32px; left: 50%;
+  width: 96px; height: 96px;
+  border-radius: 50%;
+  background: var(--orange);
+  transform: translateX(-50%);
+  opacity: .35;
+  animation: callPulse 1.6s ease-out infinite;
+  z-index: 0;
+}
+.call-modal-incoming .call-modal-pulse { background: #16a34a; }
+@keyframes callPulse {
+  0%   { transform: translateX(-50%) scale(.85); opacity: .55; }
+  70%  { transform: translateX(-50%) scale(1.6);  opacity: 0; }
+  100% { transform: translateX(-50%) scale(1.6);  opacity: 0; }
+}
+
+.call-modal-avatar {
+  position: relative;
+  z-index: 1;
+  width: 96px; height: 96px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--blue) 0%, var(--blue-dark) 100%);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 20px;
+  font-size: 36px;
+  font-weight: var(--fw-semibold);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, .15);
+}
+.call-modal-incoming .call-modal-avatar {
+  background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+}
+
+.call-modal-name {
+  font-size: 22px;
+  font-weight: var(--fw-semibold);
+  color: var(--gray-900);
+  margin-bottom: 6px;
+}
+.call-modal-sub {
+  font-size: 14px;
+  color: var(--gray-500);
+  margin-bottom: 32px;
+}
+
+.call-modal-actions {
+  display: flex;
+  justify-content: center;
+  gap: 32px;
+}
+.call-btn {
+  width: 64px; height: 64px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, .25);
+  transition: transform .15s, box-shadow .15s;
+}
+.call-btn:hover { transform: scale(1.08); box-shadow: 0 8px 22px rgba(0, 0, 0, .3); }
+.call-btn:active { transform: scale(.95); }
+.call-btn [data-lucide] { width: 28px; height: 28px; }
+.call-btn-accept { background: #16a34a; }
+.call-btn-accept:hover { background: #15803d; }
+.call-btn-decline { background: #dc2626; }
+.call-btn-decline:hover { background: #b91c1c; }
+.call-modal-incoming .call-btn-accept { animation: callShake 1.2s ease-in-out infinite; }
+@keyframes callShake {
+  0%, 100% { transform: rotate(0deg); }
+  20% { transform: rotate(-12deg); }
+  40% { transform: rotate(12deg); }
+  60% { transform: rotate(-8deg); }
+  80% { transform: rotate(8deg); }
+}
+
 /* Modal Jitsi plein écran */
 .jitsi-modal {
   position: fixed;

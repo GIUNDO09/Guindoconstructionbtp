@@ -749,9 +749,17 @@ function bindUI() {
     document.getElementById('chatMain').classList.remove('with-conv');
   });
 
-  // Démarrer une visio / appel vocal (Jitsi) : poste un message avec le lien dans la conv
+  // Démarrer une visio / appel vocal : sonnerie chez les autres via table calls
   document.getElementById('startVisioBtn').addEventListener('click', startVisio);
   document.getElementById('startCallBtn').addEventListener('click', startVoiceCall);
+
+  // Modals d'appel : accepter / refuser / annuler
+  document.getElementById('incomingCallAccept').addEventListener('click', acceptIncomingCall);
+  document.getElementById('incomingCallDecline').addEventListener('click', declineIncomingCall);
+  document.getElementById('outgoingCallCancel').addEventListener('click', cancelOutgoingCall);
+
+  // Abonnement Realtime aux appels entrants
+  subscribeCalls();
 
   // Modal Jitsi : fermer
   document.getElementById('jitsiCloseBtn').addEventListener('click', closeJitsiModal);
@@ -1321,18 +1329,25 @@ function cancelReply() {
 // -----------------------------------------------------------
 // Visio Jitsi : démarrage + ouverture modal
 // -----------------------------------------------------------
-async function startVisio() {
-  return startWherebyCall({ audioOnly: false });
-}
-async function startVoiceCall() {
-  return startWherebyCall({ audioOnly: true });
-}
-async function startWherebyCall({ audioOnly }) {
-  if (!me) return;
-  if (!serverUrl) { alert('Serveur PC non configuré — impossible de démarrer la visio'); return; }
+// -----------------------------------------------------------
+// Appels style WhatsApp : sonnerie chez les destinataires,
+// accept/decline, auto-join Whereby.
+// -----------------------------------------------------------
+let currentCall = null;          // { id, room_url, audio_only, role: 'caller'|'callee' }
+let outgoingTimer = null;        // timeout missed côté appelant
+let ringtoneCtx = null;          // Web Audio context pour la sonnerie
+let ringtoneTimer = null;
 
-  // 1) Demande au pc-server de créer une room Whereby (la clé API y reste cachée)
-  let roomUrl = null;
+async function startVisio()      { return startCallFlow({ audioOnly: false }); }
+async function startVoiceCall()  { return startCallFlow({ audioOnly: true  }); }
+
+async function startCallFlow({ audioOnly }) {
+  if (!me) return;
+  if (!serverUrl) { alert('Serveur PC non configuré — impossible de lancer l\'appel'); return; }
+  if (currentCall) { alert('Un appel est déjà en cours'); return; }
+
+  // 1) Crée la room Whereby via pc-server (clé API cachée côté serveur)
+  let roomUrl;
   try {
     const token = (await sb.auth.getSession()).data.session?.access_token;
     if (!token) throw new Error('Session expirée');
@@ -1342,23 +1357,191 @@ async function startWherebyCall({ audioOnly }) {
       body: JSON.stringify({ audioOnly })
     });
     if (!r.ok) throw new Error(await r.text());
-    const data = await r.json();
-    roomUrl = data.roomUrl;
+    roomUrl = (await r.json()).roomUrl;
   } catch (e) {
     alert('Impossible de créer la réunion : ' + e.message);
     return;
   }
 
-  // 2) Poste un message dans la conv pour que tout le monde voit le lien
-  const label = audioOnly ? '📞 Appel vocal démarré' : '🎥 Réunion en visio démarrée';
-  await sb.from('messages').insert({
-    user_id: me.id,
-    content: `${label}\n${roomUrl}`,
-    conversation_id: currentConversationId
-  });
+  // 2) Insert dans calls → notifie les autres participants en Realtime
+  const { data: call, error } = await sb.from('calls').insert({
+    conversation_id: currentConversationId,
+    caller_id: me.id,
+    audio_only: audioOnly,
+    room_url: roomUrl,
+    status: 'ringing'
+  }).select().single();
+  if (error) { alert('Erreur : ' + error.message); return; }
 
-  // 3) Ouvre l'iframe Whereby chez l'initiateur
-  openJitsiModal(roomUrl, { audioOnly });
+  currentCall = { id: call.id, room_url: roomUrl, audio_only: audioOnly, role: 'caller' };
+  showOutgoingCallModal();
+
+  // 3) Timeout 30s : si personne n'a répondu → status='missed'
+  outgoingTimer = setTimeout(async () => {
+    if (currentCall?.id !== call.id) return;
+    await sb.from('calls').update({
+      status: 'missed', ended_at: new Date().toISOString()
+    }).eq('id', call.id).eq('status', 'ringing');
+  }, 30000);
+}
+
+function showOutgoingCallModal() {
+  const modal = document.getElementById('outgoingCallModal');
+  const nameEl = document.getElementById('outgoingCallName');
+  const avEl = document.getElementById('outgoingCallAvatar');
+  const conv = currentConversationId;
+  if (conv) {
+    // DM ou groupe : affiche les autres participants
+    const others = Object.values(profilesById).filter(p => p.id !== me.id);
+    nameEl.textContent = others.length === 1 ? others[0].full_name : `${others.length} membres`;
+    avEl.textContent = (others[0]?.full_name?.[0] || '?').toUpperCase();
+  } else {
+    nameEl.textContent = 'Toute l\'équipe';
+    avEl.textContent = '#';
+  }
+  modal.hidden = false;
+  document.body.classList.add('no-scroll');
+  window.gcbtp?.renderIcons?.();
+}
+
+function hideOutgoingCallModal() {
+  document.getElementById('outgoingCallModal').hidden = true;
+  document.body.classList.remove('no-scroll');
+  if (outgoingTimer) { clearTimeout(outgoingTimer); outgoingTimer = null; }
+}
+
+async function cancelOutgoingCall() {
+  if (!currentCall || currentCall.role !== 'caller') return;
+  await sb.from('calls').update({
+    status: 'cancelled', ended_at: new Date().toISOString()
+  }).eq('id', currentCall.id).eq('status', 'ringing');
+  hideOutgoingCallModal();
+  currentCall = null;
+}
+
+function showIncomingCallModal(call) {
+  const caller = profilesById[call.caller_id];
+  const modal = document.getElementById('incomingCallModal');
+  document.getElementById('incomingCallName').textContent = caller?.full_name || 'Inconnu';
+  document.getElementById('incomingCallSub').textContent = call.audio_only
+    ? '📞 Appel vocal entrant' : '🎥 Visio entrante';
+  document.getElementById('incomingCallAvatar').textContent =
+    (caller?.full_name?.[0] || '?').toUpperCase();
+  modal.hidden = false;
+  document.body.classList.add('no-scroll');
+  window.gcbtp?.renderIcons?.();
+  startRingtone();
+  // Vibration mobile (motif sonnerie)
+  if (navigator.vibrate) {
+    navigator.vibrate([400, 200, 400, 200, 400]);
+  }
+}
+
+function hideIncomingCallModal() {
+  document.getElementById('incomingCallModal').hidden = true;
+  document.body.classList.remove('no-scroll');
+  stopRingtone();
+}
+
+async function acceptIncomingCall() {
+  if (!currentCall || currentCall.role !== 'callee') return;
+  const call = currentCall;
+  // Optimistic : on cache le modal tout de suite
+  hideIncomingCallModal();
+  const { error } = await sb.from('calls').update({
+    status: 'active', answered_by: me.id, answered_at: new Date().toISOString()
+  }).eq('id', call.id).eq('status', 'ringing');
+  if (error) { alert('Erreur : ' + error.message); currentCall = null; return; }
+  // Ouvrir Whereby chez moi (l'appelant ouvre via son listener Realtime)
+  openJitsiModal(call.room_url, { audioOnly: call.audio_only });
+}
+
+async function declineIncomingCall() {
+  if (!currentCall || currentCall.role !== 'callee') return;
+  const call = currentCall;
+  hideIncomingCallModal();
+  await sb.from('calls').update({
+    status: 'declined', ended_at: new Date().toISOString()
+  }).eq('id', call.id).eq('status', 'ringing');
+  currentCall = null;
+}
+
+// Sonnerie : double bip répété toutes les 2s via Web Audio API
+function startRingtone() {
+  stopRingtone();
+  const ring = () => {
+    try {
+      if (!ringtoneCtx) ringtoneCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const ctx = ringtoneCtx;
+      [0, 0.4].forEach((delay, i) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.frequency.value = i === 0 ? 880 : 660;
+        osc.connect(gain).connect(ctx.destination);
+        const t0 = ctx.currentTime + delay;
+        gain.gain.setValueAtTime(0.0001, t0);
+        gain.gain.exponentialRampToValueAtTime(0.25, t0 + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.3);
+        osc.start(t0);
+        osc.stop(t0 + 0.32);
+      });
+    } catch {}
+  };
+  ring();
+  ringtoneTimer = setInterval(ring, 2000);
+}
+function stopRingtone() {
+  if (ringtoneTimer) { clearInterval(ringtoneTimer); ringtoneTimer = null; }
+}
+
+// Listener Realtime sur la table calls
+function subscribeCalls() {
+  sb.channel('calls-rt')
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'calls' },
+        (p) => onCallInserted(p.new))
+    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'calls' },
+        (p) => onCallUpdated(p.new))
+    .subscribe();
+}
+
+function onCallInserted(call) {
+  if (!me?.id) return;                              // pas encore prêt
+  if (call.caller_id === me.id) return;             // mes propres appels gérés localement
+  // Ignorer les appels qui ne me concernent pas (RLS aurait dû filtrer mais double sécurité)
+  // Si appel déjà en cours chez moi, ignorer le nouveau
+  if (currentCall) return;
+  // Ne réagir qu'aux ringing récents (< 35s, on tolère un peu de retard Realtime)
+  const age = Date.now() - new Date(call.started_at).getTime();
+  if (call.status !== 'ringing' || age > 35000) return;
+  currentCall = { id: call.id, room_url: call.room_url, audio_only: call.audio_only, role: 'callee' };
+  showIncomingCallModal(call);
+}
+
+function onCallUpdated(call) {
+  if (!currentCall || currentCall.id !== call.id) return;
+  if (call.status === 'active') {
+    // Quelqu'un a accepté → si je suis l'appelant, j'ouvre Whereby chez moi
+    if (currentCall.role === 'caller') {
+      hideOutgoingCallModal();
+      openJitsiModal(call.room_url, { audioOnly: call.audio_only });
+    } else if (call.answered_by !== me?.id) {
+      // En groupe : un autre a accepté avant moi → fermer ma sonnerie
+      hideIncomingCallModal();
+      currentCall = null;
+    }
+  } else if (['ended', 'declined', 'missed', 'cancelled'].includes(call.status)) {
+    if (currentCall.role === 'caller') {
+      hideOutgoingCallModal();
+      const msg = call.status === 'declined' ? 'Appel refusé'
+                : call.status === 'missed'   ? 'Personne n\'a répondu'
+                : null;
+      if (msg) alert(msg);
+    } else {
+      hideIncomingCallModal();
+    }
+    closeJitsiModal();
+    currentCall = null;
+  }
 }
 
 // Visio Whereby : simple iframe + listener postMessage pour fermeture auto
@@ -1403,6 +1586,13 @@ function closeJitsiModal() {
   if (container) container.innerHTML = '';
   modal.hidden = true;
   document.body.classList.remove('no-scroll');
+  // Si un appel était lié, le marquer terminé en DB (le Realtime ferme chez les autres)
+  if (currentCall) {
+    sb.from('calls').update({
+      status: 'ended', ended_at: new Date().toISOString()
+    }).eq('id', currentCall.id).neq('status', 'ended').then(() => {});
+    currentCall = null;
+  }
 }
 
 // Écoute les events postMessage envoyés par l'iframe Whereby pour fermer
@@ -1544,10 +1734,6 @@ function renderMessageContent(text) {
     return `${before}<span class="mention${meCls}" data-user="${profile.id}">@${escapeHtml(name)}</span>`;
   });
   return mentioned
-    .replace(/(https:\/\/[\w-]+\.whereby\.com\/gcbtp-audio-[^\s<]+)/g,
-      '<button type="button" class="msg-jitsi-join msg-jitsi-call" data-jitsi-url="$1" data-jitsi-mode="audio"><i data-lucide="phone"></i> Rejoindre l\'appel vocal</button>')
-    .replace(/(https:\/\/[\w-]+\.whereby\.com\/gcbtp-[^\s<]+)/g,
-      '<button type="button" class="msg-jitsi-join" data-jitsi-url="$1"><i data-lucide="video"></i> Rejoindre la réunion</button>')
     .replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener">$1</a>')
     .replace(/\n/g, '<br>');
 }
