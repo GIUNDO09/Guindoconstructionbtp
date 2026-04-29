@@ -17,6 +17,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="preconnect" href="https://aqbtphtqurkunfawnvvg.supabase.co" crossorigin>
 <link rel="preconnect" href="https://unpkg.com" crossorigin>
+<link rel="preconnect" href="https://meet.jit.si" crossorigin>
 <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
 <link rel="stylesheet" href="css/equipe.css?v=39">
 </head>
@@ -174,7 +175,7 @@
     <span id="jitsiModalTitle" class="jitsi-modal-title"><i data-lucide="video"></i> Réunion</span>
     <button type="button" id="jitsiCloseBtn" class="btn-ghost"><i data-lucide="x"></i> Quitter</button>
   </div>
-  <iframe id="jitsiFrame" class="jitsi-modal-frame" allow="camera; microphone; display-capture; autoplay; fullscreen; clipboard-write" allowfullscreen></iframe>
+  <div id="jitsiFrameContainer" class="jitsi-modal-frame"></div>
 </div>
 
 <!-- Visionneuse plein écran (image) -->
@@ -192,6 +193,6 @@
 <script src="js/auth.js?v=26"></script>
 <script src="js/pwa.js?v=11"></script>
 <script src="js/push.js?v=23"></script>
-<script src="js/chat.js?v=32"></script>
+<script src="js/chat.js?v=33"></script>
 </body>
 </html>
