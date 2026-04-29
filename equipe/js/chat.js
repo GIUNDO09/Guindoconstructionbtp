@@ -1492,6 +1492,8 @@ function startRingtone() {
 }
 function stopRingtone() {
   if (ringtoneTimer) { clearInterval(ringtoneTimer); ringtoneTimer = null; }
+  if (ringtoneCtx) { try { ringtoneCtx.close(); } catch {} ringtoneCtx = null; }
+  if (navigator.vibrate) navigator.vibrate(0);
 }
 
 // Listener Realtime sur la table calls
@@ -1573,7 +1575,7 @@ function openJitsiModal(url, opts = {}) {
   const sep = url.includes('?') ? '&' : '?';
   const fullUrl = `${url}${sep}${params.toString()}`;
 
-  container.innerHTML = `<iframe class="jitsi-modal-frame" allow="camera; microphone; fullscreen; speaker; display-capture; autoplay" allowfullscreen src="${fullUrl}"></iframe>`;
+  container.innerHTML = `<iframe class="jitsi-modal-frame" allow="camera; microphone; fullscreen; display-capture; autoplay; screen-wake-lock; compute-pressure" src="${fullUrl}"></iframe>`;
   modal.hidden = false;
   document.body.classList.add('no-scroll');
   window.gcbtp?.renderIcons?.();
@@ -1583,7 +1585,13 @@ function closeJitsiModal() {
   const modal = document.getElementById('jitsiModal');
   const container = document.getElementById('jitsiFrameContainer');
   if (!modal || modal.hidden) return;
-  if (container) container.innerHTML = '';
+  if (container) {
+    // Forcer about:blank avant de remove → coupe les peer connections WebRTC
+    // proprement et libère caméra/micro tout de suite (sans attendre le GC).
+    const iframe = container.querySelector('iframe');
+    if (iframe) iframe.src = 'about:blank';
+    container.innerHTML = '';
+  }
   modal.hidden = true;
   document.body.classList.remove('no-scroll');
   // Si un appel était lié, le marquer terminé en DB (le Realtime ferme chez les autres)
