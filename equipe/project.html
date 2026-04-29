@@ -15,7 +15,7 @@
 <link rel="icon" href="../favicon.ico">
 <link rel="apple-touch-icon" href="../Images/LOGO-1.png">
 <link rel="manifest" href="manifest.json">
-<link rel="stylesheet" href="css/equipe.css?v=35">
+<link rel="stylesheet" href="css/equipe.css?v=36">
 </head>
 <body class="app-body">
 
@@ -60,6 +60,7 @@
         <div class="project-hero-actions">
           <button id="projEditBtn" class="btn-ghost" hidden><i data-lucide="pen"></i> Modifier</button>
           <button id="projChatBtn" class="btn-ghost"><i data-lucide="message-circle"></i> Conversation</button>
+          <button id="projDeleteBtn" class="btn-ghost btn-danger" hidden><i data-lucide="trash-2"></i> Supprimer</button>
         </div>
       </div>
       <div class="project-hero-progress">
@@ -194,6 +195,37 @@
   </div>
 </div>
 
+<!-- Modal "Supprimer le projet" (admin) -->
+<div id="projDeleteModal" class="modal" hidden role="dialog" aria-modal="true" aria-label="Supprimer le projet">
+  <div class="modal-content">
+    <button type="button" class="modal-close" id="projDeleteClose" aria-label="Fermer"><i data-lucide="x"></i></button>
+    <h3><i data-lucide="alert-triangle"></i> Supprimer ce projet</h3>
+    <p>Tu vas supprimer le projet <strong id="delProjName">…</strong>.</p>
+    <p class="form-hint form-hint-warn">⚠️ Action irréversible. La conversation projet et tous les liens de membres seront supprimés automatiquement.</p>
+
+    <div class="del-options">
+      <label class="checkbox-row">
+        <input type="checkbox" id="delTasks" checked>
+        <span>Supprimer aussi les <strong id="delTasksCount">0</strong> tâche(s) du projet — sinon elles deviennent orphelines (sans projet rattaché).</span>
+      </label>
+      <label class="checkbox-row">
+        <input type="checkbox" id="delFiles">
+        <span>Supprimer aussi le dossier de fichiers et ses <strong id="delFilesCount">0</strong> fichier(s) sur le PC — <strong>irréversible sur disque</strong>.</span>
+      </label>
+    </div>
+
+    <div class="del-confirm-name" id="delConfirmName" hidden>
+      <p class="form-hint form-hint-warn">Pour confirmer la suppression du dossier et de ses fichiers, retape le nom EXACT du projet :</p>
+      <input type="text" id="delConfirmInput" class="search-input" placeholder="Nom exact du projet" autocomplete="off">
+    </div>
+
+    <div class="modal-actions">
+      <button type="button" id="projDeleteCancel" class="btn-ghost">Annuler</button>
+      <button type="button" id="projDeleteConfirm" class="btn-primary btn-danger"><i data-lucide="trash-2"></i> Supprimer définitivement</button>
+    </div>
+  </div>
+</div>
+
 <!-- Modal édition projet (admin) -->
 <div id="projEditModal" class="modal" hidden>
   <div class="modal-content">
@@ -232,6 +264,6 @@
 <script src="js/supabase.js?v=24"></script>
 <script src="js/auth.js?v=26"></script>
 <script src="js/pwa.js?v=23"></script>
-<script src="js/project.js?v=2"></script>
+<script src="js/project.js?v=3"></script>
 </body>
 </html>

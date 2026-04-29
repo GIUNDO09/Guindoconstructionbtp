@@ -46,6 +46,7 @@ const state = {
 
   if (state.me?.role === 'admin') {
     document.getElementById('projEditBtn').hidden = false;
+    document.getElementById('projDeleteBtn').hidden = false;
     document.getElementById('newProjectTaskBtn').hidden = false;
     document.getElementById('quickUploadBtn').hidden = false;
   }
@@ -141,6 +142,18 @@ function bindUI() {
   document.getElementById('projEditModal').addEventListener('click', (e) => {
     if (e.target.id === 'projEditModal') closeProjEditModal();
   });
+
+  // Suppression du projet (admin)
+  document.getElementById('projDeleteBtn').addEventListener('click', openDeleteProjectModal);
+  document.getElementById('projDeleteClose').addEventListener('click', closeDeleteProjectModal);
+  document.getElementById('projDeleteCancel').addEventListener('click', closeDeleteProjectModal);
+  document.getElementById('projDeleteConfirm').addEventListener('click', performDeleteProject);
+  document.getElementById('projDeleteModal').addEventListener('click', (e) => {
+    if (e.target.id === 'projDeleteModal') closeDeleteProjectModal();
+  });
+  document.getElementById('delTasks').addEventListener('change', updateDeleteConfirmState);
+  document.getElementById('delFiles').addEventListener('change', updateDeleteConfirmState);
+  document.getElementById('delConfirmInput').addEventListener('input', updateDeleteConfirmState);
 
   document.getElementById('projChatBtn').addEventListener('click', () => {
     if (state.conversationId) location.href = `chat.html?conv=${state.conversationId}`;
@@ -584,6 +597,83 @@ async function onProjEditSubmit(e) {
     alert('Erreur : ' + e.message);
   } finally {
     submit.disabled = false;
+  }
+}
+
+// ----------------------------------------------------------
+// Suppression d'un projet (admin)
+// ----------------------------------------------------------
+function openDeleteProjectModal() {
+  document.getElementById('delProjName').textContent = state.project.name;
+  document.getElementById('delTasksCount').textContent = state.tasks.length;
+  document.getElementById('delFilesCount').textContent = state.files.length;
+  document.getElementById('delTasks').checked = true;
+  document.getElementById('delFiles').checked = false;
+  document.getElementById('delConfirmInput').value = '';
+  document.getElementById('delConfirmName').hidden = true;
+  document.getElementById('projDeleteConfirm').disabled = false;
+  document.getElementById('projDeleteModal').hidden = false;
+  window.gcbtp?.renderIcons?.();
+}
+
+function closeDeleteProjectModal() {
+  document.getElementById('projDeleteModal').hidden = true;
+}
+
+function updateDeleteConfirmState() {
+  const delFiles = document.getElementById('delFiles').checked;
+  const fileCount = state.files.length;
+  // Garde-fou : retape du nom obligatoire si on supprime des fichiers
+  // (effet irréversible sur disque)
+  const dangerous = delFiles && fileCount > 0;
+  const confirmBox = document.getElementById('delConfirmName');
+  const confirmInput = document.getElementById('delConfirmInput');
+  const confirmBtn = document.getElementById('projDeleteConfirm');
+
+  confirmBox.hidden = !dangerous;
+  if (dangerous) {
+    const typed = confirmInput.value.trim();
+    confirmBtn.disabled = (typed !== state.project.name);
+  } else {
+    confirmBtn.disabled = false;
+  }
+}
+
+async function performDeleteProject() {
+  const delTasks = document.getElementById('delTasks').checked;
+  const delFiles = document.getElementById('delFiles').checked;
+  const btn = document.getElementById('projDeleteConfirm');
+  btn.disabled = true;
+  btn.textContent = 'Suppression…';
+  try {
+    // 1) Tâches (si demandé) — sinon laisse project_id à NULL via FK SET NULL
+    if (delTasks && state.tasks.length > 0) {
+      const { error } = await sb.from('tasks').delete().eq('project_id', state.projectId);
+      if (error) throw new Error('Suppression tâches : ' + error.message);
+    }
+
+    // 2) Dossier projet (si demandé) — passe par pc-server pour nettoyer le disque
+    if (delFiles && state.project?.folder_id) {
+      if (!state.serverUrl) throw new Error('Serveur PC non configuré — impossible de supprimer le dossier');
+      const token = (await sb.auth.getSession()).data.session?.access_token;
+      const r = await fetch(`${state.serverUrl}/folder/${state.project.folder_id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!r.ok) throw new Error('Suppression dossier : ' + (await r.text()));
+    }
+
+    // 3) Le projet (cascade : conversations, project_members, conversation_participants)
+    const { error } = await sb.from('projects').delete().eq('id', state.projectId);
+    if (error) throw error;
+
+    // OK → retour à la liste
+    location.href = 'projects.html';
+  } catch (e) {
+    alert('Erreur : ' + e.message);
+    btn.disabled = false;
+    btn.innerHTML = '<i data-lucide="trash-2"></i> Supprimer définitivement';
+    window.gcbtp?.renderIcons?.();
   }
 }
 

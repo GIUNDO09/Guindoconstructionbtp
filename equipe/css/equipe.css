@@ -3169,6 +3169,45 @@ body.no-scroll { overflow: hidden; }
   .project-info-row dt { padding-bottom: 0; }
 }
 
+/* ----- Modal "Supprimer le projet" ----- */
+.del-options {
+  display: flex; flex-direction: column;
+  gap: var(--s-3);
+  margin: var(--s-4) 0;
+  padding: var(--s-3);
+  background: var(--gray-50);
+  border-radius: var(--r-sm);
+}
+.del-options .checkbox-row {
+  display: flex; align-items: flex-start;
+  gap: var(--s-2);
+  font-size: var(--text-sm);
+  color: var(--gray-700);
+  cursor: pointer;
+}
+.del-options input[type=checkbox] {
+  margin-top: 3px;
+  flex-shrink: 0;
+  accent-color: var(--blue);
+  width: 16px; height: 16px;
+}
+.del-options strong { color: var(--blue-dark); }
+.del-confirm-name {
+  background: var(--red-soft);
+  border: 1px solid var(--red);
+  border-radius: var(--r-sm);
+  padding: var(--s-3);
+  margin: var(--s-2) 0 var(--s-4);
+}
+.del-confirm-name input { margin-top: var(--s-2); width: 100%; }
+.btn-primary.btn-danger {
+  background: linear-gradient(135deg, var(--red) 0%, #b51a1a 100%);
+  border-color: var(--red);
+  box-shadow: 0 4px 14px rgba(224, 49, 49, .35);
+}
+.btn-primary.btn-danger:hover { filter: brightness(1.08); }
+.btn-primary.btn-danger:disabled { opacity: .4; cursor: not-allowed; filter: none; box-shadow: none; }
+
 /* =====================================================================
    PROJETS (vague 5) — liste + cards + modal nouveau projet
    ===================================================================== */
