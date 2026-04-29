@@ -1509,9 +1509,13 @@ function subscribeCalls() {
 function onCallInserted(call) {
   if (!me?.id) return;                              // pas encore prêt
   if (call.caller_id === me.id) return;             // mes propres appels gérés localement
-  // Ignorer les appels qui ne me concernent pas (RLS aurait dû filtrer mais double sécurité)
-  // Si appel déjà en cours chez moi, ignorer le nouveau
-  if (currentCall) return;
+  if (currentCall) return;                          // appel déjà en cours chez moi
+  // Filtrage par conversation : Realtime ne respecte pas la RLS par défaut sur
+  // postgres_changes, donc on doit vérifier ici qu'on est participant.
+  if (call.conversation_id) {
+    const members = participantsByConv[call.conversation_id] || [];
+    if (!members.includes(me.id)) return;
+  }
   // Ne réagir qu'aux ringing récents (< 35s, on tolère un peu de retard Realtime)
   const age = Date.now() - new Date(call.started_at).getTime();
   if (call.status !== 'ringing' || age > 35000) return;
