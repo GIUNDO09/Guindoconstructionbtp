@@ -3088,6 +3088,105 @@ body.no-scroll { overflow: hidden; }
   grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
   gap: var(--s-3);
 }
+
+/* ===== Galerie médias (onglet projet) ===== */
+.project-media-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 6px;
+}
+.media-tile {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
+  border-radius: var(--r-md);
+  background: var(--gray-100);
+  cursor: pointer;
+  display: block;
+  transition: transform var(--t-fast) var(--ease-out);
+}
+.media-tile:hover { transform: scale(1.03); z-index: 1; box-shadow: var(--shadow-md); }
+.media-tile img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.media-tile-play {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, .25);
+  color: #fff;
+  pointer-events: none;
+}
+.media-tile-play [data-lucide] { width: 36px; height: 36px; fill: currentColor; }
+.media-tile-badge {
+  position: absolute;
+  top: 6px; right: 6px;
+  width: 22px; height: 22px;
+  border-radius: var(--r-full);
+  background: #d1fae5;
+  color: #065f46;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-xs);
+}
+.media-tile-badge [data-lucide] { width: 12px; height: 12px; }
+
+/* Lightbox plein écran */
+.media-lightbox {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, .92);
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.media-lightbox[hidden] { display: none; }
+.media-lightbox-close {
+  position: absolute;
+  top: 16px; right: 16px;
+  width: 40px; height: 40px;
+  border-radius: var(--r-full);
+  border: none;
+  background: rgba(255, 255, 255, .15);
+  color: #fff;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.media-lightbox-close:hover { background: rgba(255, 255, 255, .28); }
+.media-lightbox-close [data-lucide] { width: 20px; height: 20px; }
+.media-lightbox-body {
+  flex: 1;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 56px 20px 20px;
+  min-height: 0;
+}
+.media-lightbox-body img,
+.media-lightbox-body video {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  border-radius: var(--r-md);
+}
+.media-lightbox-caption {
+  color: rgba(255, 255, 255, .85);
+  font-size: 13px;
+  padding: 8px 20px 16px;
+  text-align: center;
+  max-width: 80vw;
+  word-break: break-word;
+}
 .proj-file-card {
   background: #fff;
   border: 1px solid var(--gray-200);

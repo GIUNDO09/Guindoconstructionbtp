@@ -12,6 +12,7 @@ const state = {
   assigneesByTask: {},
   members: [],         // [user_id, ...]
   files: [],
+  media: [],           // images + vidéos du dossier projet et sous-dossiers
   profilesById: {},
   allProjects: [],     // [{id, name, status}, ...] pour dropdown "déplacer"
   serverUrl: null,
@@ -34,7 +35,7 @@ const state = {
   }
 
   bindUI();
-  await Promise.all([loadProfiles(), loadServerUrl(), loadProject(), loadAllProjects(), loadTasks(), loadAssignees(), loadMembers(), loadFiles(), loadConversation()]);
+  await Promise.all([loadProfiles(), loadServerUrl(), loadProject(), loadAllProjects(), loadTasks(), loadAssignees(), loadMembers(), loadFiles(), loadMedia(), loadConversation()]);
 
   if (!state.project) {
     document.getElementById('projectLoading').textContent = '❌ Projet introuvable ou accès refusé.';
@@ -68,7 +69,7 @@ const state = {
       await loadMembers(); renderAll();
     })
     .on('postgres_changes', { event: '*', schema: 'public', table: 'files' }, async () => {
-      await loadFiles(); renderAll();
+      await Promise.all([loadFiles(), loadMedia()]); renderAll();
     })
     .subscribe();
 })();
@@ -112,6 +113,32 @@ async function loadFiles() {
   if (!state.project?.folder_id) { state.files = []; return; }
   const { data } = await sb.from('files').select('*').eq('folder_id', state.project.folder_id).order('created_at', { ascending: false }).limit(20);
   state.files = data || [];
+}
+// Médias = images/vidéos du dossier projet et de tous ses sous-dossiers
+async function loadMedia() {
+  if (!state.project?.folder_id) { state.media = []; return; }
+  // 1) Tous les folders : on construit l'arbre des descendants côté client
+  const { data: folders } = await sb.from('folders').select('id, parent_id');
+  if (!folders) { state.media = []; return; }
+  const childrenOf = new Map();
+  folders.forEach(f => {
+    if (!f.parent_id) return;
+    if (!childrenOf.has(f.parent_id)) childrenOf.set(f.parent_id, []);
+    childrenOf.get(f.parent_id).push(f.id);
+  });
+  const ids = [state.project.folder_id];
+  const stack = [state.project.folder_id];
+  while (stack.length) {
+    const cur = stack.pop();
+    const kids = childrenOf.get(cur) || [];
+    kids.forEach(k => { ids.push(k); stack.push(k); });
+  }
+  // 2) Files dans ces folders, filtrés image/vidéo
+  const { data: files } = await sb.from('files').select('*')
+    .in('folder_id', ids)
+    .or('mime_type.like.image/%,mime_type.like.video/%')
+    .order('created_at', { ascending: false });
+  state.media = files || [];
 }
 async function loadConversation() {
   const { data } = await sb.from('conversations').select('id').eq('project_id', state.projectId).maybeSingle();
@@ -160,6 +187,21 @@ function bindUI() {
     else alert('Conversation projet non trouvée.');
   });
 
+  // Galerie médias : clic sur une vignette → lightbox
+  document.getElementById('projectMedia').addEventListener('click', (e) => {
+    const tile = e.target.closest('.media-tile');
+    if (!tile) return;
+    e.preventDefault();
+    openMediaLightbox(tile.dataset.mediaId, tile.dataset.mime, tile.dataset.name);
+  });
+  document.getElementById('mediaLightboxClose').addEventListener('click', closeMediaLightbox);
+  document.getElementById('mediaLightbox').addEventListener('click', (e) => {
+    if (e.target.id === 'mediaLightbox') closeMediaLightbox();
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !document.getElementById('mediaLightbox').hidden) closeMediaLightbox();
+  });
+
   // Upload rapide dans le dossier du projet
   document.getElementById('quickUploadBtn').addEventListener('click', () => {
     document.getElementById('quickUploadInput').click();
@@ -192,7 +234,7 @@ function switchTab(tab) {
   document.querySelectorAll('.project-tab').forEach(b => {
     b.classList.toggle('project-tab-active', b.dataset.tab === tab);
   });
-  ['tasks', 'files', 'team', 'info'].forEach(id => {
+  ['tasks', 'files', 'media', 'team', 'info'].forEach(id => {
     const el = document.getElementById('tab' + id[0].toUpperCase() + id.slice(1));
     if (el) el.hidden = id !== tab;
   });
@@ -207,6 +249,7 @@ function renderAll() {
   renderHero();
   renderTasksTab();
   renderFilesTab();
+  renderMediaTab();
   renderTeamTab();
   renderInfoTab();
   window.gcbtp?.renderIcons?.();
@@ -402,6 +445,72 @@ async function loadAuthedImage(imgEl, fileId) {
     const blob = await r.blob();
     imgEl.src = URL.createObjectURL(blob);
   } catch {}
+}
+
+// ---- Onglet MÉDIAS ----
+function renderMediaTab() {
+  const box = document.getElementById('projectMedia');
+  document.getElementById('tabMediaCount').textContent = state.media.length;
+  if (!state.media.length) {
+    box.innerHTML = '<p class="empty">Aucune photo ni vidéo dans ce projet pour le moment.</p>';
+    return;
+  }
+  box.innerHTML = state.media.map(f => {
+    const isVideo = (f.mime_type || '').startsWith('video/');
+    const proofChip = f.task_proof_id ? '<span class="media-tile-badge" title="Preuve de réalisation"><i data-lucide="shield-check"></i></span>' : '';
+    const playIcon = isVideo ? '<span class="media-tile-play"><i data-lucide="play"></i></span>' : '';
+    return `
+      <a class="media-tile ${isVideo ? 'media-tile-video' : ''}" data-media-id="${f.id}" data-mime="${escapeAttr(f.mime_type || '')}" data-name="${escapeAttr(f.name)}" title="${escapeAttr(f.name)}">
+        <img data-thumb-id="${f.id}" alt="${escapeAttr(f.name)}" loading="lazy">
+        ${playIcon}
+        ${proofChip}
+      </a>`;
+  }).join('');
+  box.querySelectorAll('img[data-thumb-id]').forEach(img => loadAuthedImage(img, img.dataset.thumbId));
+}
+
+async function openMediaLightbox(fileId, mime, name) {
+  if (!state.serverUrl) { alert('Serveur non configuré'); return; }
+  const lb = document.getElementById('mediaLightbox');
+  const img = document.getElementById('mediaLightboxImg');
+  const vid = document.getElementById('mediaLightboxVid');
+  const cap = document.getElementById('mediaLightboxCaption');
+  cap.textContent = name || '';
+  // Cleanup blob précédent
+  if (lb.dataset.blobUrl) { URL.revokeObjectURL(lb.dataset.blobUrl); delete lb.dataset.blobUrl; }
+  try {
+    const token = (await sb.auth.getSession()).data.session?.access_token;
+    if (!token) throw new Error('Session expirée');
+    const r = await fetch(`${state.serverUrl}/stream/${fileId}`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const blob = await r.blob();
+    const url = URL.createObjectURL(blob);
+    lb.dataset.blobUrl = url;
+    if ((mime || '').startsWith('video/')) {
+      img.hidden = true; img.removeAttribute('src');
+      vid.hidden = false; vid.src = url;
+    } else {
+      vid.hidden = true; vid.removeAttribute('src');
+      img.hidden = false; img.src = url;
+    }
+    lb.hidden = false;
+    document.body.classList.add('no-scroll');
+  } catch (e) { alert('Aperçu impossible : ' + e.message); }
+}
+
+function closeMediaLightbox() {
+  const lb = document.getElementById('mediaLightbox');
+  if (!lb || lb.hidden) return;
+  const img = document.getElementById('mediaLightboxImg');
+  const vid = document.getElementById('mediaLightboxVid');
+  vid.pause?.();
+  img.removeAttribute('src'); img.hidden = true;
+  vid.removeAttribute('src'); vid.hidden = true;
+  if (lb.dataset.blobUrl) { URL.revokeObjectURL(lb.dataset.blobUrl); delete lb.dataset.blobUrl; }
+  lb.hidden = true;
+  document.body.classList.remove('no-scroll');
 }
 
 async function uploadProjectFiles(files) {
