@@ -330,7 +330,7 @@ function renderProjectTaskList() {
         const assignees = (state.assigneesByTask[t.id] || []).map(uid => {
           const profile = state.profilesById[uid];
           if (!profile) return '';
-          return `<span class="proj-member-avatar" title="${escapeAttr(profile.full_name)}">${escapeHtml(initialsOf(profile.full_name))}</span>`;
+          return `<a href="profil-public.html?id=${uid}" class="proj-member-avatar" title="${escapeAttr(profile.full_name)}" onclick="event.stopPropagation()">${escapeHtml(initialsOf(profile.full_name))}</a>`;
         }).join('');
         const adminBtns = isAdmin ? `
           <button type="button" class="msg-act proj-task-edit" data-task-id="${t.id}" title="Modifier"><i data-lucide="pen"></i></button>
@@ -460,7 +460,12 @@ function renderInfoTab() {
   document.getElementById('infoDates').textContent      = formatDateRange(p.start_date, p.end_date) || '—';
   document.getElementById('infoStatus').textContent     = STATUS_LABEL[p.status] || p.status;
   const creator = state.profilesById[p.created_by];
-  document.getElementById('infoCreator').textContent    = creator?.full_name || '—';
+  const creatorEl = document.getElementById('infoCreator');
+  if (creator) {
+    creatorEl.innerHTML = `<a href="profil-public.html?id=${creator.id}">${escapeHtml(creator.full_name || '—')}</a>`;
+  } else {
+    creatorEl.textContent = '—';
+  }
 }
 
 // ----------------------------------------------------------

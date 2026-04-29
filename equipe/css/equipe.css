@@ -454,7 +454,8 @@ button [data-lucide], a [data-lucide] { display: inline-block; vertical-align: m
   justify-content: space-between;
   font-size: 13px;
 }
-.progress-name { font-weight: 500; color: var(--gray-900); }
+.progress-name { font-weight: 500; color: var(--gray-900); text-decoration: none; }
+a.progress-name:hover { text-decoration: underline; }
 .progress-count { color: var(--gray-500); }
 .progress-bar {
   height: 8px;
@@ -1452,7 +1453,8 @@ button [data-lucide], a [data-lucide] { display: inline-block; vertical-align: m
   margin-bottom: 4px;
   font-size: 12px;
 }
-.comment-author { font-weight: 600; color: var(--blue-dark); }
+.comment-author { font-weight: 600; color: var(--blue-dark); text-decoration: none; }
+a.comment-author:hover { text-decoration: underline; }
 .comment-time { color: var(--gray-500); }
 .comment-delete {
   margin-left: auto;
@@ -3341,7 +3343,10 @@ body.no-scroll { overflow: hidden; }
   border: 2px solid #fff;
   margin-left: -8px;
   box-shadow: var(--shadow-xs);
+  text-decoration: none;
 }
+a.proj-member-avatar { transition: transform .15s; }
+a.proj-member-avatar:hover { transform: scale(1.1); z-index: 1; }
 .proj-member-stack .proj-member-avatar:first-child { margin-left: 0; }
 .proj-member-more { background: var(--gray-300); color: var(--gray-700); }
 

@@ -181,7 +181,11 @@ function renderFolderContent() {
   }).join('');
 
   const filesHtml = filesHere.map(file => {
-    const uploader = state.profilesById[file.uploaded_by]?.full_name || '—';
+    const uploaderProfile = state.profilesById[file.uploaded_by];
+    const uploader = uploaderProfile?.full_name || '—';
+    const uploaderHtml = uploaderProfile
+      ? `<a href="profil-public.html?id=${uploaderProfile.id}" onclick="event.stopPropagation()">${escapeHtml(uploader)}</a>`
+      : escapeHtml(uploader);
     const when = new Date(file.created_at).toLocaleDateString('fr-FR');
     const mime = file.mime_type || '';
     const isImage = mime.startsWith('image/');
@@ -196,7 +200,7 @@ function renderFolderContent() {
         ${iconHtml}
         <div class="item-body">
           <div class="item-name">${escapeHtml(file.name)}</div>
-          <div class="item-meta">${formatBytes(file.size_bytes)} · ${escapeHtml(uploader)} · ${when}</div>
+          <div class="item-meta">${formatBytes(file.size_bytes)} · ${uploaderHtml} · ${when}</div>
         </div>
         ${canPreview ? `<button class="item-preview" data-file-id="${file.id}" title="Aperçu"><i data-lucide="eye"></i></button>` : ''}
         <button class="item-download" data-file-id="${file.id}" title="Télécharger"><i data-lucide="download"></i></button>

@@ -603,7 +603,7 @@ function renderTeamProgress() {
     return `
       <div class="progress-row">
         <div class="progress-head">
-          <span class="progress-name">${escapeHtml(p.full_name)}</span>
+          <a class="progress-name" href="profil-public.html?id=${p.id}">${escapeHtml(p.full_name)}</a>
           <span class="progress-count">${done}/${total}</span>
         </div>
         <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
@@ -1016,15 +1016,19 @@ function appendComment(c, animate) {
   if (empty) empty.remove();
   // Éviter les doublons
   if (list.querySelector(`[data-comment-id="${c.id}"]`)) return;
-  const author = state.profilesById[c.user_id]?.full_name || 'Inconnu';
+  const authorProfile = state.profilesById[c.user_id];
+  const author = authorProfile?.full_name || 'Inconnu';
   const mine = c.user_id === state.me?.id;
   const when = new Date(c.created_at).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+  const authorHtml = authorProfile
+    ? `<a class="comment-author" href="profil-public.html?id=${authorProfile.id}">${escapeHtml(author)}</a>`
+    : `<span class="comment-author">${escapeHtml(author)}</span>`;
   const div = document.createElement('div');
   div.className = `comment ${mine ? 'comment-mine' : ''} ${animate ? 'comment-new' : ''}`;
   div.dataset.commentId = c.id;
   div.innerHTML = `
     <div class="comment-head">
-      <span class="comment-author">${escapeHtml(author)}</span>
+      ${authorHtml}
       <span class="comment-time">${when}</span>
       ${mine ? `<button class="comment-delete" data-id="${c.id}" title="Supprimer"><i data-lucide="x"></i></button>` : ''}
     </div>
