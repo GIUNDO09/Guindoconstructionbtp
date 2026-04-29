@@ -749,8 +749,9 @@ function bindUI() {
     document.getElementById('chatMain').classList.remove('with-conv');
   });
 
-  // Démarrer une visio (Jitsi) : poste un message avec le lien dans la conv
+  // Démarrer une visio / appel vocal (Jitsi) : poste un message avec le lien dans la conv
   document.getElementById('startVisioBtn').addEventListener('click', startVisio);
+  document.getElementById('startCallBtn').addEventListener('click', startVoiceCall);
 
   // Modal Jitsi : fermer
   document.getElementById('jitsiCloseBtn').addEventListener('click', closeJitsiModal);
@@ -1321,24 +1322,29 @@ function cancelReply() {
 // Visio Jitsi : démarrage + ouverture modal
 // -----------------------------------------------------------
 async function startVisio() {
+  return startJitsiCall({ audioOnly: false });
+}
+async function startVoiceCall() {
+  return startJitsiCall({ audioOnly: true });
+}
+async function startJitsiCall({ audioOnly }) {
   if (!me) return;
-  // Room ID : convId + timestamp + random pour rendre l'URL non devinable
   const conv = currentConversationId || 'general';
   const rand = Math.random().toString(36).slice(2, 8);
-  const roomId = `gcbtp-${conv}-${Date.now().toString(36)}-${rand}`;
+  const prefix = audioOnly ? 'gcbtp-audio' : 'gcbtp';
+  const roomId = `${prefix}-${conv}-${Date.now().toString(36)}-${rand}`;
   const url = `https://meet.jit.si/${roomId}`;
+  const label = audioOnly ? '📞 Appel vocal démarré' : '🎥 Réunion en visio démarrée';
 
-  // Poste un message dans la conversation pour que tout le monde voit le lien
   const insertRow = {
     user_id: me.id,
-    content: `🎥 Réunion en visio démarrée\n${url}`,
+    content: `${label}\n${url}`,
     conversation_id: currentConversationId
   };
   const { error } = await sb.from('messages').insert(insertRow);
-  if (error) { alert('Impossible de démarrer la visio : ' + error.message); return; }
+  if (error) { alert('Impossible de démarrer l\'appel : ' + error.message); return; }
 
-  // Ouvre la visio chez l'initiateur tout de suite
-  openJitsiModal(url);
+  openJitsiModal(url, { audioOnly });
 }
 
 // External API Jitsi : permet de monitorer "readyToClose" pour fermer
@@ -1360,22 +1366,29 @@ function loadJitsiScript() {
   return jitsiScriptPromise;
 }
 
-async function openJitsiModal(url) {
+async function openJitsiModal(url, opts = {}) {
   const modal = document.getElementById('jitsiModal');
   const container = document.getElementById('jitsiFrameContainer');
+  const titleEl = document.getElementById('jitsiModalTitle');
   if (!modal || !container) return;
+  // Auto-détection audio-only depuis l'URL si non précisé
+  const audioOnly = opts.audioOnly ?? /\/gcbtp-audio-/.test(url);
+  if (titleEl) {
+    titleEl.innerHTML = audioOnly
+      ? '<i data-lucide="phone"></i> Appel vocal'
+      : '<i data-lucide="video"></i> Réunion';
+  }
   modal.hidden = false;
   document.body.classList.add('no-scroll');
-  container.innerHTML = '<p style="color:#fff;text-align:center;padding:40px;">Connexion à la réunion…</p>';
+  container.innerHTML = `<p style="color:#fff;text-align:center;padding:40px;">Connexion ${audioOnly ? "à l'appel" : 'à la réunion'}…</p>`;
 
   try { await loadJitsiScript(); }
   catch (e) {
-    // Fallback iframe direct si l'API ne charge pas
-    container.innerHTML = `<iframe class="jitsi-modal-frame" allow="camera; microphone; display-capture; autoplay; fullscreen; clipboard-write" allowfullscreen src="${url}#config.prejoinPageEnabled=false"></iframe>`;
+    const audioParam = audioOnly ? '&config.startAudioOnly=true' : '';
+    container.innerHTML = `<iframe class="jitsi-modal-frame" allow="camera; microphone; display-capture; autoplay; fullscreen; clipboard-write" allowfullscreen src="${url}#config.prejoinPageEnabled=false${audioParam}"></iframe>`;
     return;
   }
 
-  // Extrait le room name depuis l'URL (ce qui suit meet.jit.si/)
   const roomName = url.replace(/^https?:\/\/meet\.jit\.si\//, '').split(/[?#]/)[0];
   if (jitsiAPI) { try { jitsiAPI.dispose(); } catch {} jitsiAPI = null; }
   container.innerHTML = '';
@@ -1389,7 +1402,8 @@ async function openJitsiModal(url) {
       prejoinPageEnabled: false,
       disableDeepLinking: true,
       startWithAudioMuted: false,
-      startWithVideoMuted: false
+      startWithVideoMuted: audioOnly,
+      startAudioOnly: audioOnly
     },
     interfaceConfigOverwrite: {
       MOBILE_APP_PROMO: false,
@@ -1397,9 +1411,9 @@ async function openJitsiModal(url) {
       SHOW_PROMOTIONAL_CLOSE_PAGE: false
     }
   });
-  // Fermeture auto quand l'utilisateur raccroche dans Jitsi
   jitsiAPI.addEventListener('readyToClose', closeJitsiModal);
   jitsiAPI.addEventListener('videoConferenceLeft', closeJitsiModal);
+  window.gcbtp?.renderIcons?.();
 }
 
 function closeJitsiModal() {
@@ -1542,6 +1556,8 @@ function renderMessageContent(text) {
     return `${before}<span class="mention${meCls}" data-user="${profile.id}">@${escapeHtml(name)}</span>`;
   });
   return mentioned
+    .replace(/(https:\/\/meet\.jit\.si\/gcbtp-audio-[^\s<]+)/g,
+      '<button type="button" class="msg-jitsi-join msg-jitsi-call" data-jitsi-url="$1" data-jitsi-mode="audio"><i data-lucide="phone"></i> Rejoindre l\'appel vocal</button>')
     .replace(/(https:\/\/meet\.jit\.si\/gcbtp-[^\s<]+)/g,
       '<button type="button" class="msg-jitsi-join" data-jitsi-url="$1"><i data-lucide="video"></i> Rejoindre la réunion</button>')
     .replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener">$1</a>')

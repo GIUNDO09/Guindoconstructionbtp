@@ -1283,6 +1283,9 @@ a.progress-name:hover { text-decoration: underline; }
 .msg-jitsi-join [data-lucide] { width: 16px; height: 16px; }
 .msg-mine .msg-jitsi-join { background: #fff; color: var(--orange); }
 .msg-mine .msg-jitsi-join:hover { background: rgba(255, 255, 255, .9); }
+.msg-jitsi-join.msg-jitsi-call { background: #16a34a; }
+.msg-jitsi-join.msg-jitsi-call:hover { background: #15803d; }
+.msg-mine .msg-jitsi-join.msg-jitsi-call { background: #fff; color: #16a34a; }
 
 /* Modal Jitsi plein écran */
 .jitsi-modal {
