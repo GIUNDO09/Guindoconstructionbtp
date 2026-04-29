@@ -507,6 +507,7 @@ function appendMessage(m, animate) {
             <div class="msa-progress"></div>
           </div>
           <span class="msa-time">0:00</span>
+          <button type="button" class="msa-speed" aria-label="Vitesse de lecture">1x</button>
           <audio data-media-id="${fid}" preload="metadata"></audio>
         </div>`;
     } else if (m.attachment_type === 'document') {
@@ -645,6 +646,34 @@ function setupAudioPlayer(player) {
     const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
     audio.currentTime = ratio * dur;
   });
+
+  // Vitesse de lecture (cycle 1x → 1.5x → 2x → 1x), persistée en localStorage
+  const speedBtn = player.querySelector('.msa-speed');
+  if (speedBtn) {
+    const SPEEDS = [1, 1.5, 2];
+    const stored = parseFloat(localStorage.getItem('gcbtp_audio_speed') || '1');
+    let idx = SPEEDS.indexOf(stored);
+    if (idx < 0) idx = 0;
+    const apply = (rate) => {
+      audio.playbackRate = rate;
+      speedBtn.textContent = (rate === 1 ? '1x' : `${rate}x`);
+    };
+    apply(SPEEDS[idx]);
+    audio.addEventListener('loadedmetadata', () => apply(SPEEDS[idx]));
+    speedBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      idx = (idx + 1) % SPEEDS.length;
+      const r = SPEEDS[idx];
+      localStorage.setItem('gcbtp_audio_speed', String(r));
+      // Appliquer à tous les lecteurs ouverts (cohérence visuelle)
+      document.querySelectorAll('.msg-audio-player').forEach(p => {
+        const a = p.querySelector('audio');
+        const b = p.querySelector('.msa-speed');
+        if (a) a.playbackRate = r;
+        if (b) b.textContent = (r === 1 ? '1x' : `${r}x`);
+      });
+    });
+  }
 }
 
 async function loadAuthedMedia(el, fileId) {

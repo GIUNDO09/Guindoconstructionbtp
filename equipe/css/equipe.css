@@ -2583,6 +2583,25 @@ body.no-scroll { overflow: hidden; }
 }
 .msg-mine .msa-time { color: rgba(255, 255, 255, .9); }
 
+.msa-speed {
+  flex-shrink: 0;
+  border: none;
+  background: rgba(15, 37, 66, .08);
+  color: var(--gray-700);
+  font-size: 11px;
+  font-weight: var(--fw-semibold);
+  font-family: ui-monospace, Menlo, monospace;
+  padding: 3px 8px;
+  border-radius: var(--r-full);
+  cursor: pointer;
+  min-width: 36px;
+  text-align: center;
+  transition: background var(--t-fast);
+}
+.msa-speed:hover { background: rgba(15, 37, 66, .15); }
+.msg-mine .msa-speed { background: rgba(255, 255, 255, .25); color: #fff; }
+.msg-mine .msa-speed:hover { background: rgba(255, 255, 255, .4); }
+
 @media (max-width: 720px) {
   .btn-icon { width: 36px; height: 36px; font-size: 15px; }
   .msg-media { max-width: 100%; }
