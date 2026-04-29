@@ -1322,97 +1322,77 @@ function cancelReply() {
 // Visio Jitsi : démarrage + ouverture modal
 // -----------------------------------------------------------
 async function startVisio() {
-  return startJitsiCall({ audioOnly: false });
+  return startWherebyCall({ audioOnly: false });
 }
 async function startVoiceCall() {
-  return startJitsiCall({ audioOnly: true });
+  return startWherebyCall({ audioOnly: true });
 }
-async function startJitsiCall({ audioOnly }) {
+async function startWherebyCall({ audioOnly }) {
   if (!me) return;
-  const conv = currentConversationId || 'general';
-  const rand = Math.random().toString(36).slice(2, 8);
-  const prefix = audioOnly ? 'gcbtp-audio' : 'gcbtp';
-  const roomId = `${prefix}-${conv}-${Date.now().toString(36)}-${rand}`;
-  const url = `https://meet.jit.si/${roomId}`;
+  if (!serverUrl) { alert('Serveur PC non configuré — impossible de démarrer la visio'); return; }
+
+  // 1) Demande au pc-server de créer une room Whereby (la clé API y reste cachée)
+  let roomUrl = null;
+  try {
+    const token = (await sb.auth.getSession()).data.session?.access_token;
+    if (!token) throw new Error('Session expirée');
+    const r = await fetch(`${serverUrl}/whereby/meeting`, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ audioOnly })
+    });
+    if (!r.ok) throw new Error(await r.text());
+    const data = await r.json();
+    roomUrl = data.roomUrl;
+  } catch (e) {
+    alert('Impossible de créer la réunion : ' + e.message);
+    return;
+  }
+
+  // 2) Poste un message dans la conv pour que tout le monde voit le lien
   const label = audioOnly ? '📞 Appel vocal démarré' : '🎥 Réunion en visio démarrée';
-
-  const insertRow = {
+  await sb.from('messages').insert({
     user_id: me.id,
-    content: `${label}\n${url}`,
+    content: `${label}\n${roomUrl}`,
     conversation_id: currentConversationId
-  };
-  const { error } = await sb.from('messages').insert(insertRow);
-  if (error) { alert('Impossible de démarrer l\'appel : ' + error.message); return; }
-
-  openJitsiModal(url, { audioOnly });
-}
-
-// External API Jitsi : permet de monitorer "readyToClose" pour fermer
-// automatiquement le modal quand l'utilisateur raccroche dans Jitsi.
-let jitsiAPI = null;
-let jitsiScriptPromise = null;
-
-function loadJitsiScript() {
-  if (window.JitsiMeetExternalAPI) return Promise.resolve();
-  if (jitsiScriptPromise) return jitsiScriptPromise;
-  jitsiScriptPromise = new Promise((resolve, reject) => {
-    const s = document.createElement('script');
-    s.src = 'https://meet.jit.si/external_api.js';
-    s.async = true;
-    s.onload = resolve;
-    s.onerror = () => { jitsiScriptPromise = null; reject(new Error('Échec chargement Jitsi')); };
-    document.head.appendChild(s);
   });
-  return jitsiScriptPromise;
+
+  // 3) Ouvre l'iframe Whereby chez l'initiateur
+  openJitsiModal(roomUrl, { audioOnly });
 }
 
-async function openJitsiModal(url, opts = {}) {
+// Visio Whereby : simple iframe + listener postMessage pour fermeture auto
+// quand l'utilisateur clique "Quitter" dans Whereby.
+function openJitsiModal(url, opts = {}) {
   const modal = document.getElementById('jitsiModal');
   const container = document.getElementById('jitsiFrameContainer');
   const titleEl = document.getElementById('jitsiModalTitle');
   if (!modal || !container) return;
-  // Auto-détection audio-only depuis l'URL si non précisé
   const audioOnly = opts.audioOnly ?? /\/gcbtp-audio-/.test(url);
   if (titleEl) {
     titleEl.innerHTML = audioOnly
       ? '<i data-lucide="phone"></i> Appel vocal'
       : '<i data-lucide="video"></i> Réunion';
   }
+
+  // Construit l'URL embed Whereby. Params utiles :
+  //   embed              : mode embed (obligatoire pour postMessage)
+  //   iframeSource       : indique l'origine de l'app
+  //   displayName        : nom préféré de l'utilisateur
+  //   video=off          : caméra coupée d'office (mode audio-only)
+  //   chat=off,people=off: simplifie l'interface
+  const params = new URLSearchParams({
+    embed: '',
+    iframeSource: window.location.origin,
+    displayName: me?.full_name || 'Invité'
+  });
+  if (audioOnly) params.set('video', 'off');
+  const sep = url.includes('?') ? '&' : '?';
+  const fullUrl = `${url}${sep}${params.toString()}`;
+
+  container.innerHTML = `<iframe class="jitsi-modal-frame" allow="camera; microphone; fullscreen; speaker; display-capture; autoplay" allowfullscreen src="${fullUrl}"></iframe>`;
   modal.hidden = false;
   document.body.classList.add('no-scroll');
-  container.innerHTML = `<p style="color:#fff;text-align:center;padding:40px;">Connexion ${audioOnly ? "à l'appel" : 'à la réunion'}…</p>`;
-
-  try { await loadJitsiScript(); }
-  catch (e) {
-    const audioParam = audioOnly ? '&config.startAudioOnly=true' : '';
-    container.innerHTML = `<iframe class="jitsi-modal-frame" allow="camera; microphone; display-capture; autoplay; fullscreen; clipboard-write" allowfullscreen src="${url}#config.prejoinPageEnabled=false${audioParam}"></iframe>`;
-    return;
-  }
-
-  const roomName = url.replace(/^https?:\/\/meet\.jit\.si\//, '').split(/[?#]/)[0];
-  if (jitsiAPI) { try { jitsiAPI.dispose(); } catch {} jitsiAPI = null; }
-  container.innerHTML = '';
-  jitsiAPI = new window.JitsiMeetExternalAPI('meet.jit.si', {
-    roomName,
-    parentNode: container,
-    width: '100%',
-    height: '100%',
-    userInfo: { displayName: me?.full_name || 'Invité' },
-    configOverwrite: {
-      prejoinPageEnabled: false,
-      disableDeepLinking: true,
-      startWithAudioMuted: false,
-      startWithVideoMuted: audioOnly,
-      startAudioOnly: audioOnly
-    },
-    interfaceConfigOverwrite: {
-      MOBILE_APP_PROMO: false,
-      SHOW_JITSI_WATERMARK: false,
-      SHOW_PROMOTIONAL_CLOSE_PAGE: false
-    }
-  });
-  jitsiAPI.addEventListener('readyToClose', closeJitsiModal);
-  jitsiAPI.addEventListener('videoConferenceLeft', closeJitsiModal);
   window.gcbtp?.renderIcons?.();
 }
 
@@ -1420,11 +1400,19 @@ function closeJitsiModal() {
   const modal = document.getElementById('jitsiModal');
   const container = document.getElementById('jitsiFrameContainer');
   if (!modal || modal.hidden) return;
-  if (jitsiAPI) { try { jitsiAPI.dispose(); } catch {} jitsiAPI = null; }
   if (container) container.innerHTML = '';
   modal.hidden = true;
   document.body.classList.remove('no-scroll');
 }
+
+// Écoute les events postMessage envoyés par l'iframe Whereby pour fermer
+// automatiquement le modal quand l'utilisateur quitte la réunion.
+window.addEventListener('message', (e) => {
+  if (typeof e.data !== 'object' || !e.data) return;
+  if (!/\.whereby\.com$/.test(new URL(e.origin).hostname)) return;
+  const t = e.data.type;
+  if (t === 'leave' || t === 'meeting_ended') closeJitsiModal();
+});
 
 function jumpToMessage(id) {
   const target = document.querySelector(`.msg[data-id="${id}"]`);
@@ -1556,9 +1544,9 @@ function renderMessageContent(text) {
     return `${before}<span class="mention${meCls}" data-user="${profile.id}">@${escapeHtml(name)}</span>`;
   });
   return mentioned
-    .replace(/(https:\/\/meet\.jit\.si\/gcbtp-audio-[^\s<]+)/g,
+    .replace(/(https:\/\/[\w-]+\.whereby\.com\/gcbtp-audio-[^\s<]+)/g,
       '<button type="button" class="msg-jitsi-join msg-jitsi-call" data-jitsi-url="$1" data-jitsi-mode="audio"><i data-lucide="phone"></i> Rejoindre l\'appel vocal</button>')
-    .replace(/(https:\/\/meet\.jit\.si\/gcbtp-[^\s<]+)/g,
+    .replace(/(https:\/\/[\w-]+\.whereby\.com\/gcbtp-[^\s<]+)/g,
       '<button type="button" class="msg-jitsi-join" data-jitsi-url="$1"><i data-lucide="video"></i> Rejoindre la réunion</button>')
     .replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener">$1</a>')
     .replace(/\n/g, '<br>');

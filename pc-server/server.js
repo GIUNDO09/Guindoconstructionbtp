@@ -665,6 +665,47 @@ app.post('/push/unsubscribe', requireAuth, async (req, res) => {
 });
 
 // -----------------------------------------------------------
+// Visio Whereby — création de meeting via leur API
+// -----------------------------------------------------------
+// Crée une réunion d'1h max chez Whereby et renvoie son URL au client.
+// La clé API reste côté serveur (jamais exposée au navigateur).
+app.post('/whereby/meeting', requireAuth, async (req, res) => {
+  const apiKey = process.env.WHEREBY_API_KEY;
+  if (!apiKey) {
+    return res.status(503).json({ error: 'WHEREBY_API_KEY non configurée côté serveur' });
+  }
+  const audioOnly = !!(req.body && req.body.audioOnly);
+  // Préfixe différent dans le nom de room → permet au client de détecter le mode
+  // depuis l'URL (audio-only vs visio) sans stocker l'info ailleurs.
+  const prefix = audioOnly ? '/gcbtp-audio-' : '/gcbtp-';
+  try {
+    const r = await fetch('https://api.whereby.dev/v1/meetings', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        endDate: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+        roomMode: 'normal',
+        roomNamePrefix: prefix,
+        fields: ['hostRoomUrl']
+      })
+    });
+    if (!r.ok) {
+      const txt = await r.text();
+      console.error('Whereby API error:', r.status, txt);
+      return res.status(502).json({ error: 'Whereby API: ' + txt });
+    }
+    const data = await r.json();
+    res.json({ roomUrl: data.roomUrl, hostRoomUrl: data.hostRoomUrl });
+  } catch (e) {
+    console.error('Whereby create error:', e);
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// -----------------------------------------------------------
 // Démarrage
 // -----------------------------------------------------------
 app.listen(PORT, () => {
