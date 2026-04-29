@@ -3479,6 +3479,20 @@ a.proj-member-avatar:hover { transform: scale(1.1); z-index: 1; }
 .proof-thumb-doc [data-lucide] { width: 32px; height: 32px; color: var(--gray-500); margin-bottom: 4px; }
 .proof-thumb-doc-name { font-size: 10px; color: var(--gray-700); overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
 
+.proof-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: var(--r-full);
+  font-size: 13px;
+  font-weight: var(--fw-semibold);
+  margin-bottom: 10px;
+}
+.proof-status [data-lucide] { width: 16px; height: 16px; }
+.proof-status-pending { background: #fef3c7; color: #92400e; }
+.proof-status-ok { background: #d1fae5; color: #065f46; }
+
 /* =====================================================================
    AVANCEMENT (Gantt par projet) — remplace l'ancien calendrier
    ===================================================================== */

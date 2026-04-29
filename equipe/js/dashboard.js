@@ -499,6 +499,7 @@ function formatBytesShort(n) {
 async function loadAndRenderProofs(taskId, isAdmin) {
   const box = document.getElementById('detailProofs');
   if (!box) return;
+  const task = state.tasks.find(t => t.id === taskId);
   const { data: proofs, error } = await sb.from('files')
     .select('*')
     .eq('task_proof_id', taskId)
@@ -527,13 +528,33 @@ async function loadAndRenderProofs(taskId, isAdmin) {
       <span class="proof-thumb-doc-name">${escapeHtml(p.name)}</span>
     </a>`;
   }).join('');
-  const rejectBtn = isAdmin
-    ? `<button type="button" id="proofReject" class="btn-ghost btn-danger"><i data-lucide="rotate-ccw"></i> Rejeter & remettre en cours</button>`
-    : '';
+
+  // Badge état de validation
+  const isValidated = !!task?.proof_validated_at;
+  let statusBadge = '';
+  if (isValidated) {
+    const validator = state.profilesById[task.proof_validated_by]?.full_name || 'Admin';
+    const when = new Date(task.proof_validated_at).toLocaleDateString('fr-FR');
+    statusBadge = `<div class="proof-status proof-status-ok"><i data-lucide="check-circle-2"></i> Validée par ${escapeHtml(validator)} le ${when}</div>`;
+  } else {
+    statusBadge = `<div class="proof-status proof-status-pending"><i data-lucide="clock"></i> En attente de validation admin</div>`;
+  }
+
+  // Boutons admin : Valider (si pas encore validée) + Rejeter (toujours)
+  let adminBtns = '';
+  if (isAdmin) {
+    const validateBtn = !isValidated
+      ? `<button type="button" id="proofValidateAdmin" class="btn btn-primary"><i data-lucide="check-circle-2"></i> Valider la preuve</button>`
+      : '';
+    const rejectBtn = `<button type="button" id="proofReject" class="btn-ghost btn-danger"><i data-lucide="rotate-ccw"></i> Rejeter & remettre en cours</button>`;
+    adminBtns = `<div class="profil-actions" style="margin-top:12px">${validateBtn}${rejectBtn}</div>`;
+  }
+
   box.innerHTML = `
     <h4><i data-lucide="paperclip"></i> Preuve(s) de réalisation (${proofs.length})</h4>
+    ${statusBadge}
     <div class="proof-gallery">${items}</div>
-    ${rejectBtn ? `<div class="profil-actions" style="margin-top:12px">${rejectBtn}</div>` : ''}`;
+    ${adminBtns}`;
   // Hydrate les images authentifiées
   box.querySelectorAll('img[data-proof-img]').forEach(img => {
     loadAuthedImage(img, img.dataset.proofImg);
@@ -557,10 +578,29 @@ async function loadAndRenderProofs(taskId, isAdmin) {
       setTimeout(() => URL.revokeObjectURL(url), 60000);
     });
   });
-  // Rejet (admin)
+  // Validation (admin)
+  document.getElementById('proofValidateAdmin')?.addEventListener('click', async () => {
+    const { error } = await sb.from('tasks').update({
+      proof_validated_at: new Date().toISOString(),
+      proof_validated_by: state.me.id
+    }).eq('id', taskId);
+    if (error) { alert('Erreur : ' + error.message); return; }
+    // Mettre à jour l'état local pour refléter immédiatement
+    if (task) {
+      task.proof_validated_at = new Date().toISOString();
+      task.proof_validated_by = state.me.id;
+    }
+    openTaskDetail(taskId);
+  });
+
+  // Rejet (admin) : reset aussi la validation au cas où
   document.getElementById('proofReject')?.addEventListener('click', async () => {
     if (!confirm('Rejeter la preuve et remettre la tâche "en cours" ?\nLe membre devra refaire l\'upload.')) return;
-    const { error } = await sb.from('tasks').update({ status: 'in_progress' }).eq('id', taskId);
+    const { error } = await sb.from('tasks').update({
+      status: 'in_progress',
+      proof_validated_at: null,
+      proof_validated_by: null
+    }).eq('id', taskId);
     if (error) alert('Erreur : ' + error.message);
     else openTaskDetail(taskId);
   });
@@ -692,6 +732,7 @@ function renderTasks() {
             <span class="badge ${pr.cls}">${pr.label}</span>
             ${t.project ? `<span class="chip"><i data-lucide="hard-hat"></i> ${escapeHtml(t.project)}</span>` : ''}
             ${due ? `<span class="chip ${dueChipCls}">${dueLabel}</span>` : ''}
+            ${t.status === 'done' && !t.proof_validated_at ? `<span class="chip chip-warn"><i data-lucide="clock"></i> À valider</span>` : ''}
           </div>
         </div>
         <div class="row-assignees">${assigneesHtml}</div>
