@@ -72,8 +72,14 @@ async function loadFiles() {
     .or('context.is.null,context.eq.task_proof')
     .order('created_at', { ascending: false });
   if (error) { console.error(error); return; }
-  // On filtre côté client les task_proof sans folder_id pour éviter de polluer la racine
-  state.files = (data || []).filter(f => f.context !== 'task_proof' || f.folder_id);
+  // Filtre défensif : exclut les fichiers rangés dans un dossier système même
+  // si la colonne context est NULL (upload ancien ou bug). Ça évite de polluer
+  // la racine avec les vocaux/avatars/preuves.
+  state.files = (data || []).filter(f => {
+    if (f.disk_filename && /^_(?:chat|avatars|taches)\//.test(f.disk_filename)) return false;
+    if (f.context === 'task_proof' && !f.folder_id) return false;
+    return true;
+  });
 }
 
 // ---------- Render ----------
