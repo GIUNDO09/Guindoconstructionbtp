@@ -574,6 +574,7 @@ function appendMessage(m, animate) {
       <div class="msg-actions">
         <button type="button" class="msg-act msg-act-react" title="Réagir" data-id="${m.id}"><i data-lucide="smile-plus"></i></button>
         <button type="button" class="msg-act msg-act-reply" title="Répondre" data-id="${m.id}"><i data-lucide="reply"></i></button>
+        ${m.attachment_type === 'audio' ? `<button type="button" class="msg-act msg-act-totask" title="Convertir en tâche" data-id="${m.id}"><i data-lucide="clipboard-list"></i></button>` : ''}
         ${pinBtn}
         ${mine ? `<button class="msg-act msg-delete" title="Supprimer" data-id="${m.id}"><i data-lucide="trash-2"></i></button>` : ''}
       </div>
@@ -876,6 +877,23 @@ function bindUI() {
     // Répondre
     const replyBtn = e.target.closest('.msg-act-reply');
     if (replyBtn) { startReply(replyBtn.dataset.id); return; }
+
+    // Convertir un message vocal en tâche
+    const toTaskBtn = e.target.closest('.msg-act-totask');
+    if (toTaskBtn) {
+      e.stopPropagation();
+      const msg = messageCache.get(toTaskBtn.dataset.id);
+      if (!msg) return;
+      const author = profilesById[msg.user_id]?.full_name || 'Inconnu';
+      sessionStorage.setItem('gcbtp_pending_task_from_voice', JSON.stringify({
+        msgId: msg.id,
+        author,
+        content: msg.content || '',
+        createdAt: msg.created_at
+      }));
+      window.location.href = 'dashboard.html';
+      return;
+    }
 
     // Épingler / désépingler
     const pinBtn = e.target.closest('.msg-act-pin');

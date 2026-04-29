@@ -54,6 +54,22 @@ let state = {
   if (!isAdmin && state.me?.id) state.viewMember = state.me.id;
   renderAll();
 
+  // Création de tâche depuis un message vocal du chat
+  const pendingVoice = sessionStorage.getItem('gcbtp_pending_task_from_voice');
+  if (pendingVoice) {
+    sessionStorage.removeItem('gcbtp_pending_task_from_voice');
+    try {
+      const v = JSON.parse(pendingVoice);
+      openTaskModal();
+      const f = document.getElementById('taskForm');
+      const date = v.createdAt ? new Date(v.createdAt).toLocaleString('fr-FR', { day: '2-digit', month: 'long', hour: '2-digit', minute: '2-digit' }) : '';
+      const lines = [`🎤 Tâche issue d'un message vocal de ${v.author}${date ? ` (${date})` : ''}.`];
+      if (v.content) lines.push('', v.content);
+      f.description.value = lines.join('\n');
+      f.title.focus();
+    } catch (e) { console.warn('voice→task prefill failed:', e); }
+  }
+
   // Realtime : rafraîchir à chaque changement
   sb.channel('tasks-realtime')
     .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks' }, async () => {
