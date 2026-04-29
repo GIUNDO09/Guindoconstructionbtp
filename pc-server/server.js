@@ -159,6 +159,7 @@ app.post('/upload', requireAuth, upload.single('file'), async (req, res) => {
   try {
     // 1) Sous-chemin selon priorité : folder_id > context > racine
     let subPath = '';
+    let resolvedFolderId = folder_id || null;
     if (folder_id) {
       subPath = await folderRelPath(req.sb, folder_id);
     } else if (context === 'chat') {
@@ -172,8 +173,20 @@ app.post('/upload', requireAuth, upload.single('file'), async (req, res) => {
     } else if (context === 'task') {
       subPath = '_taches';
     } else if (context === 'task_proof') {
-      // Une preuve par tâche dans son propre dossier
-      subPath = path.join('_taches', 'proofs', task_proof_id);
+      // Si la tâche a un folder_id (dossier choisi à la création) → ranger là
+      // Sinon fallback : dossier dédié _taches/proofs/<taskId>/
+      let taskFolderId = null;
+      try {
+        const { data: task } = await req.sb
+          .from('tasks').select('folder_id').eq('id', task_proof_id).single();
+        taskFolderId = task?.folder_id || null;
+      } catch (_) { /* ignore, fallback ci-dessous */ }
+      if (taskFolderId) {
+        subPath = await folderRelPath(req.sb, taskFolderId);
+        resolvedFolderId = taskFolderId;
+      } else {
+        subPath = path.join('_taches', 'proofs', task_proof_id);
+      }
     }
     const targetDir = path.join(FILES_DIR, subPath);
     fs.mkdirSync(targetDir, { recursive: true });
@@ -189,7 +202,7 @@ app.post('/upload', requireAuth, upload.single('file'), async (req, res) => {
     const relDisk = path.join(subPath, finalName).split(path.sep).join('/');
 
     const insertData = {
-      folder_id: folder_id || null,
+      folder_id: resolvedFolderId,
       context: context,
       name: file.originalname,
       disk_filename: relDisk,

@@ -65,11 +65,15 @@ async function loadFolders() {
 }
 
 async function loadFiles() {
-  // Page Fichiers = uniquement les fichiers projet (context null).
-  // Les médias chat/avatars/covers sont stockés à part (context = 'chat'|'avatar'|'task').
-  const { data, error } = await sb.from('files').select('*').is('context', null).order('created_at', { ascending: false });
+  // Page Fichiers = fichiers projet (context null) + preuves rangées dans un dossier
+  // de projet (context = 'task_proof' avec folder_id non null).
+  // Exclu : chat, avatar, task (cover), task_proof sans folder_id.
+  const { data, error } = await sb.from('files').select('*')
+    .or('context.is.null,context.eq.task_proof')
+    .order('created_at', { ascending: false });
   if (error) { console.error(error); return; }
-  state.files = data || [];
+  // On filtre côté client les task_proof sans folder_id pour éviter de polluer la racine
+  state.files = (data || []).filter(f => f.context !== 'task_proof' || f.folder_id);
 }
 
 // ---------- Render ----------
@@ -195,11 +199,15 @@ function renderFolderContent() {
     const iconHtml = isImage
       ? `<img class="item-thumb" data-thumb-id="${file.id}" alt="" loading="lazy">`
       : `<span class="item-icon">${fileIcon(file.name)}</span>`;
+    const isProof = !!file.task_proof_id;
+    const proofBadge = isProof
+      ? `<span class="item-proof-badge" title="Preuve de réalisation"><i data-lucide="shield-check"></i> Preuve</span>`
+      : '';
     return `
-      <div class="item item-file ${isImage ? 'item-image' : ''}" draggable="true" data-file-id="${file.id}">
+      <div class="item item-file ${isImage ? 'item-image' : ''} ${isProof ? 'item-proof' : ''}" draggable="true" data-file-id="${file.id}">
         ${iconHtml}
         <div class="item-body">
-          <div class="item-name">${escapeHtml(file.name)}</div>
+          <div class="item-name">${escapeHtml(file.name)}${proofBadge}</div>
           <div class="item-meta">${formatBytes(file.size_bytes)} · ${uploaderHtml} · ${when}</div>
         </div>
         ${canPreview ? `<button class="item-preview" data-file-id="${file.id}" title="Aperçu"><i data-lucide="eye"></i></button>` : ''}
